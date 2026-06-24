@@ -1,22 +1,20 @@
 import type { Metadata, Viewport } from "next";
-import { Nunito, Playfair_Display } from "next/font/google";
+import { Quicksand, Fredoka } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Toaster } from "sonner";
 import "./globals.css";
 
-const nunito = Nunito({
+const quicksand = Quicksand({
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700", "800", "900"],
-  style: ["normal", "italic"],
-  variable: "--font-nunito",
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-sans",
   display: "swap",
 });
 
-const playfair = Playfair_Display({
+const fredoka = Fredoka({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  style: ["normal", "italic"],
-  variable: "--font-playfair",
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-display",
   display: "swap",
 });
 
@@ -79,7 +77,7 @@ export default function RootLayout({
 }) {
   return (
     <ClerkProvider>
-      <html lang="en" className={`${nunito.variable} ${playfair.variable}`}>
+      <html lang="en" className={`${quicksand.variable} ${fredoka.variable}`}>
         <body className="font-sans bg-cream text-ink antialiased">
           {children}
           <Toaster
@@ -89,7 +87,7 @@ export default function RootLayout({
                 background: "#FBF8F3",
                 border: "1px solid rgba(36,50,74,0.1)",
                 color: "#24324A",
-                fontFamily: "Nunito, sans-serif",
+                fontFamily: "var(--font-sans), sans-serif",
                 borderRadius: "1rem",
               },
             }}

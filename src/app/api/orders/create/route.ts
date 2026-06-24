@@ -7,7 +7,7 @@ export async function POST(req: NextRequest) {
   try {
     const { userId } = await auth();
     const body = await req.json();
-    const { items, address, paymentMethod, subtotal, shippingAmount, total, discountAmount, couponId } = body;
+    const { items, address, paymentMethod, subtotal, shippingAmount, total, discountAmount, couponId, customName } = body;
 
     if (!items || items.length === 0) {
       return NextResponse.json({ error: "Cart is empty" }, { status: 400 });
@@ -59,6 +59,7 @@ export async function POST(req: NextRequest) {
         shipping_amount: shippingAmount || 0,
         total,
         coupon_id: couponId || null,
+        notes: customName ? `Custom Name Added: ${customName}` : null,
         shipping_address: {
           full_name: address.fullName,
           phone: address.phone,

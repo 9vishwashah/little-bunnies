@@ -44,11 +44,14 @@ export default function CheckoutPage() {
   const [address, setAddress] = useState<AddressFormData | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<"cod">("cod");
   const [orderLoading, setOrderLoading] = useState(false);
+  const [isCustomNameEnabled, setIsCustomNameEnabled] = useState(false);
+  const [customName, setCustomName] = useState("");
   const { items, getTotalPrice, clearCart } = useCartStore();
 
   const subtotal = getTotalPrice();
   const shipping = calculateShipping(subtotal);
-  const total = subtotal + shipping;
+  const customNameCharge = isCustomNameEnabled ? 299 : 0;
+  const total = subtotal + shipping + customNameCharge;
 
   const {
     register,
@@ -69,6 +72,10 @@ export default function CheckoutPage() {
 
   const handlePlaceOrder = async () => {
     if (!address) return;
+    if (isCustomNameEnabled && !customName.trim()) {
+      toast.error("Please enter the child's name for customization.");
+      return;
+    }
     setOrderLoading(true);
     try {
       const res = await fetch("/api/orders/create", {
@@ -81,6 +88,7 @@ export default function CheckoutPage() {
           subtotal,
           shippingAmount: shipping,
           total,
+          customName: isCustomNameEnabled ? customName.trim() : null,
         }),
       });
       const data = await res.json();
@@ -254,6 +262,40 @@ export default function CheckoutPage() {
                 <p className="text-sm text-ink-muted">📞 {address.phone}</p>
               </div>
 
+              {/* Customization */}
+              <div className="bg-sage/5 rounded-brand shadow-card p-5 border border-sage/30">
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={isCustomNameEnabled}
+                    onChange={(e) => setIsCustomNameEnabled(e.target.checked)}
+                    className="mt-1 accent-ink w-4 h-4 rounded cursor-pointer"
+                  />
+                  <div className="flex-1">
+                    <p className="font-semibold text-ink text-sm">Add a Custom Child's Name (+₹299)</p>
+                    <p className="text-xs text-ink-muted mt-0.5">We will proudly customize your product with your child's name.</p>
+                  </div>
+                </label>
+                
+                {isCustomNameEnabled && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    className="mt-4 pt-4 border-t border-sage/20"
+                  >
+                    <label className="block text-sm font-semibold text-ink mb-1.5">Child's Name *</label>
+                    <input
+                      type="text"
+                      value={customName}
+                      onChange={(e) => setCustomName(e.target.value)}
+                      placeholder="Enter name (e.g., Aaryan)"
+                      className="input-brand bg-white"
+                      required
+                    />
+                  </motion.div>
+                )}
+              </div>
+
               {/* Items */}
               <div className="bg-white rounded-brand shadow-card p-5">
                 <h3 className="font-display font-semibold text-ink mb-4 flex items-center gap-2">
@@ -334,6 +376,12 @@ export default function CheckoutPage() {
                   {shipping === 0 ? "FREE" : formatPrice(shipping)}
                 </span>
               </div>
+              {isCustomNameEnabled && (
+                <div className="flex justify-between text-ink-light font-medium">
+                  <span>Custom Name</span>
+                  <span>{formatPrice(299)}</span>
+                </div>
+              )}
               <div className="flex justify-between font-bold text-ink text-base pt-3 border-t border-ink/8 mt-3">
                 <span>Total</span>
                 <span>{formatPrice(total)}</span>

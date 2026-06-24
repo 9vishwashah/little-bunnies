@@ -1,4 +1,5 @@
 "use client";
+// Cache buster: 1
 
 import Link from "next/link";
 import Image from "next/image";
@@ -11,10 +12,7 @@ import {
   Grid2X2,
   ShoppingCart,
   Users,
-  Tag,
-  Image as ImageIcon,
   Star,
-  Settings,
   ChevronRight,
   Store,
 } from "lucide-react";
@@ -26,10 +24,7 @@ const NAV_ITEMS = [
   { href: "/admin/categories", label: "Categories", icon: Grid2X2 },
   { href: "/admin/orders", label: "Orders", icon: ShoppingCart },
   { href: "/admin/customers", label: "Customers", icon: Users },
-  { href: "/admin/coupons", label: "Coupons", icon: Tag },
-  { href: "/admin/banners", label: "Banners", icon: ImageIcon },
   { href: "/admin/reviews", label: "Reviews", icon: Star },
-  { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 
 export default function AdminSidebar() {

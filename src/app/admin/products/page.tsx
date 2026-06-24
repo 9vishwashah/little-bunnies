@@ -1,7 +1,8 @@
 import { createAdminClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { formatPrice } from "@/lib/utils";
-import { Plus, Search, Edit, Trash2, Eye, EyeOff } from "lucide-react";
+import { Plus, Search, Edit, Eye, EyeOff } from "lucide-react";
+import DeleteProductButton from "./DeleteProductButton";
 
 async function getProducts(search?: string) {
   const supabase = createAdminClient();
@@ -165,9 +166,11 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
                           <Link
                             href={`/admin/products/${product.id}/edit`}
                             className="p-1.5 rounded-lg text-ink-muted hover:text-ink hover:bg-cream-dark transition-colors"
+                            title="Edit Product"
                           >
                             <Edit size={15} />
                           </Link>
+                          <DeleteProductButton productId={product.id} productName={product.name} />
                         </div>
                       </td>
                     </tr>

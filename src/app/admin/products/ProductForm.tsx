@@ -49,12 +49,13 @@ type ProductFormData = z.infer<typeof productSchema>;
 interface ProductFormProps {
   categories: { id: string; name: string }[];
   initialData?: Partial<ProductFormData>;
+  initialImages?: { url: string; file?: File; isNew?: boolean }[];
   productId?: string;
 }
 
-export default function ProductForm({ categories, initialData, productId }: ProductFormProps) {
+export default function ProductForm({ categories, initialData, initialImages, productId }: ProductFormProps) {
   const router = useRouter();
-  const [images, setImages] = useState<{ url: string; file?: File; isNew?: boolean }[]>([]);
+  const [images, setImages] = useState<{ url: string; file?: File; isNew?: boolean }[]>(initialImages || []);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);

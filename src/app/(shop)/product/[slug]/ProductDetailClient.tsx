@@ -20,7 +20,6 @@ import {
   Share2,
 } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
-import { useWishlistStore } from "@/store/wishlistStore";
 import { useRecentlyViewedStore } from "@/store/recentlyViewedStore";
 import { Product, ProductVariant } from "@/types";
 import {
@@ -51,9 +50,7 @@ export default function ProductDetailClient({
   const [pageUrl, setPageUrl] = useState("");
 
   const addItem = useCartStore((s) => s.addItem);
-  const { isWishlisted, toggleItem } = useWishlistStore();
   const addRecentlyViewed = useRecentlyViewedStore((s) => s.addItem);
-  const wishlisted = isWishlisted(product.id);
 
   const images = product.product_images?.sort((a, b) => a.sort_order - b.sort_order) || [];
   const primaryImage = images[selectedImage] || images[0];
@@ -375,33 +372,14 @@ export default function ProductDetailClient({
             </a>
           </div>
 
-          {/* Wishlist & Share */}
+          {/* Share */}
           <div className="flex gap-3 mb-6">
             <button
-              onClick={() => {
-                toggleItem(product.id);
-                toast.success(wishlisted ? "Removed from wishlist" : "Added to wishlist");
-              }}
-              className={cn(
-                "flex items-center gap-2 px-5 py-2.5 rounded-pill border-2 text-sm font-semibold transition-all flex-1 justify-center",
-                wishlisted
-                  ? "border-blush bg-blush/10 text-blush-dark"
-                  : "border-ink/15 text-ink hover:border-blush hover:text-blush-dark"
-              )}
-            >
-              <Heart
-                size={16}
-                fill={wishlisted ? "currentColor" : "none"}
-                strokeWidth={2}
-              />
-              {wishlisted ? "Wishlisted" : "Add to Wishlist"}
-            </button>
-            <button
               onClick={handleShare}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-pill border-2 border-ink/15 text-sm font-semibold hover:bg-cream-dark transition-colors"
+              className="flex items-center justify-center w-full gap-2 px-5 py-3 rounded-pill border-2 border-ink/15 text-sm font-semibold hover:bg-cream-dark transition-colors"
             >
               <Share2 size={16} />
-              Share
+              Share this Product
             </button>
           </div>
 
