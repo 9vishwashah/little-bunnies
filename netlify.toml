@@ -11,15 +11,15 @@
 
 # Redirect all traffic to HTTPS
 [[redirects]]
-  from = "http://littlebunnies.in/*"
-  to   = "https://littlebunnies.in/:splat"
+  from = "http://littlebunnies.co.in/*"
+  to   = "https://littlebunnies.co.in/:splat"
   status = 301
   force  = true
 
 # Remove www and redirect to apex
 [[redirects]]
-  from = "https://www.littlebunnies.in/*"
-  to   = "https://littlebunnies.in/:splat"
+  from = "https://www.littlebunnies.co.in/*"
+  to   = "https://littlebunnies.co.in/:splat"
   status = 301
   force  = true
 

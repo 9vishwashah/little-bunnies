@@ -84,6 +84,17 @@ export default function OrderClient({ order }: Props) {
               <div className="flex justify-between text-ink-muted"><span>Shipping</span><span>{formatPrice(order.shipping_amount)}</span></div>
               <div className="flex justify-between font-bold text-ink text-lg pt-2 mt-2 border-t border-ink/8"><span>Total</span><span>{formatPrice(order.total)}</span></div>
             </div>
+            {order.notes?.startsWith("Custom Name Added:") && (
+              <div className="mt-4 pt-4 border-t border-ink/8">
+                <div className="flex items-center gap-3 bg-sage/10 border border-sage/30 rounded-xl px-4 py-3">
+                  <span className="text-xl">✨</span>
+                  <div>
+                    <p className="text-xs font-bold text-sage-dark uppercase tracking-wider mb-0.5">Custom Name Requested</p>
+                    <p className="font-bold text-ink text-lg">{order.notes.replace("Custom Name Added: ", "")}</p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

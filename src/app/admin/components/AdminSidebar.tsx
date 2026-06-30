@@ -1,8 +1,6 @@
 "use client";
-// Cache buster: 1
 
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { UserButton } from "@clerk/nextjs";
 import { motion } from "framer-motion";
@@ -15,6 +13,7 @@ import {
   Star,
   ChevronRight,
   Store,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -27,16 +26,21 @@ const NAV_ITEMS = [
   { href: "/admin/reviews", label: "Reviews", icon: Star },
 ];
 
-export default function AdminSidebar() {
+export default function AdminSidebar({ onClose }: { onClose?: () => void }) {
   const pathname = usePathname();
 
   const isActive = (href: string, exact?: boolean) =>
     exact ? pathname === href : pathname.startsWith(href);
 
+  // Every nav tap closes the drawer (works even if pathname doesn't change)
+  const handleNavClick = () => {
+    onClose?.();
+  };
+
   return (
-    <aside className="w-60 flex-shrink-0 bg-ink text-cream flex flex-col h-full overflow-y-auto">
-      {/* Logo */}
-      <div className="px-5 py-5 border-b border-cream/10">
+    <aside className="w-full h-full bg-ink text-cream flex flex-col overflow-y-auto">
+      {/* Logo + Close */}
+      <div className="px-5 py-5 border-b border-cream/10 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-xl bg-cream/10 flex items-center justify-center">
             <Store size={16} className="text-cream" />
@@ -48,6 +52,21 @@ export default function AdminSidebar() {
             <p className="text-cream/40 text-xs font-medium">Admin Panel</p>
           </div>
         </div>
+        {/* Close button — visible on mobile only */}
+        {onClose && (
+          <button
+            type="button"
+            onClick={onClose}
+            onTouchEnd={(e) => {
+              e.preventDefault();
+              onClose();
+            }}
+            aria-label="Close menu"
+            className="md:hidden p-2 text-cream/60 hover:text-cream hover:bg-cream/10 rounded-lg transition-colors active:bg-cream/20"
+          >
+            <X size={20} />
+          </button>
+        )}
       </div>
 
       {/* Navigation */}
@@ -62,6 +81,7 @@ export default function AdminSidebar() {
               <Link
                 key={href}
                 href={href}
+                onClick={handleNavClick}
                 className={cn(
                   "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors group",
                   active
@@ -87,6 +107,7 @@ export default function AdminSidebar() {
         <Link
           href="/"
           target="_blank"
+          onClick={handleNavClick}
           className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm text-cream/50 hover:text-cream hover:bg-cream/8 transition-colors font-medium"
         >
           <Store size={15} />

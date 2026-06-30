@@ -15,7 +15,7 @@ import { Product } from "@/types";
 export const metadata: Metadata = {
   title: "Little Bunnies — Premium Baby Products for 0-6 Months",
   description:
-    "Shop premium baby essentials — prams, diapers, feeding bottles, clothing, nursery & more. Free shipping above ₹599. Trusted by 10,000+ parents.",
+    "Shop premium baby essentials — prams, diapers, feeding bottles, clothing, nursery & more. Free shipping above ₹5999. Trusted by 10,000+ parents.",
 };
 
 async function getFeaturedProducts(): Promise<Product[]> {

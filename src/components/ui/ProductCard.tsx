@@ -46,7 +46,7 @@ export default function ProductCard({ product, className, priority }: ProductCar
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
       className={cn("product-card group", className)}
     >
-      <Link href={`/product/${product.slug}`} className="block">
+      <Link href={`/product/${product.slug}`} className="block" prefetch={true}>
         {/* Image container */}
         <div className="relative aspect-[4/5] overflow-hidden bg-cream-dark rounded-t-brand">
           <ProductImage

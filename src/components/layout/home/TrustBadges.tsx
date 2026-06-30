@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 const BADGES = [
   {
     title: "Free Shipping",
-    desc: "On orders above ₹599",
+    desc: "On orders above ₹5999",
     icon: Truck,
     color: "text-lavender-brand-dark",
     bg: "bg-lavender-brand-light/40",

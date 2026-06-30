@@ -68,20 +68,50 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!product) return { title: "Product Not Found" };
 
   const image = product.product_images?.find((img) => img.is_primary)?.url;
+  const fallbackImage = "/images/LittleBunnies-Banner.png";
+  const ogImage = image || fallbackImage;
+
+  const title = product.meta_title || product.name;
+  const description =
+    product.meta_description ||
+    product.short_description ||
+    `Buy ${product.name} from Little Bunnies. Premium baby product, safe for newborns aged 0-6 months.`;
+
+  const price = product.compare_at_price || product.price;
 
   return {
-    title: product.meta_title || product.name,
-    description:
-      product.meta_description ||
-      product.short_description ||
-      `Buy ${product.name} from Little Bunnies. Premium baby product, safe for newborns aged 0-6 months.`,
+    title,
+    description,
     openGraph: {
       title: product.name,
-      description: product.short_description || product.name,
-      images: image ? [{ url: image, width: 800, height: 800 }] : [],
+      description,
+      type: "website",
+      siteName: "Little Bunnies",
+      images: [
+        {
+          url: ogImage,
+          width: image ? 800 : 1200,
+          height: image ? 800 : 630,
+          alt: product.name,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: product.name,
+      description,
+      images: [
+        {
+          url: ogImage,
+          alt: product.name,
+        },
+      ],
     },
   };
 }
+
+import { Suspense } from "react";
+import ProductSection from "@/components/layout/home/ProductSection";
 
 export default async function ProductDetailPage({ params }: Props) {
   const { slug } = await params;
@@ -89,9 +119,31 @@ export default async function ProductDetailPage({ params }: Props) {
 
   if (!product) notFound();
 
-  const related = product.category_id
-    ? await getRelatedProducts(product.category_id, product.id)
-    : [];
+  return (
+    <>
+      <ProductDetailClient product={product} relatedProducts={[]} />
+      {product.category_id && (
+        <Suspense fallback={null}>
+          <RelatedProducts categoryId={product.category_id} currentId={product.id} categorySlug={product.categories?.slug} />
+        </Suspense>
+      )}
+    </>
+  );
+}
 
-  return <ProductDetailClient product={product} relatedProducts={related} />;
+async function RelatedProducts({ categoryId, currentId, categorySlug }: { categoryId: string, currentId: string, categorySlug?: string }) {
+  const related = await getRelatedProducts(categoryId, currentId);
+  if (!related || related.length === 0) return null;
+  
+  return (
+    <div className="section-container pb-6 md:pb-10">
+      <ProductSection
+        title="You May Also Like"
+        products={related}
+        viewAllHref={`/products?category=${categorySlug}`}
+        badge="Related"
+        scrollable
+      />
+    </div>
+  );
 }

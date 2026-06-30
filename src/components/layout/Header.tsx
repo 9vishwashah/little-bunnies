@@ -76,7 +76,7 @@ export default function Header() {
               x: {
                 repeat: Infinity,
                 repeatType: "loop",
-                duration: 40,
+                duration: 100,
                 ease: "linear",
               },
             }}
@@ -85,13 +85,13 @@ export default function Header() {
               <div key={i} className="flex items-center w-max">
                 {[...Array(6)].map((_, j) => (
                   <div key={j} className="flex items-center gap-5 px-3 text-[11px] sm:text-xs font-black tracking-widest uppercase">
-                    <span>Free shipping on orders above ₹599</span>
+                    <span className="text-ink">Free shipping on orders above ₹5999</span>
                     <span className="text-ink/40">✦</span>
-                    <span>COD Available</span>
+                    <span className="text-sage-dark">COD Available</span>
                     <span className="text-ink/40">✦</span>
-                    <span>Premium baby essentials</span>
+                    <span className="text-blush-dark">Premium baby essentials</span>
                     <span className="text-ink/40">✦</span>
-                    <span>Handpicked with love</span>
+                    <span className="text-lavender-brand-dark">Handpicked with love</span>
                     <span className="text-ink/40">✦</span>
                   </div>
                 ))}
@@ -103,7 +103,7 @@ export default function Header() {
 
       <header
         className={cn(
-          "sticky top-0 z-50 transition-all duration-300",
+          "sticky top-0 z-50 w-full transition-all duration-300",
           scrolled
             ? "bg-cream/95 backdrop-blur-md shadow-soft border-b border-ink/5"
             : "bg-cream"

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { useForm } from "react-hook-form";
@@ -46,6 +46,11 @@ export default function CheckoutPage() {
   const [orderLoading, setOrderLoading] = useState(false);
   const [isCustomNameEnabled, setIsCustomNameEnabled] = useState(false);
   const [customName, setCustomName] = useState("");
+  // useRef is synchronous — immune to React batching — so the guard
+  // useEffect always sees the correct value even when Zustand fires
+  // its subscription synchronously on clearCart().
+  const orderPlacedRef = useRef(false);
+  const [orderPlaced, setOrderPlaced] = useState(false);
   const { items, getTotalPrice, clearCart } = useCartStore();
 
   const subtotal = getTotalPrice();
@@ -93,7 +98,10 @@ export default function CheckoutPage() {
       });
       const data = await res.json();
       if (data.orderId) {
-        clearCart();
+        // Mark SYNCHRONOUSLY via ref before any store/state update so
+        // the guard useEffect never redirects to /cart during clean-up.
+        orderPlacedRef.current = true;
+        setOrderPlaced(true);
         router.push(`/checkout/success?order=${data.orderNumber}`);
       } else {
         throw new Error(data.error || "Order creation failed");
@@ -113,14 +121,29 @@ export default function CheckoutPage() {
     setIsHydrated(true);
   }, []);
 
-  useEffect(() => {
-    if (isHydrated && items.length === 0) {
-      router.push("/cart");
-    }
-  }, [isHydrated, items.length, router]);
-
-  if (!isHydrated || items.length === 0) {
+  // Show nothing until hydration completes.
+  if (!isHydrated) {
     return null;
+  }
+
+  // If cart is empty and order wasn't just placed, show empty state
+  if (items.length === 0 && !orderPlacedRef.current) {
+    return (
+      <div className="section-container py-20 flex flex-col items-center justify-center text-center min-h-[60vh]">
+        <div className="w-24 h-24 rounded-full bg-cream-dark flex items-center justify-center mb-6">
+          <Package size={40} className="text-ink-muted" />
+        </div>
+        <h1 className="font-display text-2xl font-bold text-ink mb-2">
+          Your cart is empty
+        </h1>
+        <p className="text-ink-muted font-medium mb-8 max-w-sm">
+          Please add some items to your cart before proceeding to checkout.
+        </p>
+        <button onClick={() => router.push("/products")} className="btn-primary">
+          Explore Products
+        </button>
+      </div>
+    );
   }
 
   return (
@@ -130,17 +153,22 @@ export default function CheckoutPage() {
         {STEPS.map((s, i) => (
           <div key={s.id} className="flex items-center flex-1">
             <div className="flex flex-col items-center gap-1">
-              <div
+              <button
+                type="button"
+                onClick={() => {
+                  if (step > s.id) setStep(s.id);
+                }}
+                disabled={step <= s.id}
                 className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${
                   step > s.id
-                    ? "bg-sage text-white"
+                    ? "bg-sage text-white cursor-pointer"
                     : step === s.id
                     ? "bg-ink text-cream"
                     : "bg-cream-dark text-ink-muted"
                 }`}
               >
                 {step > s.id ? <Check size={16} /> : s.id}
-              </div>
+              </button>
               <span className={`text-xs font-semibold ${step === s.id ? "text-ink" : "text-ink-muted"}`}>
                 {s.label}
               </span>
@@ -164,12 +192,60 @@ export default function CheckoutPage() {
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              className="bg-white rounded-brand shadow-card p-6"
             >
-              <h2 className="font-display font-semibold text-ink text-xl mb-6 flex items-center gap-2">
-                <MapPin size={20} className="text-ink-muted" />
-                Delivery Address
-              </h2>
+              {/* Customization Block */}
+              <div className="relative overflow-hidden rounded-brand shadow-soft-sm mb-8 border border-sage-dark/20 bg-sage-light/20">
+                <div className="absolute inset-0 bg-sage-gradient opacity-10 pointer-events-none" />
+                <div className="relative p-6">
+                  <label className="flex items-start gap-4 cursor-pointer">
+                    <div className="relative flex items-center justify-center mt-1">
+                      <input
+                        type="checkbox"
+                        checked={isCustomNameEnabled}
+                        onChange={(e) => setIsCustomNameEnabled(e.target.checked)}
+                        className="peer absolute opacity-0 w-0 h-0"
+                      />
+                      <div className="w-6 h-6 rounded-md border-2 border-ink/20 peer-checked:border-ink peer-checked:bg-ink transition-colors flex items-center justify-center">
+                        <Check size={14} className={`text-white transition-opacity duration-200 ${isCustomNameEnabled ? 'opacity-100' : 'opacity-0'}`} />
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-display font-semibold text-ink text-lg">Custom Name</span>
+                        <span className="bg-sage-dark/20 text-ink text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full">✨ Special</span>
+                      </div>
+                      <p className="font-semibold text-ink text-sm">Add Your Childs Name on {items.map(item => item.name).join(" & ")} (+₹299)</p>
+                      <p className="text-xs text-ink-muted mt-1 leading-relaxed">
+                        Make it truly theirs! We will beautifully customize your product with your little one's name.
+                      </p>
+                    </div>
+                  </label>
+                  
+                  {isCustomNameEnabled && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      className="mt-5 pt-5 border-t border-ink/10"
+                    >
+                      <label className="block text-sm font-semibold text-ink mb-2">Child's Name *</label>
+                      <input
+                        type="text"
+                        value={customName}
+                        onChange={(e) => setCustomName(e.target.value)}
+                        placeholder="Enter name (e.g., Aaryan)"
+                        className="w-full bg-white border border-ink/20 rounded-xl px-4 py-3 text-ink text-sm focus:outline-none focus:border-ink focus:ring-1 focus:ring-ink transition-all"
+                        required
+                      />
+                    </motion.div>
+                  )}
+                </div>
+              </div>
+
+              <div className="bg-white rounded-brand shadow-card p-6">
+                <h2 className="font-display font-semibold text-ink text-xl mb-6 flex items-center gap-2">
+                  <MapPin size={20} className="text-ink-muted" />
+                  Delivery Address
+                </h2>
               <form onSubmit={handleSubmit(onAddressSubmit)} className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
@@ -231,6 +307,7 @@ export default function CheckoutPage() {
                   Continue to Review →
                 </button>
               </form>
+              </div>
             </motion.div>
           )}
 
@@ -241,6 +318,13 @@ export default function CheckoutPage() {
               animate={{ opacity: 1, x: 0 }}
               className="space-y-4"
             >
+              <button
+                onClick={() => setStep(1)}
+                className="flex items-center gap-2 text-sm font-semibold text-ink-muted hover:text-ink transition-colors mb-2"
+              >
+                ← Go Back to Address & Customization
+              </button>
+
               {/* Address summary */}
               <div className="bg-white rounded-brand shadow-card p-5">
                 <div className="flex items-center justify-between mb-3">
@@ -248,7 +332,7 @@ export default function CheckoutPage() {
                     <MapPin size={16} className="text-ink-muted" />
                     Delivery to
                   </h3>
-                  <button onClick={() => setStep(1)} className="text-sm font-semibold text-ink-muted hover:text-ink">
+                  <button onClick={() => setStep(1)} className="text-sm font-semibold text-sage-dark hover:text-ink">
                     Edit
                   </button>
                 </div>
@@ -262,39 +346,7 @@ export default function CheckoutPage() {
                 <p className="text-sm text-ink-muted">📞 {address.phone}</p>
               </div>
 
-              {/* Customization */}
-              <div className="bg-sage/5 rounded-brand shadow-card p-5 border border-sage/30">
-                <label className="flex items-start gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={isCustomNameEnabled}
-                    onChange={(e) => setIsCustomNameEnabled(e.target.checked)}
-                    className="mt-1 accent-ink w-4 h-4 rounded cursor-pointer"
-                  />
-                  <div className="flex-1">
-                    <p className="font-semibold text-ink text-sm">Add a Custom Child's Name (+₹299)</p>
-                    <p className="text-xs text-ink-muted mt-0.5">We will proudly customize your product with your child's name.</p>
-                  </div>
-                </label>
-                
-                {isCustomNameEnabled && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    className="mt-4 pt-4 border-t border-sage/20"
-                  >
-                    <label className="block text-sm font-semibold text-ink mb-1.5">Child's Name *</label>
-                    <input
-                      type="text"
-                      value={customName}
-                      onChange={(e) => setCustomName(e.target.value)}
-                      placeholder="Enter name (e.g., Aaryan)"
-                      className="input-brand bg-white"
-                      required
-                    />
-                  </motion.div>
-                )}
-              </div>
+
 
               {/* Items */}
               <div className="bg-white rounded-brand shadow-card p-5">

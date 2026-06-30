@@ -53,7 +53,7 @@ export function generateOrderNumber(): string {
   return `LB${dateStr}${random}`;
 }
 
-export const FREE_SHIPPING_THRESHOLD = 599;
+export const FREE_SHIPPING_THRESHOLD = 5999;
 
 export function calculateShipping(subtotal: number): number {
   return subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : 99;

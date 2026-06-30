@@ -62,6 +62,7 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
                 <th className="text-left text-xs font-bold text-ink-muted uppercase tracking-wide px-5 py-3.5">Order</th>
                 <th className="text-left text-xs font-bold text-ink-muted uppercase tracking-wide px-4 py-3.5">Date</th>
                 <th className="text-left text-xs font-bold text-ink-muted uppercase tracking-wide px-4 py-3.5">Customer</th>
+                <th className="text-left text-xs font-bold text-ink-muted uppercase tracking-wide px-4 py-3.5">Custom Name</th>
                 <th className="text-left text-xs font-bold text-ink-muted uppercase tracking-wide px-4 py-3.5">Total</th>
                 <th className="text-left text-xs font-bold text-ink-muted uppercase tracking-wide px-4 py-3.5">Payment</th>
                 <th className="text-left text-xs font-bold text-ink-muted uppercase tracking-wide px-4 py-3.5">Status</th>
@@ -71,7 +72,7 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
             <tbody className="divide-y divide-ink/5">
               {orders.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-16 text-ink-muted">No orders found</td>
+                  <td colSpan={8} className="text-center py-16 text-ink-muted">No orders found</td>
                 </tr>
               ) : (
                 orders.map((order: any) => (
@@ -83,6 +84,15 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
                     <td className="px-4 py-3.5">
                       <p className="font-semibold text-ink text-sm">{order.shipping_address?.full_name}</p>
                       <p className="text-xs text-ink-muted">{order.shipping_address?.phone}</p>
+                    </td>
+                    <td className="px-4 py-3.5">
+                      {order.notes?.startsWith("Custom Name Added:") ? (
+                        <span className="inline-flex items-center gap-1 bg-sage/20 text-sage-dark text-xs font-bold px-2 py-1 rounded-full">
+                          ✨ {order.notes.replace("Custom Name Added: ", "")}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-ink-muted">—</span>
+                      )}
                     </td>
                     <td className="px-4 py-3.5 font-bold text-ink text-sm">{formatPrice(order.total)}</td>
                     <td className="px-4 py-3.5">

@@ -19,7 +19,7 @@ const fredoka = Fredoka({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://littlebunnies.in"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://littlebunnies.co.in"),
   title: {
     default: "Little Bunnies — Premium Baby Products for 0-6 Months",
     template: "%s | Little Bunnies",
@@ -46,15 +46,31 @@ export const metadata: Metadata = {
     locale: "en_IN",
     url: process.env.NEXT_PUBLIC_APP_URL,
     siteName: "Little Bunnies",
-    title: "Little Bunnies — Premium Baby Products",
-    description: "Premium baby essentials handpicked with love for your little one.",
-    images: [{ url: "/images/logo-full.png", width: 1200, height: 630 }],
+    title: "Little Bunnies — Premium Baby Products for 0-6 Months",
+    description:
+      "India's premium baby essentials brand. Shop prams, strollers, diapers, feeding bottles & more — handpicked with love for your little one.",
+    images: [
+      {
+        url: "/images/LittleBunnies-Banner.png",
+        width: 1200,
+        height: 630,
+        alt: "Little Bunnies — Premium Baby Products",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Little Bunnies — Premium Baby Products",
-    description: "Premium baby essentials handpicked with love for your little one.",
-    images: ["/images/logo-full.png"],
+    title: "Little Bunnies — Premium Baby Products for 0-6 Months",
+    description:
+      "India's premium baby essentials brand. Shop prams, strollers, diapers, feeding bottles & more — handpicked with love for your little one.",
+    images: [
+      {
+        url: "/images/LittleBunnies-Banner.png",
+        width: 1200,
+        height: 630,
+        alt: "Little Bunnies — Premium Baby Products",
+      },
+    ],
   },
   robots: {
     index: true,

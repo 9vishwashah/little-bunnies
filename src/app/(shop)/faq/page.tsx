@@ -17,7 +17,7 @@ const faqs = [
       },
       {
         q: "Is there free shipping?",
-        a: "Yes! We offer free shipping on all orders above ₹599. Orders below ₹599 have a flat shipping fee of ₹79.",
+        a: "Yes! We offer free shipping on all orders above ₹5999. Orders below ₹5999 have a flat shipping fee of ₹79.",
       },
       {
         q: "Do you offer Cash on Delivery (COD)?",

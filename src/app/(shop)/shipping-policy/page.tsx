@@ -4,7 +4,7 @@ import { Package, Clock, MapPin, AlertCircle, Truck, CheckCircle } from "lucide-
 
 export const metadata: Metadata = {
   title: "Shipping Policy",
-  description: "Learn about Little Bunnies shipping policy — free shipping above ₹599, 15-day delivery window, and COD availability across India.",
+  description: "Learn about Little Bunnies shipping policy — free shipping above ₹5999, 15-day delivery window, and COD availability across India.",
 };
 
 const sections = [
@@ -24,8 +24,8 @@ const sections = [
     title: "Shipping Charges",
     color: "bg-sage-light text-sage-dark",
     content: [
-      "Free shipping on all orders above ₹599.",
-      "Orders below ₹599 attract a flat shipping fee of ₹79.",
+      "Free shipping on all orders above ₹5999.",
+      "Orders below ₹5999 attract a flat shipping fee of ₹79.",
       "Cash on Delivery (COD) is available across all serviceable pin codes with an additional COD handling fee of ₹29.",
       "Shipping charges are non-refundable unless the error is on our part.",
     ],
