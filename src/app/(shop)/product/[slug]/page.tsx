@@ -77,7 +77,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     product.short_description ||
     `Buy ${product.name} from Little Bunnies. Premium baby product, safe for newborns aged 0-6 months.`;
 
-  const price = product.compare_at_price || product.price;
+  const price = product.compare_price || product.price;
 
   return {
     title,

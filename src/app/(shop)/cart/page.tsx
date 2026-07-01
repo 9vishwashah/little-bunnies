@@ -1,49 +1,33 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { Trash2, Plus, Minus, Tag, ArrowRight, ShoppingBag } from "lucide-react";
+import { Trash2, Plus, Minus, ArrowRight, ShoppingBag } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
 import { formatPrice, calculateShipping, FREE_SHIPPING_THRESHOLD } from "@/lib/utils";
 import { toast } from "sonner";
 
 export default function CartPage() {
   const { items, removeItem, updateQuantity, getTotalPrice, clearCart } = useCartStore();
-  const [couponCode, setCouponCode] = useState("");
-  const [discount, setDiscount] = useState(0);
-  const [couponLoading, setCouponLoading] = useState(false);
-  const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
 
   const subtotal = getTotalPrice();
   const shipping = calculateShipping(subtotal);
-  const total = subtotal - discount + shipping;
+  const total = subtotal + shipping;
 
-  const handleApplyCoupon = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!couponCode.trim()) return;
-    setCouponLoading(true);
-    try {
-      const res = await fetch("/api/coupons/validate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: couponCode, subtotal }),
-      });
-      const data = await res.json();
-      if (data.valid) {
-        setDiscount(data.discountAmount);
-        setAppliedCoupon(couponCode.toUpperCase());
-        toast.success(`Coupon applied! You saved ${formatPrice(data.discountAmount)}`);
-      } else {
-        toast.error(data.error || "Invalid coupon code");
-      }
-    } catch {
-      toast.error("Failed to apply coupon");
-    } finally {
-      setCouponLoading(false);
-    }
-  };
+  if (!isHydrated) {
+    return (
+      <div className="section-container py-20 flex flex-col items-center justify-center min-h-[60vh]">
+        <div className="w-12 h-12 border-4 border-ink/20 border-t-ink rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   if (items.length === 0) {
     return (
@@ -171,60 +155,12 @@ export default function CartPage() {
               Order Summary
             </h2>
 
-            {/* Coupon */}
-            <form onSubmit={handleApplyCoupon} className="mb-5">
-              {appliedCoupon ? (
-                <div className="flex items-center justify-between p-3 bg-sage/20 rounded-xl border border-sage/30">
-                  <div className="flex items-center gap-2">
-                    <Tag size={14} className="text-sage-dark" />
-                    <span className="text-sm font-semibold text-sage-dark">
-                      {appliedCoupon} applied
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setAppliedCoupon(null);
-                      setDiscount(0);
-                      setCouponCode("");
-                    }}
-                    className="text-xs text-ink-muted hover:text-ink transition-colors"
-                  >
-                    Remove
-                  </button>
-                </div>
-              ) : (
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={couponCode}
-                    onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                    placeholder="Coupon code"
-                    className="input-brand flex-1 text-sm py-2.5"
-                  />
-                  <button
-                    type="submit"
-                    disabled={couponLoading}
-                    className="btn-secondary px-4 py-2.5 text-sm flex-shrink-0"
-                  >
-                    {couponLoading ? "..." : "Apply"}
-                  </button>
-                </div>
-              )}
-            </form>
-
             {/* Price breakdown */}
             <div className="space-y-3 text-sm font-medium">
               <div className="flex justify-between text-ink-light">
                 <span>Subtotal</span>
                 <span>{formatPrice(subtotal)}</span>
               </div>
-              {discount > 0 && (
-                <div className="flex justify-between text-sage-dark font-semibold">
-                  <span>Discount</span>
-                  <span>-{formatPrice(discount)}</span>
-                </div>
-              )}
               <div className="flex justify-between text-ink-light">
                 <span>Shipping</span>
                 <span className={shipping === 0 ? "text-sage-dark font-semibold" : ""}>

@@ -222,19 +222,12 @@ export default function CartDrawer() {
                 </div>
 
                 <Link
-                  href="/checkout"
+                  href="/cart"
                   onClick={closeCart}
                   className="btn-primary w-full text-base"
                 >
-                  Proceed to Checkout
-                  <ArrowRight size={18} />
-                </Link>
-                <Link
-                  href="/cart"
-                  onClick={closeCart}
-                  className="btn-ghost w-full text-sm justify-center"
-                >
                   View Full Cart
+                  <ArrowRight size={18} />
                 </Link>
               </div>
             )}

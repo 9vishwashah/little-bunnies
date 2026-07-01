@@ -98,11 +98,9 @@ export default function CheckoutPage() {
       });
       const data = await res.json();
       if (data.orderId) {
-        // Mark SYNCHRONOUSLY via ref before any store/state update so
-        // the guard useEffect never redirects to /cart during clean-up.
         orderPlacedRef.current = true;
         setOrderPlaced(true);
-        router.push(`/checkout/success?order=${data.orderNumber}`);
+        window.location.href = `/checkout/success?order=${data.orderNumber}`;
       } else {
         throw new Error(data.error || "Order creation failed");
       }
@@ -113,11 +111,8 @@ export default function CheckoutPage() {
     }
   };
 
-  // Run only on client side after hydration
   const [isHydrated, setIsHydrated] = useState(false);
   useEffect(() => {
-    // Rehydrate the persisted store
-    useCartStore.persist.rehydrate();
     setIsHydrated(true);
   }, []);
 
