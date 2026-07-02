@@ -20,7 +20,14 @@ export async function GET(req: NextRequest) {
 
     if (category) {
       const { data: cat } = await supabase.from("categories").select("id").eq("slug", category).single();
-      if (cat) query = query.eq("category_id", cat.id);
+      if (cat) {
+        const { data: subCats } = await supabase.from("categories").select("id").eq("parent_id", cat.id);
+        const catIds = [cat.id];
+        if (subCats) {
+          catIds.push(...subCats.map((c) => c.id));
+        }
+        query = query.in("category_id", catIds);
+      }
     }
 
     const { data, error } = await query.limit(limit);

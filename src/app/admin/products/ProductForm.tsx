@@ -38,9 +38,10 @@ const productSchema = z.object({
   metaDescription: z.string().optional(),
   tags: z.string().optional(),
   variants: z.array(z.object({
-    name: z.string(),
-    value: z.string(),
+    name: z.string().min(1, "Type is required"),
+    value: z.string().min(1, "Value is required"),
     priceModifier: z.coerce.number().default(0),
+    imageUrl: z.string().optional(),
   })).default([]),
 });
 
@@ -113,6 +114,55 @@ export default function ProductForm({ categories, initialData, initialImages, pr
     setImages((prev) => [...prev, ...newImages]);
     setUploading(false);
   };
+
+  const handleVariantImageUpload = async (index: number, type: "swatch" | "gallery", files: FileList) => {
+    toast.loading(`Uploading variant ${type}...`, { id: "variantUpload" });
+    const newUrls: string[] = [];
+    for (const file of Array.from(files)) {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("bucket", "products");
+      formData.append("folder", "variant-images");
+      try {
+        const res = await fetch("/api/upload", { method: "POST", body: formData });
+        const data = await res.json();
+        if (data.url) newUrls.push(data.url);
+      } catch {
+        toast.error(`Failed to upload ${file.name}`);
+      }
+    }
+    
+    const currentImageUrlStr = watch(`variants.${index}.imageUrl`) || "{}";
+    let currentData: { swatch?: string; gallery?: string[] } = {};
+    try {
+      currentData = JSON.parse(currentImageUrlStr);
+    } catch {}
+
+    if (type === "swatch" && newUrls.length > 0) {
+      currentData.swatch = newUrls[0];
+    } else if (type === "gallery" && newUrls.length > 0) {
+      currentData.gallery = [...(currentData.gallery || []), ...newUrls];
+    }
+
+    setValue(`variants.${index}.imageUrl`, JSON.stringify(currentData));
+    toast.success(`Variant ${type} uploaded!`, { id: "variantUpload" });
+  };
+
+  const removeVariantImage = (index: number, type: "swatch" | "gallery", imgIndex?: number) => {
+    const currentImageUrlStr = watch(`variants.${index}.imageUrl`) || "{}";
+    let currentData: { swatch?: string; gallery?: string[] } = {};
+    try {
+      currentData = JSON.parse(currentImageUrlStr);
+    } catch {}
+
+    if (type === "swatch") {
+      delete currentData.swatch;
+    } else if (type === "gallery" && imgIndex !== undefined) {
+      currentData.gallery = currentData.gallery?.filter((_, i) => i !== imgIndex);
+    }
+    setValue(`variants.${index}.imageUrl`, JSON.stringify(currentData));
+  };
+
 
   const onSubmit = async (data: ProductFormData) => {
     setSaving(true);
@@ -195,8 +245,8 @@ export default function ProductForm({ categories, initialData, initialImages, pr
                 <textarea
                   {...register("shortDescription")}
                   className="input-brand resize-none"
-                  rows={2}
-                  placeholder="Brief product summary (shown on cards)"
+                  rows={4}
+                  placeholder="Brief product summary (HTML allowed)"
                 />
               </div>
               <div>
@@ -285,33 +335,102 @@ export default function ProductForm({ categories, initialData, initialImages, pr
               </button>
             </div>
             <div className="space-y-3">
-              {variantFields.map((field, i) => (
-                <div key={field.id} className="flex gap-3 items-start">
-                  <input
-                    {...register(`variants.${i}.name`)}
-                    placeholder="Type (e.g. Color)"
-                    className="input-brand w-28 flex-shrink-0 text-sm py-2.5"
-                  />
-                  <input
-                    {...register(`variants.${i}.value`)}
-                    placeholder="Value (e.g. Blue)"
-                    className="input-brand flex-1 text-sm py-2.5"
-                  />
-                  <input
-                    {...register(`variants.${i}.priceModifier`)}
-                    type="number"
-                    placeholder="±Price"
-                    className="input-brand w-24 flex-shrink-0 text-sm py-2.5"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => removeVariant(i)}
-                    className="p-2.5 rounded-xl text-blush hover:bg-blush/10 transition-colors flex-shrink-0"
-                  >
-                    <Trash2 size={15} />
-                  </button>
+              {variantFields.map((field, i) => {
+                const imgStr = watch(`variants.${i}.imageUrl`) || "{}";
+                let imgData: { swatch?: string; gallery?: string[] } = {};
+                try { imgData = JSON.parse(imgStr); } catch {}
+
+                return (
+                <div key={field.id} className="flex flex-col gap-3 p-4 border border-ink/10 rounded-xl bg-cream-dark/20">
+                  <div className="flex flex-col gap-2 w-full">
+                    <div className="grid gap-2 items-center w-full" style={{ gridTemplateColumns: "1fr 2fr 1fr auto" }}>
+                      <input
+                        {...register(`variants.${i}.name`)}
+                        placeholder="Type"
+                        className={cn(
+                          "input-brand min-w-0 px-2 sm:px-3 text-sm py-2.5",
+                          errors.variants?.[i]?.name && "border-blush focus:border-blush"
+                        )}
+                      />
+                      <input
+                        {...register(`variants.${i}.value`)}
+                        placeholder="Value (e.g. Blue)"
+                        className={cn(
+                          "input-brand min-w-0 px-2 sm:px-3 text-sm py-2.5",
+                          errors.variants?.[i]?.value && "border-blush focus:border-blush"
+                        )}
+                      />
+                      <input
+                        {...register(`variants.${i}.priceModifier`)}
+                        type="number"
+                        placeholder="±Price"
+                        className="input-brand min-w-0 px-2 sm:px-3 text-sm py-2.5"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeVariant(i)}
+                        className="p-1.5 sm:p-2.5 rounded-xl text-blush hover:bg-blush/10 transition-colors flex-shrink-0"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
+                    {(errors.variants?.[i]?.name || errors.variants?.[i]?.value) && (
+                      <p className="text-xs text-blush font-medium px-2">
+                        {errors.variants?.[i]?.name?.message || errors.variants?.[i]?.value?.message}
+                      </p>
+                    )}
+                  </div>
+                  
+                  {/* Variant Images Section */}
+                  <div className="flex flex-wrap gap-6 mt-2 pt-3 border-t border-ink/5">
+                    {/* Swatch */}
+                    <div className="flex flex-col gap-2">
+                      <span className="text-[11px] font-semibold text-ink-muted uppercase tracking-wider">Swatch Image</span>
+                      {imgData.swatch ? (
+                        <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-ink/10 group shadow-sm">
+                          <img src={imgData.swatch} alt="Swatch" className="w-full h-full object-cover" />
+                          <button
+                            type="button"
+                            onClick={() => removeVariantImage(i, "swatch")}
+                            className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X size={14} className="text-white" />
+                          </button>
+                        </div>
+                      ) : (
+                        <label className="w-12 h-12 rounded-full border-2 border-dashed border-ink/20 flex items-center justify-center cursor-pointer hover:bg-cream hover:border-ink/40 transition-colors">
+                          <ImageIcon size={16} className="text-ink/40" />
+                          <input type="file" className="hidden" accept="image/*" onChange={(e) => e.target.files && handleVariantImageUpload(i, "swatch", e.target.files)} />
+                        </label>
+                      )}
+                    </div>
+                    
+                    {/* Gallery */}
+                    <div className="flex flex-col gap-2 flex-1">
+                      <span className="text-[11px] font-semibold text-ink-muted uppercase tracking-wider">Specific Photos for this variant</span>
+                      <div className="flex flex-wrap gap-2">
+                        {imgData.gallery?.map((url, imgIndex) => (
+                          <div key={imgIndex} className="relative w-12 h-12 rounded-lg overflow-hidden border border-ink/10 group shadow-sm">
+                            <img src={url} alt={`Gallery ${imgIndex}`} className="w-full h-full object-cover" />
+                            <button
+                              type="button"
+                              onClick={() => removeVariantImage(i, "gallery", imgIndex)}
+                              className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <X size={14} className="text-white" />
+                            </button>
+                          </div>
+                        ))}
+                        <label className="w-12 h-12 rounded-lg border-2 border-dashed border-ink/20 flex flex-col items-center justify-center cursor-pointer hover:bg-cream hover:border-ink/40 transition-colors shrink-0">
+                          <Plus size={14} className="text-ink/40" />
+                          <input type="file" multiple className="hidden" accept="image/*" onChange={(e) => e.target.files && handleVariantImageUpload(i, "gallery", e.target.files)} />
+                        </label>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              ))}
+                );
+              })}
               {variantFields.length === 0 && (
                 <p className="text-sm text-ink-muted text-center py-4">
                   No variants yet. Click &apos;Add Variant&apos; to add colors, sizes, etc.

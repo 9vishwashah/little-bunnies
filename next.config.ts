@@ -63,3 +63,5 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
+
+// Cache bust: Force Next.js dev server restart to clear stale Turbopack RSC cache

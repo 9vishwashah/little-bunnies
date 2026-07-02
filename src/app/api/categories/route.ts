@@ -6,7 +6,7 @@ export async function GET() {
     const supabase = await createClient();
     const { data, error } = await supabase
       .from("categories")
-      .select("id, name, slug, description")
+      .select("id, name, slug, description, parent_id")
       .eq("is_active", true)
       .order("sort_order", { ascending: true });
 

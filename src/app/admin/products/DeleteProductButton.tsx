@@ -5,12 +5,22 @@ import { Trash2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
-export default function DeleteProductButton({ productId, productName }: { productId: string; productName: string }) {
+export default function DeleteProductButton({
+  productId,
+  productName,
+}: {
+  productId: string;
+  productName: string;
+}) {
   const [isDeleting, setIsDeleting] = useState(false);
   const router = useRouter();
 
   const handleDelete = async () => {
-    if (!confirm(`Are you sure you want to delete "${productName}"? This action cannot be undone.`)) {
+    if (
+      !confirm(
+        `Are you sure you want to delete "${productName}"?\n\nIf this product has existing orders it will be deactivated (hidden from store) instead of permanently removed.`
+      )
+    ) {
       return;
     }
 
@@ -20,14 +30,23 @@ export default function DeleteProductButton({ productId, productName }: { produc
         method: "DELETE",
       });
 
+      const data = await res.json();
+
       if (!res.ok) {
-        throw new Error("Failed to delete product");
+        // Show the actual DB error from the API
+        throw new Error(data.error || "Failed to delete product");
       }
 
-      toast.success("Product deleted successfully");
+      if (data.soft) {
+        // Product had orders — soft deleted
+        toast.warning(data.message, { duration: 6000 });
+      } else {
+        toast.success(`"${productName}" permanently deleted.`);
+      }
+
       router.refresh();
-    } catch (error) {
-      toast.error("Failed to delete product");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to delete product");
     } finally {
       setIsDeleting(false);
     }
@@ -41,7 +60,11 @@ export default function DeleteProductButton({ productId, productName }: { produc
       aria-label="Delete Product"
       title="Delete Product"
     >
-      {isDeleting ? <Loader2 size={15} className="animate-spin" /> : <Trash2 size={15} />}
+      {isDeleting ? (
+        <Loader2 size={15} className="animate-spin" />
+      ) : (
+        <Trash2 size={15} />
+      )}
     </button>
   );
 }

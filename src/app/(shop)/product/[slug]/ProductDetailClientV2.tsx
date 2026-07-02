@@ -2,12 +2,11 @@
 
 import { useState, useEffect } from "react";
 import ProductImage from "@/components/ui/ProductImage";
+import PreOrderModal from "@/components/ui/PreOrderModal";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Heart,
   ShoppingBag,
-  MessageCircle,
   Star,
   Truck,
   RotateCcw,
@@ -18,6 +17,10 @@ import {
   Minus,
   Plus,
   Share2,
+  Info,
+  Maximize,
+  X,
+  Clock,
 } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
 import { useRecentlyViewedStore } from "@/store/recentlyViewedStore";
@@ -48,11 +51,51 @@ export default function ProductDetailClient({
   const [expandedSection, setExpandedSection] = useState<string | null>("delivery");
   // Use state for URL so SSR and client render identically (avoids hydration mismatch)
   const [pageUrl, setPageUrl] = useState("");
+  const [isEnlarged, setIsEnlarged] = useState(false);
+  const [preOrderOpen, setPreOrderOpen] = useState(false);
 
   const addItem = useCartStore((s) => s.addItem);
   const addRecentlyViewed = useRecentlyViewedStore((s) => s.addItem);
 
-  const images = product.product_images?.sort((a, b) => a.sort_order - b.sort_order) || [];
+  let images = product.product_images
+    ? [...product.product_images].sort((a, b) => a.sort_order - b.sort_order)
+    : [];
+
+  if (images.length === 0 && product.product_variants) {
+    for (const v of product.product_variants) {
+      if (v.image_url) {
+        try {
+          const parsed = JSON.parse(v.image_url);
+          if (parsed.gallery && Array.isArray(parsed.gallery) && parsed.gallery.length > 0) {
+            images = parsed.gallery.map((url: string, i: number) => ({
+              id: `fallback-img-${i}`,
+              product_id: product.id,
+              url,
+              sort_order: i,
+              is_primary: i === 0,
+            }));
+            break;
+          }
+        } catch (e) {}
+      }
+    }
+  }
+
+  if (selectedVariant?.image_url) {
+    try {
+      const parsed = JSON.parse(selectedVariant.image_url);
+      if (parsed.gallery && Array.isArray(parsed.gallery) && parsed.gallery.length > 0) {
+        images = parsed.gallery.map((url: string, i: number) => ({
+          id: `variant-img-${i}`,
+          product_id: product.id,
+          url,
+          sort_order: i,
+          is_primary: i === 0,
+        }));
+      }
+    } catch (e) {}
+  }
+
   const primaryImage = images[selectedImage] || images[0];
   const discount = calculateDiscount(product.price, product.compare_price || 0);
   const currentPrice = product.price + (selectedVariant?.price_modifier || 0);
@@ -72,6 +115,15 @@ export default function ProductDetailClient({
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product.id]);
+
+  // Auto slide images
+  useEffect(() => {
+    if (images.length <= 1) return;
+    const interval = setInterval(() => {
+      setSelectedImage((i) => (i + 1) % images.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [images.length]);
 
   const handleAddToCart = () => {
     addItem({
@@ -149,9 +201,12 @@ export default function ProductDetailClient({
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 xl:gap-16">
         {/* ── Gallery ─────────────────────────────── */}
-        <div>
+        <div className="relative">
           {/* Main image */}
-          <div className="relative aspect-square rounded-brand overflow-hidden bg-cream-dark mb-3">
+          <div 
+            className="relative aspect-square rounded-brand overflow-hidden bg-cream-dark mb-3 cursor-crosshair group"
+            onClick={() => setIsEnlarged(true)}
+          >
             <AnimatePresence mode="wait">
               <motion.div
                 key={selectedImage}
@@ -165,7 +220,7 @@ export default function ProductDetailClient({
                   src={primaryImage?.url || "/images/placeholder.jpg"}
                   alt={primaryImage?.alt || product.name}
                   fill
-                  className="object-cover"
+                  className="object-contain"
                   priority
                   sizes="(max-width: 768px) 100vw, 50vw"
                 />
@@ -173,10 +228,21 @@ export default function ProductDetailClient({
             </AnimatePresence>
 
             {/* Badges */}
-            <div className="absolute top-4 left-4 flex flex-col gap-2">
+            <div className="absolute top-4 left-4 flex flex-col gap-2 z-10">
               {discount > 0 && <span className="badge-sale">{discount}% OFF</span>}
               {product.is_new_arrival && <span className="badge-new">NEW</span>}
             </div>
+
+            {/* Expand Button */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsEnlarged(true);
+              }}
+              className="absolute bottom-4 right-4 p-2 rounded-xl bg-white/80 backdrop-blur-sm shadow-soft hover:shadow-soft-lg transition-all z-10"
+            >
+              <Maximize size={18} />
+            </button>
 
             {/* Navigation arrows */}
             {images.length > 1 && (
@@ -200,6 +266,7 @@ export default function ProductDetailClient({
               </>
             )}
           </div>
+
 
           {/* Thumbnail strip */}
           {images.length > 1 && (
@@ -227,6 +294,63 @@ export default function ProductDetailClient({
               ))}
             </div>
           )}
+          
+          {/* Variants (Moved below image container) */}
+          <div className="mt-6 md:mt-8 flex flex-wrap gap-8">
+            {Object.entries(variantGroups).map(([groupName, variants]) => (
+              <div key={groupName} className="flex flex-col items-center gap-2">
+                <div className="flex flex-wrap gap-2">
+                  {variants.map((variant) => {
+                    let swatchUrl = "";
+                    if (variant.image_url) {
+                      try {
+                        const parsed = JSON.parse(variant.image_url);
+                        if (parsed.swatch) swatchUrl = parsed.swatch;
+                      } catch (e) {}
+                    }
+
+                    return (
+                    <button
+                      key={variant.id}
+                      title={variant.value}
+                      onClick={() =>
+                        setSelectedVariant(
+                          selectedVariant?.id === variant.id ? null : variant
+                        )
+                      }
+                      className={cn(
+                        "transition-all",
+                        swatchUrl
+                          ? "w-12 h-12 rounded-full border-2 overflow-hidden" // Swatch style
+                          : "px-4 py-2 rounded-full border-2 text-sm font-semibold", // Text style
+                        selectedVariant?.id === variant.id
+                          ? "border-ink scale-110" + (!swatchUrl ? " bg-ink text-cream" : " shadow-md")
+                          : "border-ink/15 text-ink hover:border-ink/40" + (!swatchUrl ? "" : " hover:scale-105")
+                      )}
+                    >
+                      {swatchUrl ? (
+                        <img src={swatchUrl} alt={variant.value} className="w-full h-full object-cover" />
+                      ) : (
+                        <>
+                          {variant.value}
+                          {variant.price_modifier !== 0 && (
+                            <span className="text-xs ml-1 opacity-70">
+                              ({variant.price_modifier > 0 ? "+" : ""}
+                              {formatPrice(variant.price_modifier)})
+                            </span>
+                          )}
+                        </>
+                      )}
+                    </button>
+                    );
+                  })}
+                </div>
+                <p className="font-semibold text-ink text-sm">
+                  {groupName}
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* ── Product Info ─────────────────────────── */}
@@ -284,96 +408,38 @@ export default function ProductDetailClient({
           </div>
 
 
-          {/* Short description */}
-          {product.short_description && (
-            <p className="text-ink-light text-sm leading-relaxed mb-5 font-medium">
-              {product.short_description}
-            </p>
-          )}
 
-          {/* Variants */}
-          {Object.entries(variantGroups).map(([groupName, variants]) => (
-            <div key={groupName} className="mb-5">
-              <p className="font-semibold text-ink text-sm mb-2.5">
-                {groupName}:{" "}
-                {selectedVariant?.name === groupName && (
-                  <span className="text-ink-muted font-medium">{selectedVariant.value}</span>
-                )}
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {variants.map((variant) => (
-                  <button
-                    key={variant.id}
-                    onClick={() =>
-                      setSelectedVariant(
-                        selectedVariant?.id === variant.id ? null : variant
-                      )
-                    }
-                    className={cn(
-                      "px-4 py-2 rounded-pill border-2 text-sm font-semibold transition-all",
-                      selectedVariant?.id === variant.id
-                        ? "border-ink bg-ink text-cream"
-                        : "border-ink/15 text-ink hover:border-ink/40"
-                    )}
-                  >
-                    {variant.value}
-                    {variant.price_modifier !== 0 && (
-                      <span className="text-xs ml-1 opacity-70">
-                        ({variant.price_modifier > 0 ? "+" : ""}
-                        {formatPrice(variant.price_modifier)})
-                      </span>
-                    )}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ))}
-
-          {/* Quantity */}
-          <div className="mb-6">
-            <p className="font-semibold text-ink text-sm mb-2.5">Quantity</p>
-            <div className="inline-flex items-center gap-1 bg-cream-dark rounded-pill p-1">
-              <button
-                onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-cream transition-colors"
-              >
-                <Minus size={16} />
-              </button>
-              <span className="w-10 text-center font-bold text-ink text-lg">
-                {quantity}
-              </span>
-              <button
-                onClick={() => setQuantity((q) => q + 1)}
-                className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-cream transition-colors"
-              >
-                <Plus size={16} />
-              </button>
-            </div>
-          </div>
-
-          {/* Action buttons */}
-          <div className="flex flex-col gap-3 mb-6">
+          {/* Action buttons — side by side */}
+          <div className="flex flex-row gap-3 mb-4 w-full">
             <button
-              onClick={handleAddToCart}
-              disabled={!product.in_stock}
-              className="btn-primary w-full text-base py-4 disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={() => setPreOrderOpen(true)}
+              className="btn-primary flex-1 text-sm h-12 max-h-12 min-w-0 bg-peach hover:bg-peach-dark"
             >
-              <ShoppingBag size={18} />
-              {product.in_stock ? "Add to Cart" : "Out of Stock"}
+              <Clock size={17} className="flex-shrink-0" />
+              <span className="truncate">Pre-Order Now</span>
             </button>
             <a
               href={whatsappUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="btn-whatsapp w-full text-base py-4"
+              className="flex-1 flex items-center justify-center gap-2 h-12 max-h-12 px-4 rounded-full text-sm font-semibold text-white transition-all hover:opacity-90 active:scale-95 min-w-0"
+              style={{ backgroundColor: "#25D366" }}
             >
-              <MessageCircle size={18} />
-              Enquire on WhatsApp
+              {/* Official WhatsApp SVG icon */}
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                className="w-5 h-5 flex-shrink-0"
+              >
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
+              </svg>
+              <span className="truncate">WhatsApp</span>
             </a>
           </div>
 
-          {/* Share */}
-          <div className="flex gap-3 mb-6">
+          {/* Share button */}
+          <div className="mb-6">
             <button
               onClick={handleShare}
               className="flex items-center justify-center w-full gap-2 px-5 py-3 rounded-pill border-2 border-ink/15 text-sm font-semibold hover:bg-cream-dark transition-colors"
@@ -383,64 +449,60 @@ export default function ProductDetailClient({
             </button>
           </div>
 
-          {/* Delivery Info Accordion */}
-          {[
-            {
-              key: "delivery",
-              icon: Truck,
-              title: "Delivery & Shipping",
-              content:
-                "Estimated delivery: 14 business days.",
-            },
-            {
-              key: "returns",
-              icon: RotateCcw,
-              title: "Returns & Exchanges",
-              content:
-                "15-day hassle-free returns. Item must be unused and in original packaging. Contact our WhatsApp support to initiate a return.",
-            },
-            {
-              key: "safety",
-              icon: Shield,
-              title: "Safety & Certifications",
-              content:
-                "All Little Bunnies products are BPA-free, non-toxic, and comply with Indian baby safety standards. Safe for newborns 0-6 months.",
-            },
-          ].map(({ key, icon: Icon, title, content }) => (
-            <div key={key} className="border-t border-ink/8">
-              <button
-                onClick={() => toggleSection(key)}
-                className="flex items-center justify-between w-full py-4 text-left"
-              >
-                <div className="flex items-center gap-2.5">
-                  <Icon size={18} className="text-ink-muted" strokeWidth={1.8} />
-                  <span className="font-semibold text-ink text-sm">{title}</span>
+          {/* Short description */}
+          {product.short_description && (
+            <>
+              {/* Desktop View: No wrapper/accordion */}
+              <div className="hidden md:block mb-5 pt-5 border-t border-ink/8">
+                <div className="flex items-center gap-2.5 mb-3">
+                  <Info size={18} className="text-ink-muted" strokeWidth={1.8} />
+                  <span className="font-semibold text-ink text-sm">Key Features</span>
                 </div>
-                <ChevronDown
-                  size={16}
-                  className={cn(
-                    "text-ink-muted transition-transform",
-                    expandedSection === key && "rotate-180"
-                  )}
+                <div
+                  className="pb-4 text-ink-light text-sm leading-relaxed font-medium prose prose-sm max-w-none"
+                  dangerouslySetInnerHTML={{ __html: product.short_description }}
                 />
-              </button>
-              <AnimatePresence>
-                {expandedSection === key && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="overflow-hidden"
-                  >
-                    <p className="pb-4 text-sm text-ink-muted font-medium leading-relaxed">
-                      {content}
-                    </p>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          ))}
+              </div>
+
+              {/* Mobile View: Accordion */}
+              <div className="block md:hidden mb-5 border-t border-b border-ink/8">
+                <button
+                  onClick={() => toggleSection("short_description")}
+                  className="flex items-center justify-between w-full py-4 text-left"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Info size={18} className="text-ink-muted" strokeWidth={1.8} />
+                    <span className="font-semibold text-ink text-sm">Key Features</span>
+                  </div>
+                  <ChevronDown
+                    size={16}
+                    className={cn(
+                      "text-ink-muted transition-transform",
+                      expandedSection === "short_description" && "rotate-180"
+                    )}
+                  />
+                </button>
+                <AnimatePresence>
+                  {expandedSection === "short_description" && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="overflow-hidden"
+                    >
+                      <div
+                        className="pb-4 text-ink-light text-sm leading-relaxed font-medium prose prose-sm max-w-none"
+                        dangerouslySetInnerHTML={{ __html: product.short_description }}
+                      />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </>
+          )}
+
+          {/* Accordion moved below description — placeholder spacer */}
         </div>
       </div>
 
@@ -456,6 +518,123 @@ export default function ProductDetailClient({
           />
         </section>
       )}
+
+      {/* ── Delivery / Returns / Safety Accordion ──── */}
+      <section className="mt-8 border-t border-ink/8">
+        {[
+          {
+            key: "delivery",
+            icon: Truck,
+            title: "Delivery & Shipping",
+            content: "Estimated delivery: 14 business days.",
+          },
+          {
+            key: "returns",
+            icon: RotateCcw,
+            title: "Returns & Exchanges",
+            content:
+              "15-day hassle-free returns. Item must be unused and in original packaging. Contact our WhatsApp support to initiate a return.",
+          },
+          {
+            key: "safety",
+            icon: Shield,
+            title: "Safety & Certifications",
+            content:
+              "All Little Bunnies products are BPA-free, non-toxic, and comply with Indian baby safety standards. Safe for newborns 0-6 months.",
+          },
+        ].map(({ key, icon: Icon, title, content }) => (
+          <div key={key} className="border-b border-ink/8">
+            <button
+              onClick={() => toggleSection(key)}
+              className="flex items-center justify-between w-full py-4 text-left"
+            >
+              <div className="flex items-center gap-2.5">
+                <Icon size={18} className="text-ink-muted" strokeWidth={1.8} />
+                <span className="font-semibold text-ink text-sm">{title}</span>
+              </div>
+              <ChevronDown
+                size={16}
+                className={cn(
+                  "text-ink-muted transition-transform",
+                  expandedSection === key && "rotate-180"
+                )}
+              />
+            </button>
+            <AnimatePresence>
+              {expandedSection === key && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="overflow-hidden"
+                >
+                  <p className="pb-4 text-sm text-ink-muted font-medium leading-relaxed">
+                    {content}
+                  </p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        ))}
+      </section>
+
+      {/* Lightbox Modal */}
+      <AnimatePresence>
+        {isEnlarged && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4 md:p-10 cursor-zoom-out"
+            onClick={() => setIsEnlarged(false)}
+          >
+            <button
+              onClick={() => setIsEnlarged(false)}
+              className="absolute top-6 right-6 p-2 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors z-50"
+            >
+              <X size={24} />
+            </button>
+            
+            <div 
+              className="relative w-full h-full max-w-5xl max-h-[80vh] flex items-center justify-center"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <ProductImage
+                src={primaryImage?.url || "/images/placeholder.jpg"}
+                alt={primaryImage?.alt || product.name}
+                fill
+                className="object-contain"
+                sizes="100vw"
+              />
+
+              {/* Lightbox Navigation */}
+              {images.length > 1 && (
+                <>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedImage((i) => (i - 1 + images.length) % images.length);
+                    }}
+                    className="absolute left-0 p-3 rounded-full bg-white/10 text-white hover:bg-white/20 transition-all -ml-2 md:-ml-12 z-50"
+                  >
+                    <ChevronLeft size={24} />
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedImage((i) => (i + 1) % images.length);
+                    }}
+                    className="absolute right-0 p-3 rounded-full bg-white/10 text-white hover:bg-white/20 transition-all -mr-2 md:-mr-12 z-50"
+                  >
+                    <ChevronRight size={24} />
+                  </button>
+                </>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ── Reviews ──────────────────────────────── */}
       {approvedReviews.length > 0 && (
@@ -548,11 +727,11 @@ export default function ProductDetailClient({
                     {review.body}
                   </p>
                   <p className="text-xs text-ink-muted mt-3">
-                    {new Date(review.created_at).toLocaleDateString("en-IN", {
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                    })}
+                    {(() => {
+                      const d = new Date(review.created_at);
+                      const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+                      return `${d.getUTCDate()} ${months[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+                    })()}
                   </p>
                 </div>
               ))}
@@ -572,7 +751,17 @@ export default function ProductDetailClient({
         />
       )}
 
+      {/* Pre-Order Modal */}
+      <PreOrderModal
+        isOpen={preOrderOpen}
+        onClose={() => setPreOrderOpen(false)}
+        productName={product.name}
+        productPrice={formatPrice(currentPrice)}
+        productImage={primaryImage?.url}
+      />
 
     </div>
   );
 }
+
+// Cache-busting comment: Force Turbopack to drop stale lucide-react module factory error

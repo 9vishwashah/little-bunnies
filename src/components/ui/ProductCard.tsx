@@ -1,14 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import ProductImage from "./ProductImage";
 import { motion } from "framer-motion";
-import { ShoppingBag, Star } from "lucide-react";
+import { Clock, Star } from "lucide-react";
 import { cn, formatPrice, calculateDiscount } from "@/lib/utils";
-import { useCartStore } from "@/store/cartStore";
 
 import { Product } from "@/types";
-import { toast } from "sonner";
 
 interface ProductCardProps {
   product: Product;
@@ -17,27 +16,26 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product, className, priority }: ProductCardProps) {
-  const addItem = useCartStore((s) => s.addItem);
+  const router = useRouter();
 
-  const primaryImage = product.product_images?.find((img) => img.is_primary)
+  let primaryImage = product.product_images?.find((img) => img.is_primary)
     || product.product_images?.[0];
-  const discount = calculateDiscount(product.price, product.compare_price || 0);
 
-  const handleAddToCart = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    addItem({
-      id: product.id,
-      name: product.name,
-      slug: product.slug,
-      price: product.price,
-      image: primaryImage?.url || "/images/placeholder.jpg",
-      quantity: 1,
-    });
-    toast.success("Added to cart!", {
-      description: product.name,
-    });
-  };
+  if (!primaryImage && product.product_variants) {
+    for (const v of product.product_variants) {
+      if (v.image_url) {
+        try {
+          const parsed = JSON.parse(v.image_url);
+          if (parsed.gallery && parsed.gallery.length > 0) {
+            primaryImage = { id: v.id, url: parsed.gallery[0], alt: product.name, is_primary: true, sort_order: 0, product_id: product.id } as any;
+            break;
+          }
+        } catch (e) {}
+      }
+    }
+  }
+
+  const discount = calculateDiscount(product.price, product.compare_price || 0);
 
 
   return (
@@ -72,20 +70,22 @@ export default function ProductCard({ product, className, priority }: ProductCar
           </div>
 
 
-          {/* Quick add — always visible on mobile, hover-reveal on desktop */}
+          {/* Pre-Order CTA — always visible on mobile, hover-reveal on desktop */}
           <div className="absolute bottom-0 left-0 right-0 p-2.5 translate-y-0 md:translate-y-full md:group-hover:translate-y-0 transition-transform duration-300">
             <button
-              onClick={handleAddToCart}
-              disabled={!product.in_stock}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                router.push(`/product/${product.slug}`);
+              }}
               className={cn(
                 "w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold",
-                "bg-ink text-cream hover:bg-ink-light transition-colors",
-                "disabled:opacity-50 disabled:cursor-not-allowed",
+                "bg-peach text-white hover:bg-peach-dark transition-colors",
                 "min-h-[44px]" // WCAG touch target
               )}
             >
-              <ShoppingBag size={14} />
-              {product.in_stock ? "Add to Cart" : "Out of Stock"}
+              <Clock size={14} />
+              Pre-Order
             </button>
           </div>
 

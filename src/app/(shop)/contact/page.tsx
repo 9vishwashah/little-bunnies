@@ -27,6 +27,8 @@ export default function ContactPage() {
       name: formData.get("name") as string,
       email: formData.get("email") as string,
       phone: (formData.get("phone") as string) || "Not provided",
+      city: formData.get("city") as string,
+      state: formData.get("state") as string,
       message: formData.get("message") as string,
     };
 
@@ -51,7 +53,7 @@ export default function ContactPage() {
       }
     } catch {
       setStatus("error");
-      setErrorMessage("Network error. Please WhatsApp us at +91 97252 52421.");
+      setErrorMessage("Network error. Please try again later or email us at info@littlebunnies.co.in.");
     } finally {
       setIsSubmitting(false);
     }
@@ -91,8 +93,7 @@ export default function ContactPage() {
                 <FaWhatsapp size={22} className="text-[#25D366]" />
               </div>
               <div>
-                <h3 className="font-bold text-ink mb-0.5 group-hover:text-[#25D366] transition-colors">WhatsApp</h3>
-                <p className="text-ink-muted text-sm">+91 97252 52421</p>
+                <h3 className="font-bold text-ink mb-0.5 group-hover:text-[#25D366] transition-colors">WhatsApp Us</h3>
                 <p className="text-xs text-ink-muted/70 mt-1">Fastest response — usually within minutes</p>
               </div>
             </a>
@@ -165,6 +166,35 @@ export default function ContactPage() {
                         id="contact-phone"
                         name="phone"
                         placeholder="+91 98765 43210"
+                        className="w-full px-4 py-3 rounded-xl border border-ink/10 bg-cream/30 focus:bg-white focus:border-ink/20 focus:ring-2 focus:ring-peach/20 outline-none transition-all text-sm"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="contact-city" className="block text-sm font-semibold text-ink mb-1.5">
+                        City <span className="text-blush-dark">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        id="contact-city"
+                        name="city"
+                        required
+                        placeholder="Mumbai"
+                        className="w-full px-4 py-3 rounded-xl border border-ink/10 bg-cream/30 focus:bg-white focus:border-ink/20 focus:ring-2 focus:ring-peach/20 outline-none transition-all text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="contact-state" className="block text-sm font-semibold text-ink mb-1.5">
+                        State <span className="text-blush-dark">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        id="contact-state"
+                        name="state"
+                        required
+                        placeholder="Maharashtra"
                         className="w-full px-4 py-3 rounded-xl border border-ink/10 bg-cream/30 focus:bg-white focus:border-ink/20 focus:ring-2 focus:ring-peach/20 outline-none transition-all text-sm"
                       />
                     </div>

@@ -9,7 +9,6 @@ import {
   Search,
   ShoppingBag,
   Menu,
-  X,
   ChevronDown,
 } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
@@ -19,37 +18,73 @@ import MobileMenu from "./MobileMenu";
 import SearchModal from "./SearchModal";
 import CartDrawer from "@/components/cart/CartDrawer";
 
-const CATEGORIES = [
-  {
-    label: "Stroller",
-    slug: "prams",
-    sub: ["Strollers", "Prams", "Travel Systems", "Accessories"],
-  },
-  {
-    label: "Diaper Bags",
-    slug: "diapers",
-    sub: ["Newborn", "Size 1-2", "Pull-ups", "Wipes"],
-  },
-  {
-    label: "Utility Bags",
-    slug: "bags",
-    sub: ["Diaper Bags", "Tote Bags", "Backpacks", "Travel Bags"],
-  },
+// ─── Fixed top-level nav items ───────────────────────────────────────────────
+// The slug must match the category slug you create in the admin panel.
+// Sub-categories created under these parents will appear in the dropdown.
+const FIXED_NAV: { label: string; slug: string }[] = [
+  { label: "Prams",     slug: "prams"     },
+  { label: "Bags",      slug: "bags"      },
+  { label: "Utilities", slug: "utilities" },
 ];
 
-export default function Header() {
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [activeCategory, setActiveCategory] = useState<string | null>(null);
-  const [scrolled, setScrolled] = useState(false);
-  const [mounted, setMounted] = useState(false);
-  const pathname = usePathname();
-  const cartCount = useCartStore((s) => s.getTotalItems());
-  const openCart = useCartStore((s) => s.openCart);
-  const megaRef = useRef<HTMLDivElement>(null);
+interface SubCategory {
+  id: string;
+  name: string;
+  slug: string;
+  parent_id: string | null;
+}
 
+// Map from parent slug → array of sub-category objects
+type SubMap = Record<string, SubCategory[]>;
+
+// For MobileMenu prop shape
+interface NavCategory {
+  id: string;
+  name: string;
+  slug: string;
+  parent_id: string | null;
+  children: NavCategory[];
+}
+
+export default function Header() {
+  const [mobileOpen, setMobileOpen]       = useState(false);
+  const [searchOpen, setSearchOpen]       = useState(false);
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [scrolled, setScrolled]           = useState(false);
+  const [mounted, setMounted]             = useState(false);
+  const [subMap, setSubMap]               = useState<SubMap>({});
+  const pathname  = usePathname();
+  const cartCount = useCartStore((s) => s.getTotalItems());
+  const openCart  = useCartStore((s) => s.openCart);
+  const megaRef   = useRef<HTMLDivElement>(null);
+
+  useEffect(() => { setMounted(true); }, []);
+
+  // ── Fetch all active categories from DB and map children to their parent slug ──
   useEffect(() => {
-    setMounted(true);
+    fetch("/api/categories")
+      .then((r) => r.json())
+      .then((data: SubCategory[]) => {
+        if (!Array.isArray(data)) return;
+
+        // Build id → slug lookup for parents
+        const idToSlug: Record<string, string> = {};
+        data.forEach((c) => { if (!c.parent_id) idToSlug[c.id] = c.slug; });
+
+        // Group children by their parent's slug
+        const map: SubMap = {};
+        data.forEach((c) => {
+          if (c.parent_id) {
+            const parentSlug = idToSlug[c.parent_id];
+            if (parentSlug) {
+              if (!map[parentSlug]) map[parentSlug] = [];
+              map[parentSlug].push(c);
+            }
+          }
+        });
+        setSubMap(map);
+      })
+      .catch(() => {/* silently fail */});
   }, []);
 
   useEffect(() => {
@@ -58,49 +93,69 @@ export default function Header() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Close mega menu on route change
   useEffect(() => {
     setActiveCategory(null);
     setMobileOpen(false);
   }, [pathname]);
 
+  // Build the shape MobileMenu expects
+  const mobileCategories: NavCategory[] = FIXED_NAV.map((nav) => ({
+    id: nav.slug,
+    name: nav.label,
+    slug: nav.slug,
+    parent_id: null,
+    children: (subMap[nav.slug] ?? []).map((s) => ({
+      id: s.id,
+      name: s.name,
+      slug: s.slug,
+      parent_id: s.parent_id,
+      children: [],
+    })),
+  }));
+
   return (
     <>
-      {/* Top announcement bar — Framer Motion animated marquee */}
+      {/* ── Announcement bar ── */}
       <div className="relative w-full h-10 md:h-12 overflow-hidden bg-cream flex items-center justify-center">
         <div className="w-full bg-peach text-ink shadow-soft overflow-hidden py-2 md:py-2.5 z-10 border-y border-ink/5">
-          <motion.div
-            className="flex whitespace-nowrap w-max"
-            animate={{ x: ["0%", "-50%"] }}
-            transition={{
-              x: {
-                repeat: Infinity,
-                repeatType: "loop",
-                duration: 100,
-                ease: "linear",
-              },
-            }}
-          >
-            {[...Array(2)].map((_, i) => (
-              <div key={i} className="flex items-center w-max">
-                {[...Array(6)].map((_, j) => (
-                  <div key={j} className="flex items-center gap-5 px-3 text-[11px] sm:text-xs font-black tracking-widest uppercase">
-                    <span className="text-ink">Free shipping on orders above ₹5999</span>
-                    <span className="text-ink/40">✦</span>
-                    <span className="text-sage-dark">COD Available</span>
-                    <span className="text-ink/40">✦</span>
-                    <span className="text-blush-dark">Premium baby essentials</span>
-                    <span className="text-ink/40">✦</span>
-                    <span className="text-lavender-brand-dark">Handpicked with love</span>
-                    <span className="text-ink/40">✦</span>
-                  </div>
-                ))}
-              </div>
-            ))}
-          </motion.div>
+          {mounted ? (
+            <motion.div
+              className="flex whitespace-nowrap w-max"
+              animate={{ x: ["0%", "-50%"] }}
+              transition={{ x: { repeat: Infinity, repeatType: "loop", duration: 100, ease: "linear" } }}
+            >
+              {[...Array(2)].map((_, i) => (
+                <div key={i} className="flex items-center w-max">
+                  {[...Array(6)].map((_, j) => (
+                    <div key={j} className="flex items-center gap-5 px-3 text-[11px] sm:text-xs font-black tracking-widest uppercase">
+                      <span className="text-ink">Free shipping on orders above ₹5999</span>
+                      <span className="text-ink/40">✦</span>
+                      <span className="text-sage-dark">COD Available</span>
+                      <span className="text-ink/40">✦</span>
+                      <span className="text-blush-dark">Luxury Baby Gears</span>
+                      <span className="text-ink/40">✦</span>
+                      <span className="text-lavender-brand-dark">Avail 10% Off on Pre-Orders</span>
+                      <span className="text-ink/40">✦</span>
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </motion.div>
+          ) : (
+            <div className="flex items-center justify-center gap-5 px-3 text-[11px] sm:text-xs font-black tracking-widest uppercase">
+              <span className="text-ink">Free shipping on orders above ₹5999</span>
+              <span className="text-ink/40">✦</span>
+              <span className="text-sage-dark">COD Available</span>
+              <span className="text-ink/40">✦</span>
+              <span className="text-blush-dark">Luxury Baby Gears</span>
+              <span className="text-ink/40">✦</span>
+              <span className="text-lavender-brand-dark">Avail 10% Off on Pre-Orders</span>
+            </div>
+          )}
         </div>
       </div>
 
+      {/* ── Sticky header ── */}
       <header
         className={cn(
           "sticky top-0 z-50 w-full transition-all duration-300",
@@ -109,107 +164,129 @@ export default function Header() {
             : "bg-cream"
         )}
       >
-        {/* Main header */}
         <div className="section-container">
-          <div className="flex items-center justify-between h-16 md:h-18">
-            {/* Mobile: Hamburger */}
-            <div className="flex items-center gap-1 md:hidden">
-              <button
-                onClick={() => setMobileOpen(true)}
-                className="btn-ghost p-2.5 rounded-xl"
-                aria-label="Open menu"
-              >
-                <Menu size={22} />
-              </button>
+          <div className="flex items-center justify-between h-20 md:h-28">
+
+            {/* Left section: Hamburger (Mobile) + Nav (Desktop) */}
+            <div className="flex-1 flex items-center justify-start">
+              {/* Mobile hamburger */}
+              <div className="flex items-center gap-1 md:hidden">
+                <button
+                  onClick={() => setMobileOpen(true)}
+                  className="btn-ghost p-2.5 rounded-xl"
+                  aria-label="Open menu"
+                >
+                  <Menu size={22} />
+                </button>
+              </div>
+
+              {/* ── Desktop nav ── */}
+              <nav className="hidden md:flex items-center gap-1" ref={megaRef}>
+                {/* Only render after mount to avoid SSR/client structure mismatch */}
+                {mounted && FIXED_NAV.map((nav) => {
+                  const subs = subMap[nav.slug] ?? [];
+                  return (
+                    <div
+                      key={nav.slug}
+                      className="relative"
+                      onMouseEnter={() => setActiveCategory(nav.slug)}
+                      onMouseLeave={() => setActiveCategory(null)}
+                    >
+                      {/* Top-level label */}
+                      <Link
+                        href={`/products?category=${nav.slug}`}
+                        className={cn(
+                          "flex items-center gap-1 px-3 py-2 rounded-xl text-sm font-semibold transition-colors",
+                          "hover:bg-cream-dark hover:text-ink",
+                          activeCategory === nav.slug && "bg-cream-dark"
+                        )}
+                      >
+                        {nav.label}
+                        <ChevronDown
+                          size={14}
+                          className={cn(
+                            "transition-transform duration-200",
+                            activeCategory === nav.slug && "rotate-180"
+                          )}
+                        />
+                      </Link>
+
+                      {/* Dropdown — always renders (shows DB subs, or just "View All") */}
+                      <AnimatePresence>
+                        {activeCategory === nav.slug && (
+                          <motion.div
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 8 }}
+                            transition={{ duration: 0.15 }}
+                            className="absolute top-full left-0 mt-1 w-52 bg-white rounded-brand shadow-soft-lg border border-ink/5 py-2 z-50"
+                          >
+                            {subs.length > 0 ? (
+                              <>
+                                {subs.map((sub) => (
+                                  <Link
+                                    key={sub.slug}
+                                    href={`/products?category=${sub.slug}`}
+                                    className="block px-4 py-2 text-sm text-ink-light hover:text-ink hover:bg-cream transition-colors"
+                                  >
+                                    {sub.name}
+                                  </Link>
+                                ))}
+                                <div className="border-t border-ink/5 mt-2 pt-2">
+                                  <Link
+                                    href={`/products?category=${nav.slug}`}
+                                    className="block px-4 py-2 text-sm font-semibold text-ink hover:bg-cream transition-colors"
+                                  >
+                                    View All {nav.label} →
+                                  </Link>
+                                </div>
+                              </>
+                            ) : (
+                              <Link
+                                href={`/products?category=${nav.slug}`}
+                                className="block px-4 py-2 text-sm font-semibold text-ink hover:bg-cream transition-colors"
+                              >
+                                View All {nav.label} →
+                              </Link>
+                            )}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  );
+                })}
+
+                <Link
+                  href="/about"
+                  className="flex items-center gap-1 px-3 py-2 rounded-xl text-sm font-semibold transition-colors hover:bg-cream-dark hover:text-ink"
+                >
+                  About Us
+                </Link>
+                <Link
+                  href="/contact"
+                  className="flex items-center gap-1 px-3 py-2 rounded-xl text-sm font-semibold transition-colors hover:bg-cream-dark hover:text-ink"
+                >
+                  Contact Us
+                </Link>
+              </nav>
             </div>
 
-            {/* Logo */}
-            <Link href="/" className="flex-shrink-0 mx-auto md:mx-0">
-              <Image
-                src="/images/logo.png"
-                alt="Little Bunnies"
-                width={260}
-                height={88}
-                className="h-16 w-auto md:h-20 lg:h-24 transition-all"
-                priority
-              />
-            </Link>
-
-            {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center gap-1" ref={megaRef}>
-              {CATEGORIES.map((cat) => (
-                <div
-                  key={cat.slug}
-                  className="relative"
-                  onMouseEnter={() => setActiveCategory(cat.slug)}
-                  onMouseLeave={() => setActiveCategory(null)}
-                >
-                  <Link
-                    href={`/products?category=${cat.slug}`}
-                    className={cn(
-                      "flex items-center gap-1 px-3 py-2 rounded-xl text-sm font-semibold transition-colors",
-                      "hover:bg-cream-dark hover:text-ink",
-                      activeCategory === cat.slug && "bg-cream-dark"
-                    )}
-                  >
-                    {cat.label}
-                    <ChevronDown
-                      size={14}
-                      className={cn(
-                        "transition-transform duration-200",
-                        activeCategory === cat.slug && "rotate-180"
-                      )}
-                    />
-                  </Link>
-
-                  {/* Mega dropdown */}
-                  <AnimatePresence>
-                    {activeCategory === cat.slug && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 8 }}
-                        transition={{ duration: 0.15 }}
-                        className="absolute top-full left-0 mt-1 w-48 bg-white rounded-brand shadow-soft-lg border border-ink/5 py-2 z-50"
-                      >
-                        {cat.sub.map((sub) => (
-                          <Link
-                            key={sub}
-                            href={`/products?category=${cat.slug}&sub=${sub.toLowerCase()}`}
-                            className="block px-4 py-2 text-sm text-ink-light hover:text-ink hover:bg-cream transition-colors"
-                          >
-                            {sub}
-                          </Link>
-                        ))}
-                        <div className="border-t border-ink/5 mt-2 pt-2">
-                          <Link
-                            href={`/products?category=${cat.slug}`}
-                            className="block px-4 py-2 text-sm font-semibold text-ink hover:bg-cream transition-colors"
-                          >
-                            View All {cat.label} →
-                          </Link>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              ))}
-              <Link
-                href="/about"
-                className="flex items-center gap-1 px-3 py-2 rounded-xl text-sm font-semibold transition-colors hover:bg-cream-dark hover:text-ink"
-              >
-                About Us
+            {/* Center section: Logo */}
+            <div className="flex-shrink-0 flex items-center justify-center mx-4">
+              <Link href="/">
+                <Image
+                  src="/images/logo.png"
+                  alt="Little Bunnies"
+                  width={340}
+                  height={115}
+                  className="h-16 w-auto md:h-24 lg:h-32 transition-all"
+                  priority
+                />
               </Link>
-              <Link
-                href="/contact"
-                className="flex items-center gap-1 px-3 py-2 rounded-xl text-sm font-semibold transition-colors hover:bg-cream-dark hover:text-ink"
-              >
-                Contact Us
-              </Link>
-            </nav>
+            </div>
 
-            {/* Right icons */}
-            <div className="flex items-center gap-1">
+            {/* Right section: Icons */}
+            <div className="flex-1 flex items-center justify-end gap-1">
               <button
                 onClick={() => setSearchOpen(true)}
                 className="btn-ghost p-2.5 rounded-xl"
@@ -217,7 +294,6 @@ export default function Header() {
               >
                 <Search size={20} />
               </button>
-
 
               <button
                 onClick={openCart}
@@ -235,19 +311,14 @@ export default function Header() {
                   </motion.span>
                 )}
               </button>
-
             </div>
+
           </div>
         </div>
       </header>
 
-      {/* Mobile Menu */}
-      <MobileMenu isOpen={mobileOpen} onClose={() => setMobileOpen(false)} categories={CATEGORIES} />
-
-      {/* Search Modal */}
+      <MobileMenu isOpen={mobileOpen} onClose={() => setMobileOpen(false)} categories={mobileCategories} />
       <SearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
-
-      {/* Cart Drawer */}
       <CartDrawer />
     </>
   );

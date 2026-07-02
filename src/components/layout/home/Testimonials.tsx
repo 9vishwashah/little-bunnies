@@ -10,38 +10,34 @@ const TESTIMONIALS = [
     name: "Priya Sharma",
     location: "Mumbai",
     rating: 5,
-    text: "The pram I ordered from Little Bunnies is absolutely stunning. The quality is exceptional and my baby loves it. The packaging was perfect and delivery was super fast!",
-    product: "LuvLap Galaxy Stroller",
+    text: "The Egg Pram is an absolute dream! It glides so smoothly and the suspension is fantastic — my baby falls asleep within minutes. The premium build quality is obvious the moment you touch it. Worth every rupee!",
     initials: "PS",
     color: "bg-blush/30",
   },
   {
     id: 2,
     name: "Rahul & Sneha",
-    location: "Bengaluru",
+    location: "Mumbai",
     rating: 5,
-    text: "We've ordered diaper packs, feeding bottles, and baby clothes from here. Every single product has been top-notch. The free shipping made it even better!",
-    product: "Multiple Products",
+    text: "We got the Comfy Rider for our 3-month-old and it's been a game changer for our morning walks. The one-hand fold mechanism is brilliant — I can manage the baby and the pram easily. Super lightweight yet sturdy!",
     initials: "RS",
     color: "bg-sky-brand",
   },
   {
     id: 3,
     name: "Anjali Mehta",
-    location: "Delhi",
+    location: "Mumbai",
     rating: 5,
-    text: "As a first-time mom, I was overwhelmed with choices. Little Bunnies made it easy — their curation is perfect. The baby skincare range is especially amazing.",
-    product: "Baby Skincare Set",
+    text: "The Cocoon pram is everything I wanted for my newborn. The bassinet-style seat is so cosy and the canopy provides amazing sun protection. Assembly was a breeze and the Little Bunnies team was super helpful!",
     initials: "AM",
     color: "bg-sage/30",
   },
   {
     id: 4,
     name: "Vikram Patel",
-    location: "Ahmedabad",
+    location: "Mumbai",
     rating: 5,
-    text: "Ordered a car seat and nursery furniture. Both arrived in pristine condition. The WhatsApp support was incredibly responsive when I had questions.",
-    product: "Car Seat + Nursery Set",
+    text: "Ordered a diaper bag from Little Bunnies and I'm blown away by the storage. It has separate compartments for bottles, wipes, and clothes. The insulated pockets keep milk warm for hours. Looks stylish too!",
     initials: "VP",
     color: "bg-lavender-brand/30",
   },
@@ -121,10 +117,7 @@ export default function Testimonials() {
                   &ldquo;{review.text}&rdquo;
                 </p>
 
-                {/* Product */}
-                <p className="text-xs text-ink-muted font-semibold">
-                  Purchased: {review.product}
-                </p>
+
 
                 {/* Author */}
                 <div className="flex items-center gap-3 pt-2 border-t border-ink/8">

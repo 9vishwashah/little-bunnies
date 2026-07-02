@@ -1,23 +1,27 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ChevronRight, Phone, Mail } from "lucide-react";
+import { X, ChevronRight, ChevronDown } from "lucide-react";
 
-interface Category {
-  label: string;
+interface NavCategory {
+  id: string;
+  name: string;
   slug: string;
-  sub: string[];
+  parent_id: string | null;
+  children: NavCategory[];
 }
 
 interface MobileMenuProps {
   isOpen: boolean;
   onClose: () => void;
-  categories: Category[];
+  categories: NavCategory[];
 }
 
 export default function MobileMenu({ isOpen, onClose, categories }: MobileMenuProps) {
+  const [expanded, setExpanded] = useState<string | null>(null);
+
   // Lock body scroll when open
   useEffect(() => {
     if (isOpen) {
@@ -26,6 +30,11 @@ export default function MobileMenu({ isOpen, onClose, categories }: MobileMenuPr
       document.body.style.overflow = "";
     }
     return () => { document.body.style.overflow = ""; };
+  }, [isOpen]);
+
+  // Reset expanded when menu closes
+  useEffect(() => {
+    if (!isOpen) setExpanded(null);
   }, [isOpen]);
 
   return (
@@ -99,24 +108,77 @@ export default function MobileMenu({ isOpen, onClose, categories }: MobileMenuPr
               </div>
 
               {/* Categories */}
-              <div className="mt-6">
-                <p className="text-xs text-ink-muted font-semibold uppercase tracking-widest px-3 mb-3">
-                  Categories
-                </p>
-                <div className="space-y-1">
-                  {categories.map((cat) => (
-                    <Link
-                      key={cat.slug}
-                      href={`/products?category=${cat.slug}`}
-                      onClick={onClose}
-                      className="flex items-center justify-between px-3 py-3 rounded-xl hover:bg-cream-dark font-medium text-ink transition-colors"
-                    >
-                      {cat.label}
-                      <ChevronRight size={16} className="text-ink-muted" />
-                    </Link>
-                  ))}
+              {categories.length > 0 && (
+                <div className="mt-6">
+                  <p className="text-xs text-ink-muted font-semibold uppercase tracking-widest px-3 mb-3">
+                    Categories
+                  </p>
+                  <div className="space-y-1">
+                    {categories.map((cat) => (
+                      <div key={cat.slug}>
+                        {cat.children.length > 0 ? (
+                          <>
+                            {/* Accordion toggle for categories with children */}
+                            <button
+                              onClick={() => setExpanded(expanded === cat.slug ? null : cat.slug)}
+                              className="w-full flex items-center justify-between px-3 py-3 rounded-xl hover:bg-cream-dark font-medium text-ink transition-colors"
+                            >
+                              {cat.name}
+                              <ChevronDown
+                                size={16}
+                                className={`text-ink-muted transition-transform duration-200 ${expanded === cat.slug ? "rotate-180" : ""}`}
+                              />
+                            </button>
+                            <AnimatePresence>
+                              {expanded === cat.slug && (
+                                <motion.div
+                                  initial={{ height: 0, opacity: 0 }}
+                                  animate={{ height: "auto", opacity: 1 }}
+                                  exit={{ height: 0, opacity: 0 }}
+                                  transition={{ duration: 0.2 }}
+                                  className="overflow-hidden"
+                                >
+                                  <div className="pl-4 py-1 space-y-0.5">
+                                    {cat.children.map((sub) => (
+                                      <Link
+                                        key={sub.slug}
+                                        href={`/products?category=${sub.slug}`}
+                                        onClick={onClose}
+                                        className="flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-cream-dark text-sm text-ink-light hover:text-ink transition-colors"
+                                      >
+                                        {sub.name}
+                                        <ChevronRight size={14} className="text-ink-muted" />
+                                      </Link>
+                                    ))}
+                                    <Link
+                                      href={`/products?category=${cat.slug}`}
+                                      onClick={onClose}
+                                      className="flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-cream-dark text-sm font-semibold text-ink transition-colors"
+                                    >
+                                      View All {cat.name}
+                                      <ChevronRight size={14} className="text-ink-muted" />
+                                    </Link>
+                                  </div>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </>
+                        ) : (
+                          /* Direct link for categories without children */
+                          <Link
+                            href={`/products?category=${cat.slug}`}
+                            onClick={onClose}
+                            className="flex items-center justify-between px-3 py-3 rounded-xl hover:bg-cream-dark font-medium text-ink transition-colors"
+                          >
+                            {cat.name}
+                            <ChevronRight size={16} className="text-ink-muted" />
+                          </Link>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
             </nav>
 
@@ -127,7 +189,6 @@ export default function MobileMenu({ isOpen, onClose, categories }: MobileMenuPr
                 href="https://wa.me/919725252421"
                 className="flex items-center gap-2 text-sm font-semibold text-ink hover:text-sage-dark transition-colors"
               >
-                <Phone size={16} />
                 WhatsApp Us
               </a>
             </div>

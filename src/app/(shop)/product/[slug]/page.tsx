@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
-import ProductDetailClient from "./ProductDetailClient";
+import ProductDetailClient from "./ProductDetailClientV2";
 import { Product } from "@/types";
 
 interface Props {
@@ -51,7 +51,7 @@ async function getRelatedProducts(categoryId: string, currentId: string): Promis
     const supabase = await createClient();
     const { data } = await supabase
       .from("products")
-      .select(`*, product_images(id, url, alt, is_primary, sort_order)`)
+      .select(`*, product_images(id, url, alt, is_primary, sort_order), product_variants(id, name, value, price_modifier, sku_suffix, image_url)`)
       .eq("category_id", categoryId)
       .eq("is_active", true)
       .neq("id", currentId)

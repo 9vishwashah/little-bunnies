@@ -159,9 +159,34 @@ const config: Config = {
         xl: "1280px",
         "2xl": "1440px",
       },
+      typography: (theme: any) => ({
+        DEFAULT: {
+          css: {
+            color: theme("colors.ink.light"),
+            a: {
+              color: theme("colors.sage.dark"),
+              "&:hover": {
+                color: theme("colors.ink.DEFAULT"),
+              },
+            },
+            h1: { color: theme("colors.ink.DEFAULT"), fontFamily: theme("fontFamily.display").join(",") },
+            h2: { color: theme("colors.ink.DEFAULT"), fontFamily: theme("fontFamily.display").join(",") },
+            h3: { color: theme("colors.ink.DEFAULT"), fontFamily: theme("fontFamily.display").join(",") },
+            h4: { color: theme("colors.ink.DEFAULT") },
+            strong: { color: theme("colors.ink.DEFAULT") },
+            blockquote: {
+              borderLeftColor: theme("colors.sage.DEFAULT"),
+              color: theme("colors.ink.muted"),
+            },
+            hr: { borderColor: theme("colors.cream.darker") },
+            "ul > li::marker": { color: theme("colors.sage.dark") },
+            "ol > li::marker": { color: theme("colors.ink.muted") },
+          },
+        },
+      }),
     },
   },
-  plugins: [],
+  plugins: [require("@tailwindcss/typography")],
 };
 
 export default config;

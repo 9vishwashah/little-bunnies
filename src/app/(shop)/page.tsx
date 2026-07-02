@@ -7,8 +7,6 @@ import ProductSection from "@/components/layout/home/ProductSection";
 import PromoBanner from "@/components/layout/home/PromoBanner";
 import Testimonials from "@/components/layout/home/Testimonials";
 import WhyChooseUs from "@/components/layout/home/WhyChooseUs";
-import FAQSection from "@/components/layout/home/FAQSection";
-import ContactSection from "@/components/layout/home/ContactSection";
 import ImageMaskText from "@/components/layout/home/ImageMaskText";
 import { Product } from "@/types";
 
@@ -24,7 +22,7 @@ async function getFeaturedProducts(): Promise<Product[]> {
     const { data } = await supabase
       .from("products")
       .select(
-        `*, product_images(id, url, alt, is_primary, sort_order), categories(name, slug)`
+        `*, product_images(id, url, alt, is_primary, sort_order), categories(name, slug), product_variants(id, name, value, price_modifier, sku_suffix, image_url)`
       )
       .eq("is_active", true)
       .eq("is_featured", true)
@@ -61,8 +59,6 @@ export default async function HomePage() {
 
       <TrustBadges />
       <Testimonials />
-      <FAQSection />
-      <ContactSection />
       <ImageMaskText />
     </>
   );

@@ -14,7 +14,7 @@ async function getProducts(searchParams: Record<string, string>): Promise<{ prod
     const supabase = await createClient();
     let query = supabase
       .from("products")
-      .select(`*, product_images(id, url, alt, is_primary, sort_order), categories(name, slug)`, {
+      .select(`*, product_images(id, url, alt, is_primary, sort_order), categories(name, slug), product_variants(id, name, value, price_modifier, sku_suffix, image_url)`, {
         count: "exact",
       })
       .eq("is_active", true);
@@ -26,7 +26,17 @@ async function getProducts(searchParams: Record<string, string>): Promise<{ prod
         .select("id")
         .eq("slug", searchParams.category)
         .single();
-      if (cat) query = query.eq("category_id", cat.id);
+      if (cat) {
+        const { data: subCats } = await supabase
+          .from("categories")
+          .select("id")
+          .eq("parent_id", cat.id);
+        const catIds = [cat.id];
+        if (subCats) {
+          catIds.push(...subCats.map((c) => c.id));
+        }
+        query = query.in("category_id", catIds);
+      }
     }
     if (searchParams.minPrice) query = query.gte("price", parseFloat(searchParams.minPrice));
     if (searchParams.maxPrice) query = query.lte("price", parseFloat(searchParams.maxPrice));

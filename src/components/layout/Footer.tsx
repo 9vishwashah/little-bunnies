@@ -14,15 +14,14 @@ const FOOTER_LINKS = {
   ],
   Help: [
     { label: "Shipping Policy", href: "/shipping-policy" },
-    { label: "Return & Refund", href: "/returns" },
-    { label: "FAQ", href: "/faq" },
-    { label: "Contact Us", href: "/contact" },
+    { label: "Privacy Policy", href: "/privacy-policy" },
+    { label: "Cancellation and Return Policy", href: "/returns" },
+    { label: "Terms & Conditions", href: "/terms" },
   ],
   Company: [
     { label: "About Little Bunnies", href: "/about" },
     { label: "Blog", href: "/blog" },
-    { label: "Privacy Policy", href: "/privacy-policy" },
-    { label: "Terms of Service", href: "/terms" },
+    { label: "Contact Us", href: "/contact" },
   ],
 };
 

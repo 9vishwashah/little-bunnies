@@ -49,11 +49,12 @@ export async function PATCH(
     if (variants.length > 0) {
       const variantRows = variants
         .filter((v: { name: string; value: string }) => v.name && v.value)
-        .map((v: { name: string; value: string; priceModifier: number }) => ({
+        .map((v: { name: string; value: string; priceModifier: number; imageUrl?: string }) => ({
           product_id: id,
           name: v.name,
           value: v.value,
           price_modifier: v.priceModifier || 0,
+          image_url: v.imageUrl || null,
         }));
       if (variantRows.length > 0) {
         await supabase.from("product_variants").insert(variantRows);
@@ -76,8 +77,43 @@ export async function DELETE(
   const { id } = await params;
   const supabase = createAdminClient();
 
-  const { error } = await supabase.from("products").delete().eq("id", id);
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  // 1. Check if this product exists in any order_items (ON DELETE RESTRICT)
+  const { count: orderCount } = await supabase
+    .from("order_items")
+    .select("id", { count: "exact", head: true })
+    .eq("product_id", id);
 
-  return NextResponse.json({ success: true });
+  if (orderCount && orderCount > 0) {
+    // Soft-delete: deactivate and hide the product instead of hard delete.
+    // This preserves order history (order_items still reference it).
+    const { error: softErr } = await supabase
+      .from("products")
+      .update({ is_active: false, in_stock: false })
+      .eq("id", id);
+
+    if (softErr) {
+      return NextResponse.json({ error: softErr.message }, { status: 500 });
+    }
+
+    return NextResponse.json({
+      success: true,
+      soft: true,
+      message: `Product has ${orderCount} order(s) — it has been deactivated and hidden from the store instead of permanently deleted.`,
+    });
+  }
+
+  // 2. No orders — safe to hard delete.
+  // Delete child records first (images, variants, inventory, reviews, wishlists)
+  await supabase.from("product_images").delete().eq("product_id", id);
+  await supabase.from("product_variants").delete().eq("product_id", id);
+  await supabase.from("inventory").delete().eq("product_id", id);
+  await supabase.from("reviews").delete().eq("product_id", id);
+  await supabase.from("wishlists").delete().eq("product_id", id);
+
+  const { error } = await supabase.from("products").delete().eq("id", id);
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ success: true, soft: false });
 }

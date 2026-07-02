@@ -61,11 +61,12 @@ export async function POST(req: NextRequest) {
     if (variants && variants.length > 0) {
       const variantRows = variants
         .filter((v: { name: string; value: string }) => v.name && v.value)
-        .map((v: { name: string; value: string; priceModifier: number }) => ({
+        .map((v: { name: string; value: string; priceModifier: number; imageUrl?: string }) => ({
           product_id: product.id,
           name: v.name,
           value: v.value,
           price_modifier: v.priceModifier || 0,
+          image_url: v.imageUrl || null,
         }));
       if (variantRows.length > 0) {
         await supabase.from("product_variants").insert(variantRows);

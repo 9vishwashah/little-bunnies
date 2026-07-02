@@ -37,11 +37,11 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
     notFound();
   }
 
-  // Format variants
   const variants = product.product_variants?.map((v: any) => ({
     name: v.name,
     value: v.value,
     priceModifier: v.price_modifier || 0,
+    imageUrl: v.image_url || "",
   })) || [];
 
   // Format images

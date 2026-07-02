@@ -1,79 +1,12 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { FileText, Scale, AlertTriangle, ShoppingCart, CreditCard, Shield, Ban } from "lucide-react";
+import { FileText } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Terms of Service",
-  description: "Read Little Bunnies' Terms of Service — the rules and guidelines governing your use of our website and services.",
+  description: "Read Little Bunnies' Terms of Service — the rules and guidelines governing your use of our website.",
 };
 
-const sections = [
-  {
-    icon: ShoppingCart,
-    title: "Use of Our Website",
-    content: [
-      "You must be at least 18 years of age to place an order on Little Bunnies.",
-      "You agree to provide accurate, current, and complete information when creating an account or placing an order.",
-      "You are responsible for maintaining the confidentiality of your account credentials.",
-      "You may not use our website for any illegal or unauthorised purpose.",
-      "We reserve the right to refuse service, terminate accounts, or cancel orders at our discretion.",
-    ],
-  },
-  {
-    icon: CreditCard,
-    title: "Orders & Pricing",
-    content: [
-      "All prices listed on the website are in Indian Rupees (₹) and are inclusive of applicable GST.",
-      "We reserve the right to modify prices at any time without prior notice.",
-      "An order confirmation email does not guarantee acceptance of your order. We may cancel orders due to stock unavailability or pricing errors.",
-      "Little Bunnies shall not be liable for typographical errors in pricing.",
-      "Promotional prices and discount codes are valid only for the specified period and conditions.",
-    ],
-  },
-  {
-    icon: Shield,
-    title: "Intellectual Property",
-    content: [
-      "All content on this website — including text, images, logos, product descriptions, and design — is the intellectual property of Little Bunnies.",
-      "You may not reproduce, distribute, modify, or create derivative works without our prior written consent.",
-      "Unauthorised use of our brand name, logo, or content may result in legal action.",
-      "User-generated content (e.g., reviews) grants us a non-exclusive, royalty-free licence to use your content on our platforms.",
-    ],
-  },
-  {
-    icon: AlertTriangle,
-    title: "Limitation of Liability",
-    content: [
-      "Little Bunnies provides its website and products 'as is' without warranties of any kind.",
-      "We are not liable for any indirect, incidental, special, or consequential damages arising from your use of our website or products.",
-      "Our total liability to you shall not exceed the amount you paid for the product in question.",
-      "We are not responsible for delays or failures caused by circumstances beyond our control (e.g., natural disasters, carrier delays).",
-    ],
-  },
-  {
-    icon: Ban,
-    title: "Prohibited Activities",
-    content: [
-      "Attempting to gain unauthorised access to our systems or user accounts.",
-      "Uploading or transmitting viruses, malware, or harmful code.",
-      "Using our website to conduct fraudulent transactions.",
-      "Scraping, crawling, or data-mining our website without explicit permission.",
-      "Impersonating Little Bunnies or our employees, partners, or other users.",
-    ],
-  },
-  {
-    icon: Scale,
-    title: "Governing Law & Disputes",
-    content: [
-      "These Terms are governed by the laws of India.",
-      "Any disputes arising from these Terms shall be subject to the exclusive jurisdiction of the courts in Ahmedabad, Gujarat, India.",
-      "We encourage you to contact us first to resolve any dispute amicably before pursuing legal action.",
-      "If any provision of these Terms is found to be unenforceable, the remaining provisions shall continue in full force.",
-    ],
-  },
-];
-
-export default function TermsPage() {
+export default function Page() {
   return (
     <main className="min-h-screen bg-cream">
       {/* Hero */}
@@ -87,65 +20,51 @@ export default function TermsPage() {
             Terms of Service
           </h1>
           <p className="text-ink-muted text-lg md:text-xl max-w-2xl mx-auto font-medium">
-            Please read these terms carefully before using our website or placing an order.
-          </p>
-          <p className="text-ink-muted/60 text-sm mt-4">Last updated: June 22, 2026</p>
-        </div>
-      </section>
-
-      {/* Intro */}
-      <section className="section-container py-10">
-        <div className="max-w-3xl mx-auto bg-white rounded-brand shadow-card p-6 md:p-8">
-          <p className="text-ink-light text-sm leading-relaxed">
-            Welcome to <strong>Little Bunnies</strong>. By accessing our website (<strong>littlebunnies.co.in</strong>) or making a purchase, you agree to be bound by these Terms of Service and our Privacy Policy. If you do not agree with any part of these terms, you may not use our services.
-          </p>
-          <p className="text-ink-light text-sm leading-relaxed mt-3">
-            We reserve the right to update these Terms at any time. Continued use of our website after changes constitutes acceptance of the updated Terms.
+            Read Little Bunnies' Terms of Service — the rules and guidelines governing your use of our website.
           </p>
         </div>
       </section>
 
-      {/* Sections */}
-      <section className="section-container pb-10 md:pb-16">
-        <div className="max-w-3xl mx-auto space-y-6">
-          {sections.map(({ icon: Icon, title, content }) => (
-            <div key={title} className="bg-white rounded-brand shadow-card p-6 md:p-8">
-              <div className="flex items-start gap-4">
-                <div className="p-2.5 rounded-xl bg-cream-dark flex-shrink-0">
-                  <Icon size={20} className="text-ink-muted" />
-                </div>
-                <div>
-                  <h2 className="text-lg md:text-xl font-display font-bold text-ink mb-3">{title}</h2>
-                  <ul className="space-y-2.5">
-                    {content.map((item, i) => (
-                      <li key={i} className="flex items-start gap-3 text-sm text-ink-muted leading-relaxed">
-                        <span className="w-1.5 h-1.5 rounded-full bg-ink-muted mt-1.5 flex-shrink-0" />
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Contact */}
-      <section className="section-container pb-16 md:pb-24">
-        <div className="max-w-3xl mx-auto bg-ink rounded-brand p-8 text-center text-cream">
-          <Scale size={36} className="text-cream/50 mx-auto mb-4" />
-          <h2 className="text-xl md:text-2xl font-display font-bold mb-2">Questions About These Terms?</h2>
-          <p className="text-cream/70 text-sm mb-5">
-            If you have any questions about our Terms of Service, please contact our legal team.
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-4">
-            <a href="mailto:legal@littlebunnies.co.in" className="btn-primary bg-white text-ink hover:bg-cream">
-              legal@littlebunnies.co.in
-            </a>
-            <Link href="/contact" className="btn-secondary bg-transparent border-cream/30 text-cream/80 hover:bg-cream/10">
-              Contact Us
-            </Link>
+      {/* Content */}
+      <section className="section-container py-10 pb-20">
+        <div className="max-w-3xl mx-auto bg-white rounded-brand shadow-card p-8 md:p-12">
+          <div className="prose prose-stone prose-headings:font-display prose-headings:text-ink prose-p:text-ink-light prose-li:text-ink-light prose-a:text-sage-dark hover:prose-a:text-ink max-w-none">
+            <h2>{`TERMS & CONDITIONS`}</h2>
+            <p>{`The Sales and services provided by the website www.Little Bunnies are subject to the terms, and conditions as listed and any Legal entity, person or customer/buyer/visitor by using, browsing or ordering via this website of www.Little Bunnies shall be deemed to have unconditionally accepted the terms and conditions listed in this document as below:`}</p>
+            <p>{`The website www.Little Bunnies is an online sales & service website officially owned, managed and operated by Little Bunnies®. Hereafter, the term “Firm/Owner/Service provider/Seller” shall mean brand Little Bunnies®, term “website/site” shall mean www.Little Bunnies & “customer/buyers/visitors/user” shall mean anyone visiting, browsing, referring or ordering through www.Little Bunnies.`}</p>
+            <h3>{`USAGE AND ACCOUNT OBLIGATIONS`}</h3>
+            <p>{`For customers under the age of 18 years, you may use this Site only under the supervision of a parent or legal guardian who agrees to be bound by all the Terms & Conditions of Use. All customers may be assigned an Account Username & Password to enable you to login and use certain portions of this website (www.Little Bunnies). By signing up for an Account Username you agree to:`}</p>
+            <p>{`“Customer Information”; is defined as any information you provide to us in the new account registration, in the feedback area or through any email correspondence. We will protect Customer Information in accordance with our Privacy Policy. You are solely responsible for protecting the confidentiality of Your Account Username & Password, and you agree to accept responsibility for all activities that occur under Your Account Username. Little Bunnies® shall not be liable to any person for any loss or damage which may arise as a result of any failure by you to protect your username or password. If you know or suspect that someone else knows your password you should notify us by contacting us immediately through Customer Service. If Little Bunnies® has reason to believe that there is likely to be a breach of security or misuse of the website, we may require you to change your password or we may suspend your account without any liability to Little Bunnies®. We do use your contact information to send you offers based on your previous orders and your interests.”`}</p>
+            <h3>{`PRICING, TECHNICAL OR TYPOGRAPHICAL ERRORS`}</h3>
+            <p>{`Little Bunnies® on its website (www.Little Bunnies) strives to provide accurate product and pricing information, pricing or typographical or technical errors may occur. In the event that a product is listed at an incorrect price or with incorrect information due to an error in pricing or product information, Little Bunnies® shall have the right to refuse or cancel any orders placed for that product listed at the incorrect price. Little Bunnies® shall have the right to refuse or cancel any such orders whether or not the order has been confirmed and money has been charged. Little Bunnies® shall initiate a refund in such cases or offer you a credit note to be redeemed for your future purchases as per your choice.`}</p>
+            <h3>{`RIGHT TO REFUSE OR CANCELLATION ORDERS BY LITTLE Bunnies® (www.Little Bunnies)`}</h3>
+            <p>{`There may be certain orders that we are unable to process and needs cancellation. Little Bunnies® reserves the right to refuse or cancel any order without sighting any reason whatsoever. Some situations that may result in your order being cancelled include limitations on quantities available for purchase, inaccuracies or errors in product or pricing information, or problems identified by our credit and fraud avoidance department. We may also require additional verifications or information before accepting any order. We will contact you if all or any portion of your order is cancelled or if additional information is required to accept your order. If your order is cancelled after your money has been charged, Little Bunnies® may initiate a refund in such cases or offer you a credit note to be redeemed for your future purchases as deemed fit at its own discretion. However, this is made clear that, no orders can be cancelled and refunds demanded by the customers once the orders are placed in any circumstances whatsoever.`}</p>
+            <h3>{`FINANCIAL TRANSACTIONS`}</h3>
+            <p>{`You agree, understand and confirm that the financial details provided by you on the website and payment modes used or shall be used for availing of services on www.Little Bunnies are correct and accurate and lawfully owned by you. Any financial information will not be utilized and shared by www.Little Bunnies with any of the third parties unless required for fraud verifications or by law, regulation or court order. Little Bunnies® and its www.Little Bunnies will not be liable for any credit card fraud or any money that has not been received against payments in its official bank accounts. The liability for use of a card fraudulently will be on you and the onus to ‘prove otherwise’ shall be exclusively on you (customer).`}</p>
+            <h3>{`EXTERNAL LINKS`}</h3>
+            <h3>{`FAKE OR DUMMY WEBSITES`}</h3>
+            <p>{`Little Bunnies® manages and operates www.Little Bunnies , which is the only official website of the company. Little Bunnies® has not granted any permissions or rights to any other website to sell products and collect money on its behalf. Little Bunnies® shall not be responsible for any actions of fake or third party websites. You are seriously advised to check authenticity of website before placing orders and you are requested to bring to our notice any such case for immediate action. Little Bunnies shall not be responsible for any frauds or monetary transactions that may be carried out by you on similar looking website or websites using Little Bunnies name or logo falsely.`}</p>
+            <h3>{`PRODUCT DESIGN, COLORS AND APPEARANCE`}</h3>
+            <p>{`We have made every effort to display the colors of our products that appear on www.Little Bunnies as accurately as possible. However, as the actual colors you see will depend on your display screen, we cannot guarantee that your display screen of any color will be accurate. Due to display settings and/or video card differences, subtle variations in color and texture may not be fully revealed. Little Bunnies selling its products through its website www.Little Bunnies cannot guarantee the finish and appearance of the final customized product ordered by the user. Alterations to certain aspects of your custom product order such as the size, color, personalization text, font size and type etc., may be required due to limitations caused by the design and/or available production and raw materials. Further, All Little Bunnies products are handcrafted using basic equipment by our skilled Indian Artisans. We take all efforts in standardizing the product quality, shape, size, material and looks. However, there could be some differences in products from the pictures shown on the website. Little changes or imperfections and slight variations could be there and should not be considered as mistakes and no claims based on these shall be accepted.`}</p>
+            <h3>{`REVIEWS AND FEEDBACK`}</h3>
+            <p>{`Except as otherwise provided elsewhere of www.Little Bunnies, anything that you submit or post or provide to www.Little Bunnies, including without limitation, pictures of products shared on social media or on website, product reviews, comments, feedback, suggestions, ideas, questions (collectively, “Disclosures”) shall be and remain property of Little Bunnies®. All Disclosures shall be treated as non-confidential and non-proprietary, and Little Bunnies® shall have royalty-free, worldwide, perpetual, irrevocable and transferable right to use, copy, distribute, display, publish, perform, sell, lease, transmit, adapt, create derivative works from such Disclosures by any means and in any form, and to translate, modify, or decompile such Disclosures without restriction and without compensating you in any way. All Disclosures shall automatically become the sole and exclusive property of Little Bunnies® and shall not be returned to you. Little Bunnies® or its website www.Little Bunnies is and shall be under no obligation to:`}</p>
+            <ul className="list-disc pl-5 space-y-2">
+            <li>{`maintain any Disclosures in confidence;`}</li>
+            <li>{`pay you any compensation for any Disclosures; or`}</li>
+            <li>{`respond to any Disclosures.`}</li>
+            </ul>
+            <p>{`You agree that any Disclosures submitted by you to the website will not violate this policy or any right of any third party, including copyright, trademark, privacy or other personal or proprietary right(s), and will not cause injury to any person or entity. You further agree that no Disclosures submitted by you to the Site will be or contain libelous or otherwise unlawful, threatening, abusive or obscene material, or contain software viruses, political campaigning, commercial solicitation, chain letters, mass mailings or any form of “spam”. You shall not use a false email address, pretend to be someone other than yourself or otherwise mislead www.Little Bunnies or third parties as to the origin of any Disclosure. www.Little Bunnies may, but shall not be obligated to, remove or edit any Disclosures (including comments or reviews) for any reason.`}</p>
+            <h3>{`TRADEMARKS, DESIGN PATENTS & COPYRIGHT`}</h3>
+            <p>{`1. Ownership: The Registered trademark "LITTLE Bunnies®" and associated logo, as well as the design patent for specified bags (TOTE BAG & SWIMMING BAG), are the exclusive property of Little Bunnies Unicorn Pvt. Ltd. All rights are reserved. 2. Authorized Use: Users are granted a limited, non-exclusive, non-transferable license to use the LITTLE Bunnies® trademarks solely in connection with the purchase and promotion of products and only after written authorized by Company. All Images used in the website are a sole property of LITTLE Bunnies® and should not be used anywhere without written consent of the company. 3. Prohibited Actions:`}</p>
+            <ul className="list-disc pl-5 space-y-2">
+            <li>{`Users are strictly prohibited from using the trademarks in any manner that may cause confusion, dilution, or damage to the reputation of LITTLE Bunnies®. • Unauthorized reproduction, modification, or distribution of the design patent-protected TOTE BAGS AND SWIMMING BAGS is strictly prohibited.`}</li>
+            </ul>
+            <h3>{`DISCLAIMER AND LIMITATION OF LIABILITY`}</h3>
+            <p>{`Little Bunnies® (www.Little Bunnies) is provided without any warranties or guarantees and in an “As Is” condition. You must bear the risks associated with the use of www.Little Bunnies. www.Little Bunnies provides content from third-party Vendors and while www.Little Bunnies tries to ensure that the content is correct, reputable and of high quality, it cannot accept responsibility if this is not the case. www.Little Bunnies will not be responsible for any errors or omissions or for the results obtained from the use of such information or for any technical problems you may experience with www.Little Bunnies. This disclaimer does not apply to any product warranty offered by the manufacturer of the product as specified in the product specifications. This disclaimer constitutes an essential part of these Terms & Conditions of Use. To the fullest extent permitted under applicable law, www.Little Bunnies or its Vendors shall not be liable for any indirect, incidental, special, incidental, consequential or exemplary damages, including but not limited to, damages for loss of profits, goodwill, use, data or other intangible losses arising out of or in connection with www.Little Bunnies, its services or these Terms & Conditions of Use. Without prejudice to the generality of the section above, the total liability of www.Little Bunnies to you for all liabilities arising out of these Terms & Conditions of Use be it in tort or contract is limited to the value of the product ordered by you. Little Bunnies® (www.Little Bunnies), its associates and technology partners make no representations or warranties about the accuracy, reliability, completeness and/or timeliness of any content, information, software, text, graphics, links or communications provided on or through the use of www.Little Bunnies or that the operation of www.Little Bunnies will be error free and/or uninterrupted. Consequently, www.Little Bunnies assumes no liability whatsoever for any monetary or other damage suffered by you on account of the delay, failure, interruption, or corruption of any data or other information transmitted in connection with use of the Site; and/or any interruption or errors in the operation of www.Little Bunnies.`}</p>
+            <h3>{`PRIVACY POLICY`}</h3>
+            <p>{`We may share personal information with our affiliates to: help detect and prevent identity theft, fraud and other potentially illegal acts; correlate related or multiple accounts to prevent abuse of our services; and to facilitate joint or co-branded services that you request where such services are provided by more than one corporate entity. Those entities and affiliates may not market to you as a result of such sharing unless you explicitly opt-in. We may disclose personal information if required to do so by law or in the good faith belief that such disclosure is reasonably necessary to respond to subpoenas, court orders, or other legal process. We use third-party advertising companies to serve ads when you visit our website. These companies may use information (not including your name, address, email address, or telephone number) about your visits to this and other websites in order to provide advertisements about goods and services of interest to you. (Also read our Privacy Policy Document for more details) These Terms & Conditions of Use shall be construed in accordance with the applicable laws of India and Little Bunnies reserves all rights to change or update any information without your consent or prior information to anyone. The Courts at Kolkata, West Bengal, India shall have exclusive jurisdiction in any proceedings arising out of this agreement.`}</p>
+            <p>{`Please send all questions, comments (including copyright infringement) including any clarification or information on orders@Little Bunnies.`}</p>
+            <p>{`************`}</p>
           </div>
         </div>
       </section>
