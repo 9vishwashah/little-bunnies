@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Quicksand, Fredoka } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Toaster } from "sonner";
+import ScrollToTop from "@/components/ScrollToTop";
 import "./globals.css";
 
 const quicksand = Quicksand({
@@ -94,7 +95,8 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="en" className={`${quicksand.variable} ${fredoka.variable}`}>
-        <body className="font-sans bg-cream text-ink antialiased">
+        <body className="font-sans bg-cream text-ink antialiased overflow-x-hidden">
+          <ScrollToTop />
           {children}
           <Toaster
             position="top-center"

@@ -11,7 +11,7 @@ const FOOTER_LINKS = {
     { label: "Diapers", href: "/products?category=diapers" },
     { label: "Bags", href: "/products?category=bags" },
   ],
-  Help: [
+  "Quick Links": [
     { label: "Shipping Policy", href: "/shipping-policy" },
     { label: "Exchange & Credit Note Policy", href: "/exchange-policy" },
     { label: "Cancellation and Return Policy", href: "/returns" },

@@ -6,12 +6,13 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Search,
   ShoppingBag,
   Menu,
   ChevronDown,
+  Heart,
 } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
+import { useWishlistStore } from "@/store/wishlistStore";
 
 import { cn } from "@/lib/utils";
 import MobileMenu from "./MobileMenu";
@@ -56,6 +57,7 @@ export default function Header() {
   const pathname  = usePathname();
   const cartCount = useCartStore((s) => s.getTotalItems());
   const openCart  = useCartStore((s) => s.openCart);
+  const wishlistCount = useWishlistStore((s) => s.items.length);
   const megaRef   = useRef<HTMLDivElement>(null);
 
   useEffect(() => { setMounted(true); }, []);
@@ -279,25 +281,35 @@ export default function Header() {
                   alt="Little Bunnies"
                   width={340}
                   height={115}
-                  className="h-16 w-auto md:h-24 lg:h-32 transition-all"
+                  className="h-20 w-auto md:h-24 lg:h-32 transition-all"
                   priority
                 />
               </Link>
             </div>
 
             {/* Right section: Icons */}
-            <div className="flex-1 flex items-center justify-end gap-1">
-              <button
-                onClick={() => setSearchOpen(true)}
-                className="btn-ghost p-2.5 rounded-xl"
-                aria-label="Search"
+            <div className="flex-1 flex items-center justify-end gap-0 md:gap-1">
+              {/* Wishlist */}
+              <Link
+                href="/wishlist"
+                className="btn-ghost p-1.5 md:p-2.5 rounded-xl relative"
+                aria-label={`Wishlist (${wishlistCount})`}
               >
-                <Search size={20} />
-              </button>
+                <Heart size={20} />
+                {mounted && wishlistCount > 0 && (
+                  <motion.span
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center"
+                  >
+                    {wishlistCount > 9 ? "9+" : wishlistCount}
+                  </motion.span>
+                )}
+              </Link>
 
               <button
                 onClick={openCart}
-                className="btn-ghost p-2.5 rounded-xl relative"
+                className="btn-ghost p-1.5 md:p-2.5 rounded-xl relative"
                 aria-label={`Cart (${cartCount})`}
               >
                 <ShoppingBag size={20} />

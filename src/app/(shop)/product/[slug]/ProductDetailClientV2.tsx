@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import ProductImage from "@/components/ui/ProductImage";
-import PreOrderModal from "@/components/ui/PreOrderModal";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -19,9 +18,12 @@ import {
   Share2,
   Info,
   Clock,
+  Heart,
+  BookOpen,
 } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
 import { useRecentlyViewedStore } from "@/store/recentlyViewedStore";
+import { useWishlistStore } from "@/store/wishlistStore";
 import { Product, ProductVariant } from "@/types";
 import {
   formatPrice,
@@ -47,12 +49,17 @@ export default function ProductDetailClient({
   );
   const [quantity, setQuantity] = useState(1);
   const [expandedSection, setExpandedSection] = useState<string | null>("delivery");
-  // Use state for URL so SSR and client render identically (avoids hydration mismatch)
   const [pageUrl, setPageUrl] = useState("");
-  const [preOrderOpen, setPreOrderOpen] = useState(false);
+  const [promoInput, setPromoInput] = useState("");
+  const [promoApplied, setPromoApplied] = useState(false);
+  const [promoError, setPromoError] = useState("");
+  const [pincode, setPincode] = useState("");
+  const [pincodeResult, setPincodeResult] = useState<"idle" | "valid" | "invalid">("idle");
 
   const addItem = useCartStore((s) => s.addItem);
   const addRecentlyViewed = useRecentlyViewedStore((s) => s.addItem);
+  const toggleWishlist = useWishlistStore((s) => s.toggleItem);
+  const isWishlisted = useWishlistStore((s) => s.isWishlisted);
 
   let images = product.product_images
     ? [...product.product_images].sort((a, b) => a.sort_order - b.sort_order)
@@ -96,6 +103,8 @@ export default function ProductDetailClient({
   const primaryImage = images[selectedImage] || images[0];
   const discount = calculateDiscount(product.price, product.compare_price || 0);
   const currentPrice = product.price + (selectedVariant?.price_modifier || 0);
+  const promoDiscount = promoApplied ? currentPrice * 0.1 : 0;
+  const finalPrice = currentPrice - promoDiscount;
 
   const whatsappUrl = getWhatsAppUrl(product.name, pageUrl);
 
@@ -113,14 +122,7 @@ export default function ProductDetailClient({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product.id]);
 
-  // Auto slide images
-  useEffect(() => {
-    if (images.length <= 1) return;
-    const interval = setInterval(() => {
-      setSelectedImage((i) => (i + 1) % images.length);
-    }, 4000);
-    return () => clearInterval(interval);
-  }, [images.length]);
+  // Auto slide removed — images change only on manual swipe/click
 
   const handleAddToCart = () => {
     addItem({
@@ -176,8 +178,8 @@ export default function ProductDetailClient({
 
   return (
     <div className="section-container py-6 md:py-10">
-      {/* Breadcrumb */}
-      <nav className="flex items-center gap-2 text-sm text-ink-muted font-medium mb-6">
+      {/* Breadcrumb — desktop only */}
+      <nav className="hidden md:flex items-center gap-2 text-sm text-ink-muted font-medium mb-6">
         <Link href="/" className="hover:text-ink transition-colors">Home</Link>
         <span>/</span>
         <Link href="/products" className="hover:text-ink transition-colors">Products</Link>
@@ -195,6 +197,18 @@ export default function ProductDetailClient({
         <span>/</span>
         <span className="text-ink line-clamp-1">{product.name}</span>
       </nav>
+
+      {/* Mobile product title — shown instead of breadcrumb */}
+      <div className="md:hidden mb-4">
+        {product.brand && (
+          <p className="text-xs font-bold text-ink-muted uppercase tracking-widest mb-1">
+            {product.brand}
+          </p>
+        )}
+        <h1 className="font-display text-lg font-bold text-ink leading-tight">
+          {product.name}
+        </h1>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 xl:gap-16">
         {/* ── Gallery ─────────────────────────────── */}
@@ -226,6 +240,29 @@ export default function ProductDetailClient({
               {discount > 0 && <span className="badge-sale">{discount}% OFF</span>}
               {product.is_new_arrival && <span className="badge-new">NEW</span>}
             </div>
+
+            {/* Wishlist heart button */}
+            <button
+              onClick={() => {
+                const wasWishlisted = isWishlisted(product.id);
+                toggleWishlist(product.id);
+                toast.success(
+                  wasWishlisted ? "Removed from wishlist" : "Added to wishlist! ❤️"
+                );
+              }}
+              className="absolute top-4 right-4 z-10 p-2.5 rounded-full bg-white/90 backdrop-blur-sm shadow-soft hover:shadow-soft-lg transition-all hover:scale-110 active:scale-95"
+              aria-label="Toggle wishlist"
+            >
+              <Heart
+                size={20}
+                className={cn(
+                  "transition-all duration-200",
+                  isWishlisted(product.id)
+                    ? "fill-red-500 text-red-500 scale-110"
+                    : "text-ink/50"
+                )}
+              />
+            </button>
 
             {/* Navigation arrows */}
             {images.length > 1 && (
@@ -338,15 +375,15 @@ export default function ProductDetailClient({
 
         {/* ── Product Info ─────────────────────────── */}
         <div>
-          {/* Brand */}
+          {/* Brand — desktop only (mobile brand shown above gallery) */}
           {product.brand && (
-            <p className="text-xs font-bold text-ink-muted uppercase tracking-widest mb-2">
+            <p className="hidden md:block text-xs font-bold text-ink-muted uppercase tracking-widest mb-2">
               {product.brand}
             </p>
           )}
 
-          {/* Name */}
-          <h1 className="font-display text-2xl md:text-3xl font-bold text-ink leading-tight mb-3">
+          {/* Name — desktop only (mobile title shown above gallery) */}
+          <h1 className="hidden md:block font-display text-2xl md:text-3xl font-bold text-ink leading-tight mb-3">
             {product.name}
           </h1>
 
@@ -376,60 +413,153 @@ export default function ProductDetailClient({
           ) : null}
 
           {/* Price */}
-          <div className="flex items-baseline gap-3 mb-5">
-            <span className="font-bold text-ink text-3xl">
-              {formatPrice(currentPrice)}
+          <div className="flex items-baseline gap-3 mb-1">
+            <span className="font-bold text-ink text-2xl">
+              {formatPrice(finalPrice)}
             </span>
-            {product.compare_price && product.compare_price > product.price && (
-              <span className="text-lg text-ink-muted line-through font-medium">
+            {promoApplied && (
+              <span className="text-sm text-ink-muted line-through font-medium">
+                {formatPrice(currentPrice)}
+              </span>
+            )}
+            {!promoApplied && product.compare_price && product.compare_price > product.price && (
+              <span className="text-sm text-ink-muted line-through font-medium">
                 {formatPrice(product.compare_price)}
               </span>
             )}
             {discount > 0 && (
               <span className="badge-sale text-sm px-3 py-1.5">{discount}% OFF</span>
             )}
+            {promoApplied && (
+              <span className="text-xs font-bold text-green-600 bg-green-50 border border-green-200 px-2 py-1 rounded-full">
+                -10% applied
+              </span>
+            )}
           </div>
 
-
-
-          {/* Action buttons — side by side */}
-          <div className="flex flex-row gap-3 mb-4 w-full">
-            <button
-              onClick={() => setPreOrderOpen(true)}
-              className="btn-primary flex-1 text-sm h-12 max-h-12 min-w-0 bg-peach hover:bg-peach-dark"
+          {/* Promo Code */}
+          <div className="mb-5">
+            {promoApplied ? (
+              <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-xl px-4 py-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-green-600 text-lg">🎉</span>
+                  <div>
+                    <p className="text-xs font-bold text-green-700 uppercase tracking-wide">Promo Applied</p>
+                    <p className="text-xs text-green-600 font-medium">FAMILY5 — 10% off</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setPromoApplied(false);
+                    setPromoInput("");
+                    setPromoError("");
+                  }}
+                  className="text-xs font-semibold text-red-500 hover:text-red-700 transition-colors"
+                >
+                  Remove
+                </button>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={promoInput}
+                  onChange={(e) => { setPromoInput(e.target.value); setPromoError(""); }}
+                  placeholder="Enter promo code"
+                  className="flex-1 px-4 py-2.5 rounded-xl border-2 border-ink/15 text-sm font-medium bg-cream focus:outline-none focus:border-ink/40 transition-colors placeholder:text-ink-muted/60 uppercase"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      if (promoInput.trim().toUpperCase() === "FAMILY5") {
+                        setPromoApplied(true); setPromoError("");
+                      } else {
+                        setPromoError("Invalid promo code");
+                      }
+                    }
+                  }}
+                />
+                <button
+                  onClick={() => {
+                    if (promoInput.trim().toUpperCase() === "FAMILY5") {
+                      setPromoApplied(true); setPromoError("");
+                    } else {
+                      setPromoError("Invalid promo code");
+                    }
+                  }}
+                  className="px-4 py-2.5 rounded-xl bg-ink text-cream text-sm font-bold hover:bg-ink/80 active:scale-95 transition-all"
+                >
+                  Apply
+                </button>
+              </div>
+            )}
+            {promoError && (
+              <p className="text-xs text-red-500 font-medium mt-1.5 ml-1">{promoError}</p>
+            )}
+          </div>
+          {/* Action button — opens WhatsApp directly */}
+          <div className="flex mb-4 w-full">
+            <a
+              href={(() => {
+                const number = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "919725252421";
+                const variantLine = selectedVariant ? `\nVariant: ${selectedVariant.name} — ${selectedVariant.value}` : "";
+                const promoLine = promoApplied ? `\nPromo Code: FAMILY5 (10% off applied)` : "";
+                const msg = `Hi Little Bunnies,\n\nI'd like to Pre-Order:\n\nProduct: ${product.name}${variantLine}\nPrice: ${formatPrice(finalPrice)}${promoLine}\n\n${pageUrl}\n\nKindly share delivery and payment details. Thank you!`;
+                return `https://wa.me/${number}?text=${encodeURIComponent(msg)}`;
+              })()}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-primary w-full text-sm h-12 max-h-12 bg-peach hover:bg-peach-dark flex items-center justify-center gap-2"
             >
               <Clock size={17} className="flex-shrink-0" />
               <span className="truncate">Pre-Order Now</span>
-            </button>
-            <a
-              href={whatsappUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex-1 flex items-center justify-center gap-2 h-12 max-h-12 px-4 rounded-full text-sm font-semibold text-white transition-all hover:opacity-90 active:scale-95 min-w-0"
-              style={{ backgroundColor: "#25D366" }}
-            >
-              {/* Official WhatsApp SVG icon */}
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                className="w-5 h-5 flex-shrink-0"
-              >
-                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
-              </svg>
-              <span className="truncate">WhatsApp</span>
             </a>
           </div>
 
-          {/* Share button */}
-          <div className="mb-6">
-            <button
-              onClick={handleShare}
-              className="flex items-center justify-center w-full gap-2 px-5 py-3 rounded-pill border-2 border-ink/15 text-sm font-semibold hover:bg-cream-dark transition-colors"
-            >
-              <Share2 size={16} />
-              Share this Product
-            </button>
+          {/* Delivery Pincode */}
+          <div className="mb-5 p-4 rounded-xl border border-ink/10 bg-cream-dark/30">
+            <p className="text-sm font-bold text-ink mb-0.5">Delivery To</p>
+            <p className="text-xs text-ink-muted font-medium mb-3">Enter your pincode to check delivery info</p>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                inputMode="numeric"
+                maxLength={6}
+                value={pincode}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/\D/g, "");
+                  setPincode(val);
+                  setPincodeResult("idle");
+                }}
+                placeholder="Enter Pincode"
+                className="flex-1 px-4 py-2.5 rounded-xl border-2 border-ink/15 text-sm font-medium bg-white focus:outline-none focus:border-ink/40 transition-colors placeholder:text-ink-muted/50"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && pincode.length === 6) {
+                    setPincodeResult("valid");
+                  }
+                }}
+              />
+              <button
+                onClick={() => {
+                  if (pincode.length === 6) {
+                    setPincodeResult("valid");
+                  } else {
+                    setPincodeResult("invalid");
+                  }
+                }}
+                className="px-4 py-2.5 rounded-xl text-sm font-bold text-peach-dark hover:bg-peach/10 transition-colors"
+              >
+                CHECK
+              </button>
+            </div>
+            {pincodeResult === "valid" && (
+              <p className="text-xs text-green-700 font-semibold mt-2 ml-1">
+                Delivery available to {pincode} — estimated 14 business days.
+              </p>
+            )}
+            {pincodeResult === "invalid" && (
+              <p className="text-xs text-red-500 font-medium mt-2 ml-1">
+                Please enter a valid 6-digit pincode.
+              </p>
+            )}
           </div>
 
           {/* Short description */}
@@ -448,7 +578,7 @@ export default function ProductDetailClient({
               </div>
 
               {/* Mobile View: Accordion */}
-              <div className="block md:hidden mb-5 border-t border-b border-ink/8">
+              <div className="block md:hidden border-t border-ink/8">
                 <button
                   onClick={() => toggleSection("short_description")}
                   className="flex items-center justify-between w-full py-4 text-left"
@@ -485,66 +615,31 @@ export default function ProductDetailClient({
             </>
           )}
 
-          {/* Accordion moved below description — placeholder spacer */}
         </div>
       </div>
 
-      {/* ── Description ──────────────────────────────── */}
+      {/* ── About this Product Accordion ──── */}
       {product.description && (
-        <section className="mt-12 bg-cream-dark/50 rounded-[2rem] p-6 md:p-10">
-          <h2 className="font-display text-xl md:text-2xl font-bold text-ink mb-5">
-            About this product
-          </h2>
-          <div
-            className="prose prose-sm max-w-none text-ink-light"
-            dangerouslySetInnerHTML={{ __html: product.description }}
-          />
-        </section>
-      )}
-
-      {/* ── Delivery / Returns / Safety Accordion ──── */}
-      <section className="mt-8 border-t border-ink/8">
-        {[
-          {
-            key: "delivery",
-            icon: Truck,
-            title: "Delivery & Shipping",
-            content: "Estimated delivery: 14 business days.",
-          },
-          {
-            key: "returns",
-            icon: RotateCcw,
-            title: "Returns & Exchanges",
-            content:
-              "15-day hassle-free returns. Item must be unused and in original packaging. Contact our WhatsApp support to initiate a return.",
-          },
-          {
-            key: "safety",
-            icon: Shield,
-            title: "Safety & Certifications",
-            content:
-              "All Little Bunnies products are BPA-free, non-toxic, and comply with Indian baby safety standards. Safe for newborns 0-6 months.",
-          },
-        ].map(({ key, icon: Icon, title, content }) => (
-          <div key={key} className="border-b border-ink/8">
+        <section className="border-t border-ink/8">
+          <div className="border-b border-ink/8">
             <button
-              onClick={() => toggleSection(key)}
+              onClick={() => toggleSection("about")}
               className="flex items-center justify-between w-full py-4 text-left"
             >
               <div className="flex items-center gap-2.5">
-                <Icon size={18} className="text-ink-muted" strokeWidth={1.8} />
-                <span className="font-semibold text-ink text-sm">{title}</span>
+                <BookOpen size={18} className="text-ink-muted" strokeWidth={1.8} />
+                <span className="font-semibold text-ink text-sm">About this Product</span>
               </div>
               <ChevronDown
                 size={16}
                 className={cn(
                   "text-ink-muted transition-transform",
-                  expandedSection === key && "rotate-180"
+                  expandedSection === "about" && "rotate-180"
                 )}
               />
             </button>
             <AnimatePresence>
-              {expandedSection === key && (
+              {expandedSection === "about" && (
                 <motion.div
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: "auto", opacity: 1 }}
@@ -552,15 +647,16 @@ export default function ProductDetailClient({
                   transition={{ duration: 0.2 }}
                   className="overflow-hidden"
                 >
-                  <p className="pb-4 text-sm text-ink-muted font-medium leading-relaxed">
-                    {content}
-                  </p>
+                  <div
+                    className="pb-4 prose prose-sm max-w-none text-ink font-medium leading-relaxed"
+                    dangerouslySetInnerHTML={{ __html: product.description }}
+                  />
                 </motion.div>
               )}
             </AnimatePresence>
           </div>
-        ))}
-      </section>
+        </section>
+      )}
 
 
 
@@ -678,15 +774,6 @@ export default function ProductDetailClient({
           scrollable
         />
       )}
-
-      {/* Pre-Order Modal */}
-      <PreOrderModal
-        isOpen={preOrderOpen}
-        onClose={() => setPreOrderOpen(false)}
-        productName={product.name}
-        productPrice={formatPrice(currentPrice)}
-        productImage={primaryImage?.url}
-      />
 
     </div>
   );

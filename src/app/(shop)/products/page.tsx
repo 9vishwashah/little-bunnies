@@ -36,6 +36,9 @@ async function getProducts(searchParams: Record<string, string>): Promise<{ prod
           catIds.push(...subCats.map((c) => c.id));
         }
         query = query.in("category_id", catIds);
+      } else {
+        // Category not found, force empty result
+        query = query.eq("id", "00000000-0000-0000-0000-000000000000");
       }
     }
     if (searchParams.minPrice) query = query.gte("price", parseFloat(searchParams.minPrice));
