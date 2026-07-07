@@ -7,39 +7,65 @@ import { Star, ChevronLeft, ChevronRight, Quote } from "lucide-react";
 const TESTIMONIALS = [
   {
     id: 1,
-    name: "Priya Sharma",
+    name: "Aarohi S.",
     location: "Mumbai",
-    rating: 5,
-    text: "The Egg Pram is an absolute dream! It glides so smoothly and the suspension is fantastic — my baby falls asleep within minutes. The premium build quality is obvious the moment you touch it. Worth every rupee!",
-    initials: "PS",
+    rating: 4.9,
+    ratingDisplay: "4.9/5",
+    text: "The stroller feels incredibly premium and is so easy to maneuver. The suspension is smooth, the canopy offers great coverage, and my baby falls asleep within minutes every time we go out.",
+    initials: "AS",
     color: "bg-blush/30",
   },
   {
     id: 2,
-    name: "Rahul & Sneha",
+    name: "Priyanshi M.",
     location: "Mumbai",
     rating: 5,
-    text: "We got the Comfy Rider for our 3-month-old and it's been a game changer for our morning walks. The one-hand fold mechanism is brilliant — I can manage the baby and the pram easily. Super lightweight yet sturdy!",
-    initials: "RS",
+    ratingDisplay: "5/5",
+    text: "We wanted a stroller that looked luxurious without compromising on comfort, and Little Bunnies delivered exactly that. Lightweight, sturdy, and folds effortlessly. Worth every penny.",
+    initials: "PM",
     color: "bg-sky-brand",
   },
   {
     id: 3,
-    name: "Anjali Mehta",
+    name: "Rohan & Sneha P.",
     location: "Mumbai",
     rating: 5,
-    text: "The Cocoon pram is everything I wanted for my newborn. The bassinet-style seat is so cosy and the canopy provides amazing sun protection. Assembly was a breeze and the Little Bunnies team was super helpful!",
-    initials: "AM",
+    ratingDisplay: "5/5",
+    text: "We've used it for shopping malls, airports, and daily walks. Steering is effortless, storage is spacious, and the quality is far better than many expensive international brands.",
+    initials: "RP",
     color: "bg-sage/30",
   },
   {
     id: 4,
-    name: "Vikram Patel",
+    name: "Neha K.",
+    location: "Mumbai",
+    rating: 4.8,
+    ratingDisplay: "4.8/5",
+    text: "Beautiful finish, premium materials, and extremely comfortable for our newborn. We've received so many compliments on it. Highly recommended for new parents.",
+    initials: "NK",
+    color: "bg-lavender-brand/30",
+  },
+  {
+    id: 5,
+    name: "Shreya V.",
     location: "Mumbai",
     rating: 5,
-    text: "Ordered a diaper bag from Little Bunnies and I'm blown away by the storage. It has separate compartments for bottles, wipes, and clothes. The insulated pockets keep milk warm for hours. Looks stylish too!",
-    initials: "VP",
-    color: "bg-lavender-brand/30",
+    ratingDisplay: "5/5",
+    text: "Finally, a diaper bag that doesn't look like a diaper bag! Elegant, spacious, and beautifully organized. It fits everything we need while still looking stylish.",
+    initials: "SV",
+    color: "bg-peach/20",
+    bagReview: true,
+  },
+  {
+    id: 6,
+    name: "Ankit & Riya D.",
+    location: "Mumbai",
+    rating: 4.9,
+    ratingDisplay: "4.9/5",
+    text: "Excellent build quality with plenty of compartments. The insulated bottle pockets are a lifesaver, and the bag matches perfectly with our stroller. Functional and premium in every way.",
+    initials: "AD",
+    color: "bg-cream-dark",
+    bagReview: true,
   },
 ];
 
@@ -97,19 +123,21 @@ export default function Testimonials() {
                 {/* Quote icon */}
                 <Quote size={24} className="text-ink/20" />
 
-                {/* Stars */}
-                <div className="flex gap-1">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <Star
-                      key={star}
-                      size={14}
-                      className={
-                        star <= review.rating
-                          ? "text-peach fill-peach"
-                          : "text-ink/20 fill-ink/10"
-                      }
-                    />
-                  ))}
+                {/* Stars + rating */}
+                <div className="flex items-center gap-2">
+                  <div className="flex gap-0.5">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star
+                        key={star}
+                        size={14}
+                        className="text-peach fill-peach"
+                      />
+                    ))}
+                  </div>
+                  <span className="text-xs font-bold text-ink/60">{review.ratingDisplay}</span>
+                  {review.bagReview && (
+                    <span className="ml-auto text-xs font-semibold text-ink/50">🎒 Diaper Bag</span>
+                  )}
                 </div>
 
                 {/* Review text */}

@@ -68,7 +68,7 @@ export default function HeroSection() {
               <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3 py-1 sm:px-4 sm:py-1.5 rounded-pill bg-white shadow-soft-sm mb-4 sm:mb-6">
                 <Heart className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-peach fill-peach" />
                 <span className="text-[10px] sm:text-xs font-bold text-ink-light tracking-wide">
-                  Crafted for Your Tiny Royalty
+                  Crafted with love
                 </span>
               </div>
 
@@ -87,12 +87,6 @@ export default function HeroSection() {
               <p className="text-base sm:text-lg md:text-xl text-ink-muted mb-4 max-w-md font-medium">
                 Luxury Begins with the First Ride.<br />For Little Feet. Only First Class.
               </p>
-
-              {/* Pre-order badge */}
-              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-pill bg-amber-50 border border-amber-200 mb-4">
-                <Clock size={13} className="text-amber-500" />
-                <span className="text-xs font-bold text-amber-600 tracking-wide uppercase">Pre-Order Now Open</span>
-              </div>
 
               <div className="flex flex-col sm:flex-row gap-3">
                 <button 

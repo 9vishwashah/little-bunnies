@@ -33,8 +33,10 @@ const nextConfig: NextConfig = {
     ],
   },
 
-  // Cache static assets aggressively
+  // Cache static assets aggressively — production only
+  // (In dev, immutable caching breaks Turbopack hot reload)
   async headers() {
+    if (process.env.NODE_ENV !== "production") return [];
     return [
       {
         source: "/_next/static/(.*)",

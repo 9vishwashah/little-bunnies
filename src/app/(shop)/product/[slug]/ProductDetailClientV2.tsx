@@ -18,8 +18,6 @@ import {
   Plus,
   Share2,
   Info,
-  Maximize,
-  X,
   Clock,
 } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
@@ -51,7 +49,6 @@ export default function ProductDetailClient({
   const [expandedSection, setExpandedSection] = useState<string | null>("delivery");
   // Use state for URL so SSR and client render identically (avoids hydration mismatch)
   const [pageUrl, setPageUrl] = useState("");
-  const [isEnlarged, setIsEnlarged] = useState(false);
   const [preOrderOpen, setPreOrderOpen] = useState(false);
 
   const addItem = useCartStore((s) => s.addItem);
@@ -203,10 +200,7 @@ export default function ProductDetailClient({
         {/* ── Gallery ─────────────────────────────── */}
         <div className="relative">
           {/* Main image */}
-          <div 
-            className="relative aspect-square rounded-brand overflow-hidden bg-cream-dark mb-3 cursor-crosshair group"
-            onClick={() => setIsEnlarged(true)}
-          >
+          <div className="relative aspect-square rounded-brand overflow-hidden bg-cream-dark mb-3 group">
             <AnimatePresence mode="wait">
               <motion.div
                 key={selectedImage}
@@ -232,17 +226,6 @@ export default function ProductDetailClient({
               {discount > 0 && <span className="badge-sale">{discount}% OFF</span>}
               {product.is_new_arrival && <span className="badge-new">NEW</span>}
             </div>
-
-            {/* Expand Button */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsEnlarged(true);
-              }}
-              className="absolute bottom-4 right-4 p-2 rounded-xl bg-white/80 backdrop-blur-sm shadow-soft hover:shadow-soft-lg transition-all z-10"
-            >
-              <Maximize size={18} />
-            </button>
 
             {/* Navigation arrows */}
             {images.length > 1 && (
@@ -579,62 +562,7 @@ export default function ProductDetailClient({
         ))}
       </section>
 
-      {/* Lightbox Modal */}
-      <AnimatePresence>
-        {isEnlarged && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4 md:p-10 cursor-zoom-out"
-            onClick={() => setIsEnlarged(false)}
-          >
-            <button
-              onClick={() => setIsEnlarged(false)}
-              className="absolute top-6 right-6 p-2 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors z-50"
-            >
-              <X size={24} />
-            </button>
-            
-            <div 
-              className="relative w-full h-full max-w-5xl max-h-[80vh] flex items-center justify-center"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <ProductImage
-                src={primaryImage?.url || "/images/placeholder.jpg"}
-                alt={primaryImage?.alt || product.name}
-                fill
-                className="object-contain"
-                sizes="100vw"
-              />
 
-              {/* Lightbox Navigation */}
-              {images.length > 1 && (
-                <>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectedImage((i) => (i - 1 + images.length) % images.length);
-                    }}
-                    className="absolute left-0 p-3 rounded-full bg-white/10 text-white hover:bg-white/20 transition-all -ml-2 md:-ml-12 z-50"
-                  >
-                    <ChevronLeft size={24} />
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectedImage((i) => (i + 1) % images.length);
-                    }}
-                    className="absolute right-0 p-3 rounded-full bg-white/10 text-white hover:bg-white/20 transition-all -mr-2 md:-mr-12 z-50"
-                  >
-                    <ChevronRight size={24} />
-                  </button>
-                </>
-              )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* ── Reviews ──────────────────────────────── */}
       {approvedReviews.length > 0 && (

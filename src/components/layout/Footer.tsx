@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { MessageCircle } from "lucide-react";
 import { FaInstagram, FaFacebook, FaWhatsapp } from "react-icons/fa";
 import { FaLinkedinIn } from "react-icons/fa6";
 
@@ -14,14 +13,15 @@ const FOOTER_LINKS = {
   ],
   Help: [
     { label: "Shipping Policy", href: "/shipping-policy" },
-    { label: "Privacy Policy", href: "/privacy-policy" },
+    { label: "Exchange & Credit Note Policy", href: "/exchange-policy" },
     { label: "Cancellation and Return Policy", href: "/returns" },
     { label: "Terms & Conditions", href: "/terms" },
   ],
   Company: [
     { label: "About Little Bunnies", href: "/about" },
-    { label: "Blog", href: "/blog" },
     { label: "Contact Us", href: "/contact" },
+    { label: "Wholesale Inquiry", href: "/wholesale" },
+    { label: "Work For Us", href: "/work-for-us" },
   ],
 };
 
@@ -47,58 +47,36 @@ export default function Footer() {
 
             {/* Social */}
             <div className="flex items-center gap-3 mt-6">
-              {[
-                {
-                  icon: FaInstagram,
-                  href: "https://www.instagram.com/littlebunniesofficial",
-                  label: "Instagram",
-                  color: "#E1306C",
-                  bg: "rgba(225,48,108,0.12)",
-                  hoverBg: "rgba(225,48,108,0.22)",
-                },
-                {
-                  icon: FaFacebook,
-                  href: "https://www.facebook.com/share/1D5pdMpchM/",
-                  label: "Facebook",
-                  color: "#1877F2",
-                  bg: "rgba(24,119,242,0.12)",
-                  hoverBg: "rgba(24,119,242,0.22)",
-                },
-                {
-                  icon: FaLinkedinIn,
-                  href: "https://www.linkedin.com/in/little-bunnies-309a84418?utm_source=share_via&utm_content=profile&utm_medium=member_android",
-                  label: "LinkedIn",
-                  color: "#0A66C2",
-                  bg: "rgba(10,102,194,0.12)",
-                  hoverBg: "rgba(10,102,194,0.22)",
-                },
-                {
-                  icon: FaWhatsapp,
-                  href: "https://wa.me/919725252421",
-                  label: "WhatsApp",
-                  color: "#25D366",
-                  bg: "rgba(37,211,102,0.12)",
-                  hoverBg: "rgba(37,211,102,0.22)",
-                },
-              ].map(({ icon: Icon, href, label, color, bg }) => (
-                <a
-                  key={label}
-                  href={href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={label}
-                  className="p-2.5 rounded-xl transition-all duration-200 hover:scale-110"
-                  style={{ background: bg }}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.background = `${color}33`)
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.background = bg)
-                  }
-                >
-                  <Icon size={18} style={{ color }} />
-                </a>
-              ))}
+              <a
+                href="https://www.instagram.com/littlebunniesofficial"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Instagram"
+                className="p-2.5 rounded-xl transition-all duration-200 hover:scale-110"
+                style={{ background: "rgba(225,48,108,0.12)" }}
+              >
+                <FaInstagram size={18} style={{ color: "#E1306C" }} />
+              </a>
+              <a
+                href="https://www.facebook.com/share/1D5pdMpchM/"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Facebook"
+                className="p-2.5 rounded-xl transition-all duration-200 hover:scale-110"
+                style={{ background: "rgba(24,119,242,0.12)" }}
+              >
+                <FaFacebook size={18} style={{ color: "#1877F2" }} />
+              </a>
+              <a
+                href="https://wa.me/919725252421"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="WhatsApp"
+                className="p-2.5 rounded-xl transition-all duration-200 hover:scale-110"
+                style={{ background: "rgba(37,211,102,0.12)" }}
+              >
+                <FaWhatsapp size={18} style={{ color: "#25D366" }} />
+              </a>
             </div>
 
             {/* WhatsApp CTA */}
@@ -141,7 +119,9 @@ export default function Footer() {
       {/* Bottom bar */}
       <div className="border-t border-cream/10">
         <div className="section-container py-5 flex items-center justify-center gap-3 text-sm text-cream/40 font-medium">
-          <p suppressHydrationWarning>© {new Date().getFullYear()} Little Bunnies. All rights reserved.</p>
+          <p suppressHydrationWarning>
+            &copy; {new Date().getFullYear()} Little Bunnies. All rights reserved.
+          </p>
         </div>
       </div>
     </footer>
