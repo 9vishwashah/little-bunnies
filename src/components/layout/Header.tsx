@@ -274,14 +274,14 @@ export default function Header() {
             </div>
 
             {/* Center section: Logo */}
-            <div className="flex-shrink-0 flex items-center justify-center mx-4">
+            <div className="flex-shrink-0 flex items-center justify-center mx-1 md:mx-4">
               <Link href="/">
                 <Image
                   src="/images/logo.png"
                   alt="Little Bunnies"
                   width={340}
                   height={115}
-                  className="h-20 w-auto md:h-24 lg:h-32 transition-all"
+                  className="h-20 w-auto md:h-24 lg:h-32 transition-all scale-[1.35] md:scale-100 origin-center"
                   priority
                 />
               </Link>

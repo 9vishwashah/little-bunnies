@@ -72,7 +72,7 @@ export default function HeroSection() {
                 </span>
               </div>
 
-              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-sans font-black text-ink leading-[1.1] mb-3 drop-shadow-sm tracking-tight">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-sans font-black text-ink leading-[1.1] mb-6 drop-shadow-sm tracking-tight">
                 Joy for Every <br />
                 <span>
                   <span className="text-sage-dark">L</span>
@@ -83,10 +83,6 @@ export default function HeroSection() {
                   <span className="text-ink">e</span>
                 </span> One!
               </h1>
-
-              <p className="text-base sm:text-lg md:text-xl text-ink-muted mb-4 max-w-md font-medium">
-                Luxury Begins with the First Ride.<br />For Little Feet. Only First Class.
-              </p>
 
               <div className="flex flex-col sm:flex-row gap-3">
                 <button 

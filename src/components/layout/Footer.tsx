@@ -16,12 +16,13 @@ const FOOTER_LINKS = {
     { label: "Exchange & Credit Note Policy", href: "/exchange-policy" },
     { label: "Cancellation and Return Policy", href: "/returns" },
     { label: "Terms & Conditions", href: "/terms" },
+    { label: "Privacy Policy", href: "/privacy-policy" },
   ],
   Company: [
-    { label: "About Little Bunnies", href: "/about" },
-    { label: "Contact Us", href: "/contact" },
     { label: "Wholesale Inquiry", href: "/wholesale" },
     { label: "Work For Us", href: "/work-for-us" },
+    { label: "About Little Bunnies", href: "/about" },
+    { label: "Contact Us", href: "/contact" },
   ],
 };
 
