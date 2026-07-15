@@ -41,7 +41,7 @@ export function formatWhatsAppMessage(
 }
 
 export function getWhatsAppUrl(productName: string, productUrl: string): string {
-  const number = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "919725252421";
+  const number = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "918976077070";
   const message = formatWhatsAppMessage(productName, productUrl);
   return `https://wa.me/${number}?text=${message}`;
 }

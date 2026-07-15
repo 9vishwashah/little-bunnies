@@ -42,11 +42,15 @@ export default function ProductCard({ product, className, priority }: ProductCar
     <motion.div
       whileHover={{ y: -4 }}
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
-      className={cn("product-card group", className)}
+      className={cn("product-card group relative flex flex-col h-full", className)}
     >
-      <Link href={`/product/${product.slug}`} className="block" prefetch={true}>
+      <Link href={`/product/${product.slug}`} className="absolute inset-0 z-10" prefetch={true}>
+        <span className="sr-only">View {product.name}</span>
+      </Link>
+
+      <div className="relative z-0 flex-1 flex flex-col">
         {/* Image container */}
-        <div className="relative aspect-[4/5] overflow-hidden bg-cream-dark rounded-t-brand">
+        <div className="relative aspect-[4/5] overflow-hidden bg-white rounded-t-brand">
           <ProductImage
             src={primaryImage?.url || "/images/placeholder.jpg"}
             alt={primaryImage?.alt || product.name}
@@ -58,9 +62,6 @@ export default function ProductCard({ product, className, priority }: ProductCar
 
           {/* Badges */}
           <div className="absolute top-3 left-3 flex flex-col gap-1.5">
-            {discount > 0 && (
-              <span className="badge-sale">{discount}% OFF</span>
-            )}
             {product.is_new_arrival && (
               <span className="badge-new">NEW</span>
             )}
@@ -71,7 +72,7 @@ export default function ProductCard({ product, className, priority }: ProductCar
 
 
           {/* Pre-Order CTA — always visible on mobile, hover-reveal on desktop */}
-          <div className="absolute bottom-0 left-0 right-0 p-2.5 translate-y-0 md:translate-y-full md:group-hover:translate-y-0 transition-transform duration-300">
+          <div className="absolute bottom-0 left-0 right-0 p-2.5 translate-y-0 md:translate-y-full md:group-hover:translate-y-0 transition-transform duration-300 z-20">
             <button
               onClick={(e) => {
                 e.preventDefault();
@@ -101,14 +102,16 @@ export default function ProductCard({ product, className, priority }: ProductCar
 
         {/* Product info */}
         <div className="p-3 md:p-4">
-          {product.brand && (
-            <p className="text-xs text-ink-muted font-semibold uppercase tracking-wider mb-1">
-              {product.brand}
-            </p>
-          )}
-          <h3 className="font-semibold text-ink text-sm leading-snug line-clamp-2 mb-2 group-hover:text-ink-light transition-colors">
-            {product.name}
-          </h3>
+          <div className="min-h-[4rem] mb-2 flex flex-col justify-start">
+            {product.brand && (
+              <span className="inline-block px-2 py-0.5 bg-ink/5 border border-ink/10 text-ink-muted text-[10px] font-bold uppercase tracking-widest rounded mb-1.5 self-start">
+                {product.brand}
+              </span>
+            )}
+            <h3 className="font-light text-ink text-[15px] tracking-wide leading-relaxed line-clamp-2 group-hover:text-peach transition-colors">
+              {product.name}
+            </h3>
+          </div>
 
           {/* Rating */}
           {product.review_count && product.review_count > 0 && (
@@ -144,7 +147,7 @@ export default function ProductCard({ product, className, priority }: ProductCar
             )}
           </div>
         </div>
-      </Link>
+      </div>
     </motion.div>
   );
 }

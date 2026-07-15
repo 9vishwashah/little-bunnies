@@ -182,7 +182,7 @@ export default function FAQPage() {
               Contact Us
             </Link>
             <Link
-              href="https://wa.me/919725252421"
+              href="https://wa.me/918976077070"
               target="_blank"
               className="btn-whatsapp"
             >

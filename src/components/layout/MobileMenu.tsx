@@ -186,7 +186,7 @@ export default function MobileMenu({ isOpen, onClose, categories }: MobileMenuPr
             <div className="px-5 py-4 border-t border-ink/8 bg-cream-dark">
               <p className="text-xs text-ink-muted mb-3 font-medium">Need help?</p>
               <a
-                href="https://wa.me/919725252421"
+                href="https://wa.me/918976077070"
                 className="flex items-center gap-2 text-sm font-semibold text-ink hover:text-sage-dark transition-colors"
               >
                 WhatsApp Us

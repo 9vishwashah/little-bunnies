@@ -27,25 +27,37 @@ export const metadata: Metadata = {
   },
   description:
     "Little Bunnies is India's premium baby essentials brand. Shop prams, strollers, diapers, feeding bottles, baby care, clothing, and nursery products crafted for newborns aged 0-6 months.",
-  icons: {
-    icon: "/images/logo-full.png",
-    shortcut: "/images/logo-full.png",
-    apple: "/images/logo-full.png",
-  },
+  applicationName: "Little Bunnies",
+  authors: [{ name: "Little Bunnies" }],
+  generator: "Next.js",
+  creator: "Little Bunnies",
+  publisher: "Little Bunnies",
   keywords: [
+    "Little Bunnies",
+    "little bunnies",
+    "little bunnies india",
     "baby products india",
     "newborn essentials",
     "baby prams",
     "baby strollers",
     "infant care",
     "baby clothing",
-    "little bunnies",
     "0-6 months baby",
   ],
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  icons: {
+    icon: "/images/logo-full.png",
+    shortcut: "/images/logo-full.png",
+    apple: "/images/logo-full.png",
+  },
   openGraph: {
     type: "website",
     locale: "en_IN",
-    url: process.env.NEXT_PUBLIC_APP_URL,
+    url: "/",
     siteName: "Little Bunnies",
     title: "Little Bunnies — Premium Baby Products for 0-6 Months",
     description:
@@ -73,10 +85,13 @@ export const metadata: Metadata = {
       },
     ],
   },
+  verification: {
+    google: "YOUR_GOOGLE_SEARCH_CONSOLE_VERIFICATION_CODE", // Replace with your actual code from Google Search Console
+  },
   robots: {
     index: true,
     follow: true,
-    googleBot: { index: true, follow: true, "max-image-preview": "large" },
+    googleBot: { index: true, follow: true, "max-image-preview": "large", "max-video-preview": -1, "max-snippet": -1 },
   },
 };
 

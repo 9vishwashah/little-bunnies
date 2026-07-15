@@ -214,7 +214,7 @@ export default function ProductDetailClient({
         {/* ── Gallery ─────────────────────────────── */}
         <div className="relative">
           {/* Main image */}
-          <div className="relative aspect-square rounded-brand overflow-hidden bg-cream-dark mb-3 group">
+          <div className="relative aspect-square rounded-brand overflow-hidden bg-white mb-3 group">
             <AnimatePresence mode="wait">
               <motion.div
                 key={selectedImage}
@@ -237,7 +237,7 @@ export default function ProductDetailClient({
 
             {/* Badges */}
             <div className="absolute top-4 left-4 flex flex-col gap-2 z-10">
-              {discount > 0 && <span className="badge-sale">{discount}% OFF</span>}
+
               {product.is_new_arrival && <span className="badge-new">NEW</span>}
             </div>
 
@@ -427,9 +427,7 @@ export default function ProductDetailClient({
                 {formatPrice(product.compare_price)}
               </span>
             )}
-            {discount > 0 && (
-              <span className="badge-sale text-sm px-3 py-1.5">{discount}% OFF</span>
-            )}
+
             {promoApplied && (
               <span className="text-xs font-bold text-green-600 bg-green-50 border border-green-200 px-2 py-1 rounded-full">
                 -10% applied
@@ -499,7 +497,7 @@ export default function ProductDetailClient({
           <div className="flex mb-4 w-full">
             <a
               href={(() => {
-                const number = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "919725252421";
+                const number = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "918976077070";
                 const variantLine = selectedVariant ? `\nVariant: ${selectedVariant.name} — ${selectedVariant.value}` : "";
                 const promoLine = promoApplied ? `\nPromo Code: FAMILY5 (10% off applied)` : "";
                 const msg = `Hi Little Bunnies,\n\nI'd like to Pre-Order:\n\nProduct: ${product.name}${variantLine}\nPrice: ${formatPrice(finalPrice)}${promoLine}\n\n${pageUrl}\n\nKindly share delivery and payment details. Thank you!`;

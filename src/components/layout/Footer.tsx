@@ -69,7 +69,7 @@ export default function Footer() {
                 <FaFacebook size={18} style={{ color: "#1877F2" }} />
               </a>
               <a
-                href="https://wa.me/919725252421"
+                href="https://wa.me/918976077070"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="WhatsApp"
@@ -83,7 +83,7 @@ export default function Footer() {
             {/* WhatsApp CTA */}
             <div className="mt-6">
               <a
-                href="https://wa.me/919725252421"
+                href="https://wa.me/918976077070"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-pill bg-[#25D366] text-white text-sm font-bold hover:bg-[#20BA59] transition-colors shadow-soft hover:shadow-soft-lg hover:-translate-y-1"

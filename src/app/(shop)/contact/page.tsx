@@ -84,7 +84,7 @@ export default function ContactPage() {
           {/* Left — Info */}
           <div className="lg:col-span-2 space-y-5">
             <a
-              href="https://wa.me/919725252421"
+              href="https://wa.me/918976077070"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-start gap-4 bg-white rounded-brand shadow-card p-5 hover:shadow-card-hover hover:-translate-y-0.5 transition-all group"

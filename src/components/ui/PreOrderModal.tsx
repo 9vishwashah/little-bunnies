@@ -62,7 +62,7 @@ export default function PreOrderModal({
         `\n_Submitted via Little Bunnies Pre-Order_`
     );
 
-    const waUrl = `https://wa.me/919725252421?text=${msg}`;
+    const waUrl = `https://wa.me/918976077070?text=${msg}`;
 
     setLoading(false);
     setSubmitted(true);

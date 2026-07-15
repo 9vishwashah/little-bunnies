@@ -4,7 +4,6 @@ import HeroSection from "@/components/layout/home/HeroSection";
 import CategorySection from "@/components/layout/home/CategorySection";
 import TrustBadges from "@/components/layout/home/TrustBadges";
 import ProductSection from "@/components/layout/home/ProductSection";
-import PromoBanner from "@/components/layout/home/PromoBanner";
 import Testimonials from "@/components/layout/home/Testimonials";
 import WhyChooseUs from "@/components/layout/home/WhyChooseUs";
 import ImageMaskText from "@/components/layout/home/ImageMaskText";
@@ -54,8 +53,6 @@ export default async function HomePage() {
           scrollable
         />
       )}
-
-      <PromoBanner />
 
       <TrustBadges />
       <Testimonials />
