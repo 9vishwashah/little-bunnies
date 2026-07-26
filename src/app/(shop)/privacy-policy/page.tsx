@@ -16,7 +16,7 @@ export default function Page() {
             <ShieldCheck size={14} className="text-ink-muted" />
             <span className="text-xs font-bold text-ink-light tracking-wide uppercase">Privacy</span>
           </div>
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold text-ink mb-4">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-sans font-semibold text-ink mb-4">
             Privacy Policy
           </h1>
           <p className="text-ink-muted text-lg md:text-xl max-w-2xl mx-auto font-medium">
@@ -28,7 +28,7 @@ export default function Page() {
       {/* Content */}
       <section className="section-container py-10 pb-20">
         <div className="max-w-3xl mx-auto bg-white rounded-brand shadow-card p-8 md:p-12">
-          <div className="prose prose-stone prose-headings:font-display prose-headings:text-ink prose-p:text-ink-light prose-li:text-ink-light prose-a:text-sage-dark hover:prose-a:text-ink max-w-none">
+          <div className="policy-prose">
             <p>
               We collect various types of information to improve your shopping experience and process your orders. This includes:
             </p>

@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import ProductDetailClient from "./ProductDetailClientV2";
 import { Product } from "@/types";
+import { SITE_URL, jsonLd, stripHtml } from "@/lib/seo";
+import { truncate } from "@/lib/utils";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -70,22 +72,25 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const image = product.product_images?.find((img) => img.is_primary)?.url;
   const fallbackImage = "/images/LittleBunnies-Banner.png";
   const ogImage = image || fallbackImage;
+  const canonical = `${SITE_URL}/product/${product.slug}`;
 
-  const title = product.meta_title || product.name;
-  const description =
+  const description = truncate(
     product.meta_description ||
-    product.short_description ||
-    `Buy ${product.name} from Little Bunnies. Premium baby product, safe for newborns aged 0-6 months.`;
-
-  const price = product.compare_price || product.price;
+      product.short_description ||
+      `Buy ${product.name} from Little Bunnies. Premium baby product, safe for newborns aged 0-6 months.`,
+    160
+  );
 
   return {
-    title,
+    // Bypasses the root layout's "%s | Little Bunnies" title template so we
+    // control the exact string shown in search results / share previews.
+    title: { absolute: `${product.name} | Little Bunnies - Premium Baby Products` },
     description,
+    alternates: { canonical },
     openGraph: {
       title: product.name,
       description,
-      type: "website",
+      url: canonical,
       siteName: "Little Bunnies",
       images: [
         {
@@ -113,6 +118,78 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 import { Suspense } from "react";
 import ProductSection from "@/components/layout/home/ProductSection";
 
+function buildProductJsonLd(product: Product) {
+  const canonical = `${SITE_URL}/product/${product.slug}`;
+  const images = product.product_images?.length
+    ? product.product_images.map((img) => img.url)
+    : [`${SITE_URL}/images/LittleBunnies-Banner.png`];
+
+  const description = stripHtml(
+    product.description || product.short_description || product.name
+  );
+
+  const schema: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.name,
+    image: images,
+    description,
+    sku: product.sku || product.id,
+    brand: { "@type": "Brand", name: product.brand || "Little Bunnies" },
+    offers: {
+      "@type": "Offer",
+      url: canonical,
+      priceCurrency: "INR",
+      price: String(product.price),
+      availability: product.in_stock
+        ? "https://schema.org/InStock"
+        : "https://schema.org/OutOfStock",
+      itemCondition: "https://schema.org/NewCondition",
+    },
+  };
+
+  if (product.categories?.name) {
+    schema.category = product.categories.name;
+  }
+
+  if (product.review_count && product.review_count > 0) {
+    schema.aggregateRating = {
+      "@type": "AggregateRating",
+      ratingValue: (product.avg_rating || 0).toFixed(1),
+      reviewCount: product.review_count,
+    };
+  }
+
+  return schema;
+}
+
+function buildBreadcrumbJsonLd(product: Product) {
+  const items = [
+    { name: "Home", item: SITE_URL },
+    { name: "Products", item: `${SITE_URL}/products` },
+  ];
+
+  if (product.categories) {
+    items.push({
+      name: product.categories.name,
+      item: `${SITE_URL}/products?category=${product.categories.slug}`,
+    });
+  }
+
+  items.push({ name: product.name, item: `${SITE_URL}/product/${product.slug}` });
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: items.map((it, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name: it.name,
+      item: it.item,
+    })),
+  };
+}
+
 export default async function ProductDetailPage({ params }: Props) {
   const { slug } = await params;
   const product = await getProduct(slug);
@@ -121,6 +198,20 @@ export default async function ProductDetailPage({ params }: Props) {
 
   return (
     <>
+      {/* Facebook/WhatsApp product-preview hints — Next's typed metadata API
+          has no "product" og:type and its `other` field only emits `name=`
+          attributes, but the Open Graph product extension requires
+          `property=`, so these are rendered directly instead. */}
+      <meta property="product:price:amount" content={String(product.price)} />
+      <meta property="product:price:currency" content="INR" />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: jsonLd(buildProductJsonLd(product)) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: jsonLd(buildBreadcrumbJsonLd(product)) }}
+      />
       <ProductDetailClient product={product} relatedProducts={[]} />
       {product.category_id && (
         <Suspense fallback={null}>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import ProductImage from "@/components/ui/ProductImage";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -16,10 +17,11 @@ import {
   Minus,
   Plus,
   Share2,
+  Copy,
   Info,
-  Clock,
   Heart,
   BookOpen,
+  Tag,
 } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
 import { useRecentlyViewedStore } from "@/store/recentlyViewedStore";
@@ -30,6 +32,8 @@ import {
   calculateDiscount,
   getWhatsAppUrl,
   cn,
+  PROMO_COUPON_CODE,
+  PROMO_COUPON_LABEL,
 } from "@/lib/utils";
 import ProductSection from "@/components/home/ProductSection";
 import { toast } from "sonner";
@@ -45,17 +49,15 @@ export default function ProductDetailClient({
 }: ProductDetailClientProps) {
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(
-    null
+    () => product.product_variants?.[0] || null
   );
   const [quantity, setQuantity] = useState(1);
   const [expandedSection, setExpandedSection] = useState<string | null>("delivery");
   const [pageUrl, setPageUrl] = useState("");
-  const [promoInput, setPromoInput] = useState("");
-  const [promoApplied, setPromoApplied] = useState(false);
-  const [promoError, setPromoError] = useState("");
   const [pincode, setPincode] = useState("");
   const [pincodeResult, setPincodeResult] = useState<"idle" | "valid" | "invalid">("idle");
 
+  const router = useRouter();
   const addItem = useCartStore((s) => s.addItem);
   const addRecentlyViewed = useRecentlyViewedStore((s) => s.addItem);
   const toggleWishlist = useWishlistStore((s) => s.toggleItem);
@@ -96,6 +98,17 @@ export default function ProductDetailClient({
           sort_order: i,
           is_primary: i === 0,
         }));
+      } else if (parsed.swatch) {
+        images = [
+          {
+            id: "variant-img-swatch",
+            product_id: product.id,
+            url: parsed.swatch,
+            sort_order: 0,
+            is_primary: true,
+          },
+          ...images,
+        ];
       }
     } catch (e) {}
   }
@@ -103,10 +116,28 @@ export default function ProductDetailClient({
   const primaryImage = images[selectedImage] || images[0];
   const discount = calculateDiscount(product.price, product.compare_price || 0);
   const currentPrice = product.price + (selectedVariant?.price_modifier || 0);
-  const promoDiscount = promoApplied ? currentPrice * 0.1 : 0;
-  const finalPrice = currentPrice - promoDiscount;
+  const finalPrice = currentPrice;
 
   const whatsappUrl = getWhatsAppUrl(product.name, pageUrl);
+
+  const handleCopyCoupon = () => {
+    navigator.clipboard.writeText(PROMO_COUPON_CODE);
+    toast.success(`Coupon code ${PROMO_COUPON_CODE} copied!`);
+  };
+
+  const handleShareCoupon = async () => {
+    const shareText = `Use code ${PROMO_COUPON_CODE} for ${PROMO_COUPON_LABEL} at Little Bunnies! 🐰`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: "Little Bunnies Coupon", text: shareText, url: pageUrl });
+      } catch {
+        // user cancelled the share sheet — no error needed
+      }
+    } else {
+      navigator.clipboard.writeText(`${shareText} ${pageUrl}`);
+      toast.success("Coupon link copied to clipboard!");
+    }
+  };
 
   // Set page URL and track recently viewed after mount (client-only)
   useEffect(() => {
@@ -125,23 +156,34 @@ export default function ProductDetailClient({
   // Auto slide removed — images change only on manual swipe/click
 
   const handleAddToCart = () => {
+    const activeVariant =
+      selectedVariant ||
+      (product.product_variants && product.product_variants.length > 0
+        ? product.product_variants[0]
+        : undefined);
+
     addItem({
       id: product.id,
-      name: product.name,
+      name: product.brand || product.name,
       slug: product.slug,
       price: product.price,
       image: primaryImage?.url || "/images/placeholder.jpg",
       quantity,
-      variant: selectedVariant
+      variant: activeVariant
         ? {
-            id: selectedVariant.id,
-            name: selectedVariant.name,
-            value: selectedVariant.value,
-            price_modifier: selectedVariant.price_modifier,
+            id: activeVariant.id,
+            name: activeVariant.name,
+            value: activeVariant.value,
+            price_modifier: activeVariant.price_modifier,
           }
         : undefined,
     });
     toast.success("Added to cart!");
+  };
+
+  const handleBuyNow = () => {
+    handleAddToCart();
+    router.push("/checkout");
   };
 
   const handleShare = async () => {
@@ -178,34 +220,16 @@ export default function ProductDetailClient({
 
   return (
     <div className="section-container py-6 md:py-10">
-      {/* Breadcrumb — desktop only */}
-      <nav className="hidden md:flex items-center gap-2 text-sm text-ink-muted font-medium mb-6">
-        <Link href="/" className="hover:text-ink transition-colors">Home</Link>
-        <span>/</span>
-        <Link href="/products" className="hover:text-ink transition-colors">Products</Link>
-        {product.categories && (
-          <>
-            <span>/</span>
-            <Link
-              href={`/products?category=${product.categories.slug}`}
-              className="hover:text-ink transition-colors"
-            >
-              {product.categories.name}
-            </Link>
-          </>
-        )}
-        <span>/</span>
-        <span className="text-ink line-clamp-1">{product.name}</span>
-      </nav>
+
 
       {/* Mobile product title — shown instead of breadcrumb */}
       <div className="md:hidden mb-4">
         {product.brand && (
-          <p className="text-xs font-bold text-ink-muted uppercase tracking-widest mb-1">
+          <p className="text-base sm:text-lg font-bold text-ink uppercase tracking-widest mb-1.5">
             {product.brand}
           </p>
         )}
-        <h1 className="font-display text-lg font-bold text-ink leading-tight">
+        <h1 className="font-sans font-light text-xs sm:text-sm text-ink-muted leading-relaxed">
           {product.name}
         </h1>
       </div>
@@ -333,11 +357,7 @@ export default function ProductDetailClient({
                     <button
                       key={variant.id}
                       title={variant.value}
-                      onClick={() =>
-                        setSelectedVariant(
-                          selectedVariant?.id === variant.id ? null : variant
-                        )
-                      }
+                      onClick={() => setSelectedVariant(variant)}
                       className={cn(
                         "transition-all",
                         swatchUrl
@@ -377,13 +397,13 @@ export default function ProductDetailClient({
         <div>
           {/* Brand — desktop only (mobile brand shown above gallery) */}
           {product.brand && (
-            <p className="hidden md:block text-xs font-bold text-ink-muted uppercase tracking-widest mb-2">
+            <p className="hidden md:block text-lg md:text-xl font-bold text-ink uppercase tracking-widest mb-2">
               {product.brand}
             </p>
           )}
 
           {/* Name — desktop only (mobile title shown above gallery) */}
-          <h1 className="hidden md:block font-display text-2xl md:text-3xl font-bold text-ink leading-tight mb-3">
+          <h1 className="hidden md:block font-sans font-light text-sm md:text-base text-ink-muted leading-relaxed mb-4">
             {product.name}
           </h1>
 
@@ -417,100 +437,68 @@ export default function ProductDetailClient({
             <span className="font-bold text-ink text-2xl">
               {formatPrice(finalPrice)}
             </span>
-            {promoApplied && (
-              <span className="text-sm text-ink-muted line-through font-medium">
-                {formatPrice(currentPrice)}
-              </span>
-            )}
-            {!promoApplied && product.compare_price && product.compare_price > product.price && (
+            {product.compare_price && product.compare_price > product.price && (
               <span className="text-sm text-ink-muted line-through font-medium">
                 {formatPrice(product.compare_price)}
               </span>
             )}
-
-            {promoApplied && (
-              <span className="text-xs font-bold text-green-600 bg-green-50 border border-green-200 px-2 py-1 rounded-full">
-                -10% applied
-              </span>
-            )}
           </div>
 
-          {/* Promo Code */}
-          <div className="mb-5">
-            {promoApplied ? (
-              <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-xl px-4 py-3">
-                <div className="flex items-center gap-2">
-                  <span className="text-green-600 text-lg">🎉</span>
-                  <div>
-                    <p className="text-xs font-bold text-green-700 uppercase tracking-wide">Promo Applied</p>
-                    <p className="text-xs text-green-600 font-medium">FAMILY5 — 10% off</p>
-                  </div>
+          {/* Coupon card */}
+          <div className="mb-5 relative overflow-hidden rounded-xl border-2 border-dashed border-sage-dark/40 bg-sage-light/20 px-4 py-3">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <Tag size={18} className="text-sage-dark flex-shrink-0" />
+                <div>
+                  <p className="font-mono font-bold text-ink text-sm tracking-wider">
+                    {PROMO_COUPON_CODE}
+                  </p>
+                  <p className="text-xs text-ink-muted font-medium">
+                    {PROMO_COUPON_LABEL} — apply at checkout
+                  </p>
                 </div>
+              </div>
+              <div className="flex items-center gap-1.5 flex-shrink-0">
                 <button
-                  onClick={() => {
-                    setPromoApplied(false);
-                    setPromoInput("");
-                    setPromoError("");
-                  }}
-                  className="text-xs font-semibold text-red-500 hover:text-red-700 transition-colors"
+                  onClick={handleCopyCoupon}
+                  title="Copy code"
+                  className="p-2 rounded-lg bg-white/70 hover:bg-white text-ink transition-colors"
                 >
-                  Remove
+                  <Copy size={15} />
+                </button>
+                <button
+                  onClick={handleShareCoupon}
+                  title="Share coupon"
+                  className="p-2 rounded-lg bg-white/70 hover:bg-white text-ink transition-colors"
+                >
+                  <Share2 size={15} />
                 </button>
               </div>
-            ) : (
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={promoInput}
-                  onChange={(e) => { setPromoInput(e.target.value); setPromoError(""); }}
-                  placeholder="Enter promo code"
-                  className="flex-1 px-4 py-2.5 rounded-xl border-2 border-ink/15 text-sm font-medium bg-cream focus:outline-none focus:border-ink/40 transition-colors placeholder:text-ink-muted/60 uppercase"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      if (promoInput.trim().toUpperCase() === "FAMILY5") {
-                        setPromoApplied(true); setPromoError("");
-                      } else {
-                        setPromoError("Invalid promo code");
-                      }
-                    }
-                  }}
-                />
-                <button
-                  onClick={() => {
-                    if (promoInput.trim().toUpperCase() === "FAMILY5") {
-                      setPromoApplied(true); setPromoError("");
-                    } else {
-                      setPromoError("Invalid promo code");
-                    }
-                  }}
-                  className="px-4 py-2.5 rounded-xl bg-ink text-cream text-sm font-bold hover:bg-ink/80 active:scale-95 transition-all"
-                >
-                  Apply
-                </button>
-              </div>
-            )}
-            {promoError && (
-              <p className="text-xs text-red-500 font-medium mt-1.5 ml-1">{promoError}</p>
-            )}
+            </div>
           </div>
-          {/* Action button — opens WhatsApp directly */}
-          <div className="flex mb-4 w-full">
-            <a
-              href={(() => {
-                const number = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "918976077070";
-                const variantLine = selectedVariant ? `\nVariant: ${selectedVariant.name} — ${selectedVariant.value}` : "";
-                const promoLine = promoApplied ? `\nPromo Code: FAMILY5 (10% off applied)` : "";
-                const msg = `Hi Little Bunnies,\n\nI'd like to Pre-Order:\n\nProduct: ${product.name}${variantLine}\nPrice: ${formatPrice(finalPrice)}${promoLine}\n\n${pageUrl}\n\nKindly share delivery and payment details. Thank you!`;
-                return `https://wa.me/${number}?text=${encodeURIComponent(msg)}`;
-              })()}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn-primary w-full text-sm h-12 max-h-12 bg-peach hover:bg-peach-dark flex items-center justify-center gap-2"
+          {/* Action buttons — Add to Cart / Buy Now */}
+          <div className="flex gap-3 mb-4 w-full">
+            <button
+              onClick={handleAddToCart}
+              disabled={!product.in_stock}
+              className="btn-secondary flex-1 text-sm h-12 max-h-12 flex items-center justify-center gap-2"
             >
-              <Clock size={17} className="flex-shrink-0" />
-              <span className="truncate">Pre-Order Now</span>
-            </a>
+              <ShoppingBag size={17} className="flex-shrink-0" />
+              <span className="truncate">Add to Cart</span>
+            </button>
+            <button
+              onClick={handleBuyNow}
+              disabled={!product.in_stock}
+              className="btn-primary flex-1 text-sm h-12 max-h-12 flex items-center justify-center gap-2"
+            >
+              <span className="truncate">Buy Now</span>
+            </button>
           </div>
+          {!product.in_stock && (
+            <p className="text-xs text-red-500 font-semibold mb-4 -mt-2">
+              Currently out of stock.
+            </p>
+          )}
 
           {/* Delivery Pincode */}
           <div className="mb-5 p-4 rounded-xl border border-ink/10 bg-cream-dark/30">

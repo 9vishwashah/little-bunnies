@@ -12,11 +12,7 @@ export default function Page() {
       {/* Hero */}
       <section className="bg-gradient-to-br from-cream-dark via-cream to-sky-brand py-16 md:py-24">
         <div className="section-container text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-pill bg-white shadow-soft-sm mb-6">
-            <Truck size={14} className="text-ink-muted" />
-            <span className="text-xs font-bold text-ink-light tracking-wide uppercase">Legal</span>
-          </div>
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold text-ink mb-4">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-sans font-semibold text-ink mb-4">
             Shipping Policy
           </h1>
           <p className="text-ink-muted text-lg md:text-xl max-w-2xl mx-auto font-medium">
@@ -28,7 +24,7 @@ export default function Page() {
       {/* Content */}
       <section className="section-container py-10 pb-20">
         <div className="max-w-3xl mx-auto bg-white rounded-brand shadow-card p-8 md:p-12">
-          <div className="prose prose-stone prose-headings:font-display prose-headings:text-ink prose-p:text-ink-light prose-li:text-ink-light prose-a:text-sage-dark hover:prose-a:text-ink max-w-none">
+          <div className="policy-prose">
             
             <p>{`We ship products all over India except some remote areas. Currently, we are not delivering to locations based out of India.`}</p>
 
@@ -42,8 +38,6 @@ export default function Page() {
             <h3>{`Are there any Shipping Charges Applicable on my Order?`}</h3>
             <p>{`Shipping Charges may be applicable on your order, and the exact details will be available during the checkout process. The Shipping Charges vary from product-to-product and may be different for different regions within the country. In case of eligibility for free shipping, no shipping charges will be applicable.`}</p>
 
-            <h3>{`Convenience Charges`}</h3>
-            <p>{`A nominal cash handling fee is applicable when you choose the Cash on Delivery (COD) payment option. This fee covers the additional operational and logistics costs involved in processing and managing cash payments at the time of delivery. Please note that the cash-handling fee charged at checkout is non-refundable and will only be refunded in cases where the product is not successfully delivered.`}</p>
 
             <h3>{`Refund of Shipping Charges`}</h3>
             <p>{`Shipping Charges will not be refunded in case of returning the order. And in case of cancellation, it will be refundable only if the Order is Cancelled before getting Shipped.`}</p>

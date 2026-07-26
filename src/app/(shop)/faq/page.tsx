@@ -19,10 +19,7 @@ const faqs = [
         q: "Is there free shipping?",
         a: "Yes! We offer free shipping on all orders above ₹5999. Orders below ₹5999 have a flat shipping fee of ₹79.",
       },
-      {
-        q: "Do you offer Cash on Delivery (COD)?",
-        a: "Yes, COD is available across 27,000+ pin codes in India. A nominal COD handling fee of ₹29 applies.",
-      },
+
       {
         q: "How do I track my order?",
         a: "You will receive a tracking number via email and WhatsApp within 24 hours of your order being dispatched. Use the link to track your shipment in real time.",
@@ -40,11 +37,11 @@ const faqs = [
     items: [
       {
         q: "What is the return window?",
-        a: "You have 7 days from the date of delivery to initiate a return for eligible products.",
+        a: "You have 15 days from the date of delivery to initiate a return for eligible products.",
       },
       {
         q: "How do I initiate a return?",
-        a: "Contact us via WhatsApp (+91 97252 52421) or email with your order number, reason for return, and photos of the product within 7 days of delivery.",
+        a: "Contact us via WhatsApp (+91 97252 52421) or email with your order number, reason for return, and photos of the product within 15 days of delivery.",
       },
       {
         q: "When will I receive my refund?",
@@ -86,7 +83,7 @@ const faqs = [
     items: [
       {
         q: "What payment methods do you accept?",
-        a: "We accept UPI, credit/debit cards (Visa, Mastercard, RuPay), net banking, wallets (Paytm, PhonePe, Google Pay), and Cash on Delivery.",
+        a: "We accept UPI, credit/debit cards (Visa, Mastercard, RuPay), net banking, and wallets (Paytm, PhonePe, Google Pay).",
       },
       {
         q: "Is my payment information secure?",

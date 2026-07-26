@@ -124,6 +124,7 @@ export default function CartDrawer() {
                               src={item.image}
                               alt={item.name}
                               fill
+                              sizes="112px"
                               className="object-cover"
                               showSkeleton={false}
                             />

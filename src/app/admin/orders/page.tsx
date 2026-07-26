@@ -2,6 +2,7 @@ import { createAdminClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { formatPrice } from "@/lib/utils";
 import { Eye, Search } from "lucide-react";
+import DeleteOrderButton from "./DeleteOrderButton";
 
 async function getOrders(search?: string) {
   const supabase = createAdminClient();
@@ -107,9 +108,12 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
                       </span>
                     </td>
                     <td className="px-4 py-3.5">
-                      <Link href={`/admin/orders/${order.id}`} className="btn-ghost text-xs p-2">
-                        <Eye size={16} />
-                      </Link>
+                      <div className="flex items-center gap-1">
+                        <Link href={`/admin/orders/${order.id}`} className="btn-ghost text-xs p-2" title="View order">
+                          <Eye size={16} />
+                        </Link>
+                        <DeleteOrderButton orderId={order.id} orderNumber={order.order_number} />
+                      </div>
                     </td>
                   </tr>
                 ))

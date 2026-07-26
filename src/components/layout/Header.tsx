@@ -22,10 +22,12 @@ import CartDrawer from "@/components/cart/CartDrawer";
 // ─── Fixed top-level nav items ───────────────────────────────────────────────
 // The slug must match the category slug you create in the admin panel.
 // Sub-categories created under these parents will appear in the dropdown.
-const FIXED_NAV: { label: string; slug: string }[] = [
-  { label: "Prams",     slug: "prams"     },
-  { label: "Bags",      slug: "bags"      },
-  { label: "Utilities", slug: "utilities" },
+// dropdownEnabled: if false, clicking the label navigates directly to the
+//   category page without opening any sub-menu popup.
+const FIXED_NAV: { label: string; slug: string; dropdownEnabled: boolean }[] = [
+  { label: "Prams",     slug: "prams",     dropdownEnabled: true  },
+  { label: "Bags",      slug: "bags",      dropdownEnabled: false },
+  { label: "Utilities", slug: "utility-bags", dropdownEnabled: false },
 ];
 
 interface SubCategory {
@@ -132,8 +134,6 @@ export default function Header() {
                     <div key={j} className="flex items-center gap-5 px-3 text-[11px] sm:text-xs font-black tracking-widest uppercase">
                       <span className="text-ink">Free shipping on orders above ₹5999</span>
                       <span className="text-ink/40">✦</span>
-                      <span className="text-sage-dark">COD Available</span>
-                      <span className="text-ink/40">✦</span>
                       <span className="text-blush-dark">Luxury Baby Gears</span>
                       <span className="text-ink/40">✦</span>
                       <span className="text-lavender-brand-dark">Avail 10% Off on Pre-Orders</span>
@@ -146,8 +146,6 @@ export default function Header() {
           ) : (
             <div className="flex items-center justify-center gap-5 px-3 text-[11px] sm:text-xs font-black tracking-widest uppercase">
               <span className="text-ink">Free shipping on orders above ₹5999</span>
-              <span className="text-ink/40">✦</span>
-              <span className="text-sage-dark">COD Available</span>
               <span className="text-ink/40">✦</span>
               <span className="text-blush-dark">Luxury Baby Gears</span>
               <span className="text-ink/40">✦</span>
@@ -187,6 +185,21 @@ export default function Header() {
                 {/* Only render after mount to avoid SSR/client structure mismatch */}
                 {mounted && FIXED_NAV.map((nav) => {
                   const subs = subMap[nav.slug] ?? [];
+
+                  // ── Direct-link items (Bags, Utilities) ─────────────────
+                  if (!nav.dropdownEnabled) {
+                    return (
+                      <Link
+                        key={nav.slug}
+                        href={`/products?category=${nav.slug}`}
+                        className="flex items-center gap-1 px-3 py-2 rounded-xl text-sm font-semibold transition-colors hover:bg-cream-dark hover:text-ink"
+                      >
+                        {nav.label}
+                      </Link>
+                    );
+                  }
+
+                  // ── Dropdown items (Prams only) ──────────────────────────
                   return (
                     <div
                       key={nav.slug}
@@ -213,7 +226,7 @@ export default function Header() {
                         />
                       </Link>
 
-                      {/* Dropdown — always renders (shows DB subs, or just "View All") */}
+                      {/* Dropdown — shows DB sub-categories + "View All" */}
                       <AnimatePresence>
                         {activeCategory === nav.slug && (
                           <motion.div
@@ -281,7 +294,7 @@ export default function Header() {
                   alt="Little Bunnies"
                   width={340}
                   height={115}
-                  className="h-20 w-auto md:h-24 lg:h-32 transition-all scale-[1.35] md:scale-100 origin-center"
+                  className="h-20 w-auto md:h-24 lg:h-32 transition-all scale-[1.55] md:scale-100 origin-center"
                   priority
                 />
               </Link>

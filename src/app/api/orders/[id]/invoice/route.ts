@@ -1,0 +1,62 @@
+import { NextRequest, NextResponse } from "next/server";
+import { createAdminClient } from "@/lib/supabase/server";
+import { generateInvoicePdf } from "@/lib/invoice/generateInvoicePdf";
+
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const supabase = createAdminClient();
+
+    const { data: order, error } = await supabase
+      .from("orders")
+      .select(
+        "order_number, created_at, subtotal, discount_amount, custom_name_charge, coupon_id, shipping_amount, total, razorpay_payment_id, payment_status, user_id, guest_email, shipping_address"
+      )
+      .eq("id", id)
+      .single();
+
+    if (error || !order) {
+      return NextResponse.json({ error: "Order not found" }, { status: 404 });
+    }
+
+    if (order.payment_status !== "paid") {
+      return NextResponse.json({ error: "Invoice is only available for paid orders" }, { status: 403 });
+    }
+
+    const { data: items } = await supabase
+      .from("order_items")
+      .select("product_name, variant_name, quantity, unit_price, total_price")
+      .eq("order_id", id);
+
+    const email = order.user_id
+      ? (await supabase.from("users").select("email").eq("id", order.user_id).single()).data?.email
+      : order.guest_email;
+
+    let couponCode: string | null = null;
+    if (order.coupon_id) {
+      const { data: coupon } = await supabase
+        .from("coupons")
+        .select("code")
+        .eq("id", order.coupon_id)
+        .single();
+      couponCode = coupon?.code || null;
+    }
+
+    const pdf = await generateInvoicePdf({ ...order, coupon_code: couponCode }, items || [], email);
+
+    return new NextResponse(new Uint8Array(pdf), {
+      status: 200,
+      headers: {
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `attachment; filename="invoice-${order.order_number}.pdf"`,
+        "Cache-Control": "private, no-store",
+      },
+    });
+  } catch (err) {
+    console.error("Invoice generation error:", err);
+    return NextResponse.json({ error: "Failed to generate invoice" }, { status: 500 });
+  }
+}

@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
     const supabase = await createClient();
     let query = supabase
       .from("products")
-      .select("id, name, slug, price, compare_price, product_images(url, is_primary)")
+      .select("id, name, brand, slug, price, compare_price, product_images(url, is_primary)")
       .eq("is_active", true);
 
     if (search) {

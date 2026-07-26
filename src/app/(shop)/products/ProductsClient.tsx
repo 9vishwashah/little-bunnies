@@ -1,27 +1,20 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  SlidersHorizontal,
   Grid2X2,
   LayoutGrid,
   X,
-  ChevronDown,
   Search,
 } from "lucide-react";
 import ProductCard from "@/components/ui/ProductCard";
 import { Product, Category } from "@/types";
 import { cn, formatPrice } from "@/lib/utils";
 
-const SORT_OPTIONS = [
-  { value: "featured", label: "Featured" },
-  { value: "newest", label: "Newest First" },
-  { value: "price_asc", label: "Price: Low to High" },
-  { value: "price_desc", label: "Price: High to Low" },
-  { value: "best_seller", label: "Best Sellers" },
-];
+
 
 const PRICE_RANGES = [
   { label: "Below ₹5,000", min: 0, max: 5000 },
@@ -45,7 +38,7 @@ export default function ProductsClient({
 }: ProductsClientProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const [filterOpen, setFilterOpen] = useState(false);
+
   const [gridCols, setGridCols] = useState<2 | 4>(2);
   const [localSearch, setLocalSearch] = useState(searchParams.search || "");
 
@@ -74,6 +67,19 @@ export default function ProductsClient({
   const activeFilters = Object.entries(searchParams).filter(
     ([k]) => !["page", "sort"].includes(k)
   );
+
+  // Real crawlable hrefs for pagination — Googlebot discovers subsequent
+  // pages via <a href>, it doesn't execute onClick handlers.
+  const buildPageHref = (page: number) => {
+    const params = new URLSearchParams(searchParams);
+    if (page <= 1) {
+      params.delete("page");
+    } else {
+      params.set("page", String(page));
+    }
+    const qs = params.toString();
+    return qs ? `${pathname}?${qs}` : pathname;
+  };
 
   const FilterContent = () => (
     <div className="space-y-6">
@@ -201,19 +207,6 @@ export default function ProductsClient({
       {/* Toolbar */}
       <div className="flex items-center justify-between gap-3 mb-6">
         <div className="flex items-center gap-2">
-          {/* Filter toggle (mobile) */}
-          <button
-            onClick={() => setFilterOpen(true)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-ink/8 text-sm font-semibold text-ink hover:bg-cream-dark transition-colors md:hidden"
-          >
-            <SlidersHorizontal size={16} />
-            Filters
-            {activeFilters.length > 0 && (
-              <span className="w-5 h-5 rounded-full bg-ink text-cream text-xs font-bold flex items-center justify-center">
-                {activeFilters.length}
-              </span>
-            )}
-          </button>
 
           {/* Active filter chips */}
           <div className="flex flex-wrap gap-2">
@@ -221,7 +214,7 @@ export default function ProductsClient({
               <button
                 key={key}
                 onClick={() => updateFilter(key, null)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-pill bg-sky-brand text-ink text-xs font-semibold"
+                className="flex items-center gap-1.5 px-3 min-h-[44px] rounded-pill bg-sky-brand text-ink text-xs font-semibold active:scale-95 transition-transform"
               >
                 {key}: {value}
                 <X size={12} />
@@ -231,31 +224,12 @@ export default function ProductsClient({
         </div>
 
         <div className="flex items-center gap-2 ml-auto">
-          {/* Sort */}
-          <div className="relative">
-            <select
-              value={searchParams.sort || "featured"}
-              onChange={(e) => updateFilter("sort", e.target.value)}
-              className="appearance-none bg-white border border-ink/8 rounded-xl pl-3 pr-8 py-2.5 text-sm font-semibold text-ink cursor-pointer outline-none hover:bg-cream-dark transition-colors"
-            >
-              {SORT_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-            <ChevronDown
-              size={14}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-ink-muted pointer-events-none"
-            />
-          </div>
-
           {/* Grid toggle (desktop only) */}
           <div className="hidden md:flex items-center gap-1 p-1 rounded-xl bg-cream-dark">
             <button
               onClick={() => setGridCols(4)}
               className={cn(
-                "p-2 rounded-lg transition-colors",
+                "p-2 rounded-lg transition-all active:scale-95",
                 gridCols === 4 ? "bg-white shadow-soft-sm" : "hover:bg-cream"
               )}
             >
@@ -264,7 +238,7 @@ export default function ProductsClient({
             <button
               onClick={() => setGridCols(2)}
               className={cn(
-                "p-2 rounded-lg transition-colors",
+                "p-2 rounded-lg transition-all active:scale-95",
                 gridCols === 2 ? "bg-white shadow-soft-sm" : "hover:bg-cream"
               )}
             >
@@ -275,23 +249,6 @@ export default function ProductsClient({
       </div>
 
       <div className="flex gap-6">
-        {/* Desktop Filter Sidebar */}
-        <aside className="hidden md:block w-56 flex-shrink-0">
-          <div className="bg-white rounded-brand p-5 shadow-card sticky top-24">
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="font-display font-semibold text-ink">Filters</h2>
-              {activeFilters.length > 0 && (
-                <button
-                  onClick={() => router.push(pathname)}
-                  className="text-xs text-ink-muted hover:text-ink transition-colors font-semibold"
-                >
-                  Clear all
-                </button>
-              )}
-            </div>
-            <FilterContent />
-          </div>
-        </aside>
 
         {/* Product Grid */}
         <div className="flex-1 min-w-0">
@@ -342,72 +299,26 @@ export default function ProductsClient({
           {totalPages > 1 && (
             <div className="flex items-center justify-center gap-2 mt-10">
               {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                <button
+                <Link
                   key={page}
-                  onClick={() => updateFilter("page", String(page))}
+                  href={buildPageHref(page)}
+                  aria-current={page === currentPage ? "page" : undefined}
                   className={cn(
-                    "w-10 h-10 rounded-xl text-sm font-semibold transition-colors",
+                    "w-11 h-11 flex items-center justify-center rounded-xl text-sm font-semibold transition-all active:scale-95",
                     page === currentPage
                       ? "bg-ink text-cream"
                       : "bg-cream-dark text-ink hover:bg-sky-brand"
                   )}
                 >
                   {page}
-                </button>
+                </Link>
               ))}
             </div>
           )}
         </div>
       </div>
 
-      {/* Mobile Filter Drawer */}
-      <AnimatePresence>
-        {filterOpen && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setFilterOpen(false)}
-              className="fixed inset-0 bg-ink/40 backdrop-blur-sm z-[80]"
-            />
-            <motion.div
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
-              transition={{ type: "spring", damping: 30, stiffness: 300 }}
-              className="fixed bottom-0 left-0 right-0 bg-cream rounded-t-[2rem] z-[90] max-h-[85vh] overflow-y-auto"
-            >
-              <div className="p-5">
-                <div className="flex items-center justify-between mb-5">
-                  <h2 className="font-display font-semibold text-ink text-xl">Filters</h2>
-                  <button onClick={() => setFilterOpen(false)}>
-                    <X size={22} />
-                  </button>
-                </div>
-                <FilterContent />
-                <div className="flex gap-3 mt-6 pt-4 border-t border-ink/8">
-                  <button
-                    onClick={() => {
-                      router.push(pathname);
-                      setFilterOpen(false);
-                    }}
-                    className="btn-secondary flex-1"
-                  >
-                    Clear All
-                  </button>
-                  <button
-                    onClick={() => setFilterOpen(false)}
-                    className="btn-primary flex-1"
-                  >
-                    Show Results ({totalCount})
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+
     </div>
   );
 }

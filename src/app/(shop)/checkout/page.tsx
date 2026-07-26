@@ -6,13 +6,16 @@ import { motion } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import confetti from "canvas-confetti";
 import { useCartStore } from "@/store/cartStore";
 import { formatPrice, calculateShipping } from "@/lib/utils";
-import { Check, MapPin, Package, CreditCard } from "lucide-react";
+import { loadRazorpayScript } from "@/lib/loadRazorpayScript";
+import { Check, MapPin, Package, CreditCard, Tag, X } from "lucide-react";
 import { toast } from "sonner";
 
 const addressSchema = z.object({
   fullName: z.string().min(2, "Name is required"),
+  email: z.string().email("Enter a valid email address"),
   phone: z.string().regex(/^[6-9]\d{9}$/, "Enter valid 10-digit Indian mobile number"),
   addressLine1: z.string().min(5, "Address is required"),
   addressLine2: z.string().optional(),
@@ -42,7 +45,6 @@ export default function CheckoutPage() {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [address, setAddress] = useState<AddressFormData | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<"cod">("cod");
   const [orderLoading, setOrderLoading] = useState(false);
   const [isCustomNameEnabled, setIsCustomNameEnabled] = useState(false);
   const [customName, setCustomName] = useState("");
@@ -53,10 +55,55 @@ export default function CheckoutPage() {
   const [orderPlaced, setOrderPlaced] = useState(false);
   const { items, getTotalPrice, clearCart } = useCartStore();
 
+  const [couponInput, setCouponInput] = useState("");
+  const [couponCode, setCouponCode] = useState<string | null>(null);
+  const [couponDiscount, setCouponDiscount] = useState(0);
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [couponError, setCouponError] = useState("");
+
   const subtotal = getTotalPrice();
   const shipping = calculateShipping(subtotal);
   const customNameCharge = isCustomNameEnabled ? 299 : 0;
-  const total = subtotal + shipping + customNameCharge;
+  const total = Math.max(0, subtotal + shipping + customNameCharge - couponDiscount);
+
+  const applyCoupon = async () => {
+    const code = couponInput.trim();
+    if (!code) return;
+    setCouponLoading(true);
+    setCouponError("");
+    try {
+      const res = await fetch("/api/coupons/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code, subtotal }),
+      });
+      const data = await res.json();
+      if (!data.valid) {
+        setCouponError(data.error || "Invalid coupon code");
+        return;
+      }
+      setCouponCode(code.toUpperCase());
+      setCouponDiscount(data.discountAmount || 0);
+      toast.success(`🎉 Coupon applied! You saved ${formatPrice(data.discountAmount || 0)}`);
+      confetti({
+        particleCount: 120,
+        spread: 80,
+        origin: { y: 0.6 },
+        colors: ["#8FAD78", "#B9C9A8", "#24324A", "#F0EBE0"],
+      });
+    } catch {
+      setCouponError("Couldn't validate coupon. Please try again.");
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  const removeCoupon = () => {
+    setCouponCode(null);
+    setCouponDiscount(0);
+    setCouponInput("");
+    setCouponError("");
+  };
 
   const {
     register,
@@ -83,30 +130,85 @@ export default function CheckoutPage() {
     }
     setOrderLoading(true);
     try {
-      const res = await fetch("/api/orders/create", {
+      const res = await fetch("/api/checkout/create-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           items,
           address,
-          paymentMethod,
-          subtotal,
-          shippingAmount: shipping,
-          total,
           customName: isCustomNameEnabled ? customName.trim() : null,
+          couponCode,
         }),
       });
       const data = await res.json();
-      if (data.orderId) {
-        orderPlacedRef.current = true;
-        setOrderPlaced(true);
-        window.location.href = `/checkout/success?order=${data.orderNumber}`;
-      } else {
+      if (!res.ok || !data.success) {
         throw new Error(data.error || "Order creation failed");
       }
+
+      const scriptLoaded = await loadRazorpayScript();
+      if (!scriptLoaded || !window.Razorpay) {
+        toast.error("Couldn't load the payment gateway. Please check your connection and try again.");
+        setOrderLoading(false);
+        return;
+      }
+
+      const razorpay = new window.Razorpay({
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        amount: data.amount,
+        currency: data.currency,
+        order_id: data.razorpayOrderId,
+        name: "Little Bunnies",
+        description: `Order ${data.orderNumber}`,
+        prefill: {
+          name: address.fullName,
+          email: address.email,
+          contact: address.phone,
+        },
+        theme: { color: "#8FAD78" },
+        handler: async (response: {
+          razorpay_order_id: string;
+          razorpay_payment_id: string;
+          razorpay_signature: string;
+        }) => {
+          try {
+            const verifyRes = await fetch("/api/checkout/verify-payment", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                orderId: data.orderId,
+                ...response,
+              }),
+            });
+            const verifyData = await verifyRes.json();
+            if (!verifyRes.ok || !verifyData.success) {
+              throw new Error(verifyData.error || "Payment verification failed");
+            }
+            orderPlacedRef.current = true;
+            setOrderPlaced(true);
+            window.location.href = `/checkout/success?order=${verifyData.orderNumber}&id=${data.orderId}`;
+          } catch {
+            toast.error(
+              "We couldn't confirm your payment. If money was deducted, please contact support with your order details."
+            );
+            setOrderLoading(false);
+          }
+        },
+        modal: {
+          ondismiss: () => {
+            toast("Payment cancelled. Your order has not been placed.");
+            setOrderLoading(false);
+          },
+        },
+      });
+
+      razorpay.on("payment.failed", () => {
+        toast.error("Payment failed. Please try again.");
+        setOrderLoading(false);
+      });
+
+      razorpay.open();
     } catch (err) {
-      toast.error("Failed to place order. Please try again.");
-    } finally {
+      toast.error(err instanceof Error ? err.message : "Failed to place order. Please try again.");
       setOrderLoading(false);
     }
   };
@@ -268,6 +370,17 @@ export default function CheckoutPage() {
                   </div>
                 </div>
                 <div>
+                  <label className="block text-sm font-semibold text-ink mb-1.5">Email *</label>
+                  <input
+                    {...register("email")}
+                    className="input-brand"
+                    placeholder="you@example.com"
+                    type="email"
+                  />
+                  {errors.email && <p className="text-xs text-blush mt-1">{errors.email.message}</p>}
+                  <p className="text-xs text-ink-muted mt-1">We&apos;ll send your payment receipt and order updates here.</p>
+                </div>
+                <div>
                   <label className="block text-sm font-semibold text-ink mb-1.5">Address Line 1 *</label>
                   <input {...register("addressLine1")} className="input-brand" placeholder="House No., Street, Area" />
                   {errors.addressLine1 && <p className="text-xs text-blush mt-1">{errors.addressLine1.message}</p>}
@@ -368,6 +481,67 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
+              {/* Coupon */}
+              <div className="bg-white rounded-brand shadow-card p-5">
+                <h3 className="font-display font-semibold text-ink mb-4 flex items-center gap-2">
+                  <Tag size={16} className="text-ink-muted" />
+                  Have a coupon?
+                </h3>
+                {couponCode ? (
+                  <div className="flex items-center justify-between bg-sage-light/30 border border-sage-dark/20 rounded-xl px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sage-dark text-lg">🎉</span>
+                      <div>
+                        <p className="text-xs font-bold text-sage-dark uppercase tracking-wide">
+                          {couponCode} Applied
+                        </p>
+                        <p className="text-xs text-ink-muted font-medium">
+                          You saved {formatPrice(couponDiscount)}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={removeCoupon}
+                      className="p-1.5 rounded-lg text-ink-muted hover:text-blush transition-colors"
+                      aria-label="Remove coupon"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                ) : (
+                  <div>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={couponInput}
+                        onChange={(e) => {
+                          setCouponInput(e.target.value.toUpperCase());
+                          setCouponError("");
+                        }}
+                        placeholder="Enter coupon code"
+                        className="flex-1 input-brand uppercase"
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            applyCoupon();
+                          }
+                        }}
+                      />
+                      <button
+                        onClick={applyCoupon}
+                        disabled={couponLoading || !couponInput.trim()}
+                        className="btn-secondary px-5 disabled:opacity-50"
+                      >
+                        {couponLoading ? "..." : "Apply"}
+                      </button>
+                    </div>
+                    {couponError && (
+                      <p className="text-xs text-blush mt-1.5 ml-1">{couponError}</p>
+                    )}
+                  </div>
+                )}
+              </div>
+
               {/* Payment Method */}
               <div className="bg-white rounded-brand shadow-card p-5">
                 <h3 className="font-display font-semibold text-ink mb-4 flex items-center gap-2">
@@ -375,21 +549,14 @@ export default function CheckoutPage() {
                   Payment Method
                 </h3>
                 <div className="space-y-3">
-                  <label className="flex items-center gap-3 p-4 rounded-xl border-2 border-ink cursor-pointer">
+                  <label className="flex items-center gap-3 p-4 rounded-xl border-2 border-ink cursor-pointer bg-cream-light/30">
                     <input type="radio" checked readOnly className="accent-ink" />
                     <div>
-                      <p className="font-semibold text-ink text-sm">Cash on Delivery (COD)</p>
-                      <p className="text-xs text-ink-muted">Pay when your order arrives</p>
-                    </div>
-                    <span className="ml-auto badge-new">Available</span>
-                  </label>
-                  <div className="flex items-center gap-3 p-4 rounded-xl border-2 border-ink/15 opacity-50 cursor-not-allowed">
-                    <input type="radio" disabled className="accent-ink" />
-                    <div>
                       <p className="font-semibold text-ink text-sm">Online Payment</p>
-                      <p className="text-xs text-ink-muted">UPI / Card / Net Banking (Coming soon)</p>
+                      <p className="text-xs text-ink-muted">Pay securely via UPI, Card, Net Banking or Wallets</p>
                     </div>
-                  </div>
+                    <span className="ml-auto badge-new bg-sage-dark text-white px-2 py-0.5 rounded-full text-[10px] uppercase font-bold tracking-wider">Available</span>
+                  </label>
                 </div>
               </div>
 
@@ -401,7 +568,7 @@ export default function CheckoutPage() {
                 {orderLoading ? (
                   <span className="inline-block w-5 h-5 border-2 border-cream/30 border-t-cream rounded-full animate-spin" />
                 ) : (
-                  "Place Order (COD)"
+                  "Proceed to Pay & Place Order"
                 )}
               </button>
             </motion.div>
@@ -427,6 +594,12 @@ export default function CheckoutPage() {
                 <div className="flex justify-between text-ink-light font-medium">
                   <span>Custom Name</span>
                   <span>{formatPrice(299)}</span>
+                </div>
+              )}
+              {couponCode && (
+                <div className="flex justify-between text-sage-dark font-semibold">
+                  <span>Discount ({couponCode})</span>
+                  <span>-{formatPrice(couponDiscount)}</span>
                 </div>
               )}
               <div className="flex justify-between font-bold text-ink text-base pt-3 border-t border-ink/8 mt-3">

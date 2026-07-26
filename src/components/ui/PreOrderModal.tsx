@@ -24,7 +24,7 @@ export default function PreOrderModal({
   const [note, setNote] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [products, setProducts] = useState<{name: string, price: number}[]>([]);
+  const [products, setProducts] = useState<{name: string, brand?: string, price: number}[]>([]);
   const [selectedProduct, setSelectedProduct] = useState(productName || "");
 
   useEffect(() => {
@@ -180,7 +180,7 @@ export default function PreOrderModal({
                               <option value={productName}>{productName}</option>
                             )}
                             {products.map((p, i) => (
-                              <option key={i} value={p.name}>{p.name}</option>
+                              <option key={i} value={p.name}>{p.brand || p.name}</option>
                             ))}
                           </select>
                           <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none">

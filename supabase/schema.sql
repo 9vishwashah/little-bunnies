@@ -138,8 +138,10 @@ CREATE TABLE IF NOT EXISTS public.orders (
   payment_status TEXT NOT NULL DEFAULT 'pending' CHECK (payment_status IN ('pending', 'paid', 'failed', 'refunded')),
   razorpay_order_id TEXT,
   razorpay_payment_id TEXT,
+  razorpay_signature TEXT,
   subtotal DECIMAL(10, 2) NOT NULL,
   discount_amount DECIMAL(10, 2) DEFAULT 0,
+  custom_name_charge DECIMAL(10, 2) DEFAULT 0,
   shipping_amount DECIMAL(10, 2) DEFAULT 0,
   total DECIMAL(10, 2) NOT NULL,
   coupon_id UUID,
@@ -263,6 +265,11 @@ CREATE INDEX IF NOT EXISTS idx_products_best_seller ON public.products(is_best_s
 CREATE INDEX IF NOT EXISTS idx_product_images_product ON public.product_images(product_id);
 CREATE INDEX IF NOT EXISTS idx_orders_user ON public.orders(user_id);
 CREATE INDEX IF NOT EXISTS idx_orders_status ON public.orders(status);
+CREATE INDEX IF NOT EXISTS idx_orders_razorpay_order_id ON public.orders(razorpay_order_id);
+
+-- Idempotent migrations for existing databases created before later features
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS razorpay_signature TEXT;
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS custom_name_charge DECIMAL(10, 2) DEFAULT 0;
 CREATE INDEX IF NOT EXISTS idx_reviews_product ON public.reviews(product_id);
 CREATE INDEX IF NOT EXISTS idx_reviews_approved ON public.reviews(is_approved) WHERE is_approved = TRUE;
 CREATE INDEX IF NOT EXISTS idx_wishlists_user ON public.wishlists(user_id);
@@ -349,6 +356,19 @@ BEGIN
   RETURN new_number;
 END;
 $$ LANGUAGE plpgsql;
+
+-- Coupon usage counter — called after a coupon-discounted order is paid
+CREATE OR REPLACE FUNCTION increment_coupon_uses(coupon_id UUID)
+RETURNS VOID AS $$
+BEGIN
+  UPDATE public.coupons SET uses_count = uses_count + 1 WHERE id = coupon_id;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Seed the site-wide promotional coupon shown on product pages
+INSERT INTO public.coupons (code, type, value, min_order_amount, is_active)
+VALUES ('FAMILY10', 'percentage', 10, 0, TRUE)
+ON CONFLICT (code) DO NOTHING;
 
 -- =============================================
 -- CONTACT MESSAGES

@@ -19,39 +19,35 @@ const FAQS = [
     answer: "Most orders are dispatched within 24–48 hours and typically delivered within 3–7 business days depending on your location."
   },
   {
-    question: "4. Do you offer Cash on Delivery (COD)?",
-    answer: "Yes, Cash on Delivery is available on selected products and serviceable pin codes."
-  },
-  {
-    question: "5. Can I return or exchange a product?",
+    question: "4. Can I return or exchange a product?",
     answer: "Yes. We offer easy returns and exchanges for eligible products within the specified return window. Please refer to our Return Policy for complete details."
   },
   {
-    question: "6. How can I track my order?",
+    question: "5. How can I track my order?",
     answer: "Once your order is shipped, you will receive a tracking link via SMS and email. You can also track your order from the My Account section."
   },
   {
-    question: "7. Are the product images shown on the website accurate?",
+    question: "6. Are the product images shown on the website accurate?",
     answer: "We strive to display products as accurately as possible. However, slight color variations may occur due to lighting conditions and screen settings."
   },
   {
-    question: "8. Do you provide warranty on baby gear products?",
+    question: "7. Do you provide warranty on baby gear products?",
     answer: "Yes. Selected products such as strollers, prams, and baby gear may include manufacturer warranties. Warranty information is available on the respective product pages."
   },
   {
-    question: "9. How do I choose the right product for my baby?",
+    question: "8. How do I choose the right product for my baby?",
     answer: "Each product includes detailed descriptions, specifications, age recommendations, and usage guidelines to help parents make informed decisions."
   },
   {
-    question: "10. What payment methods do you accept?",
-    answer: "We accept:\n\n- UPI\n- Credit Cards\n- Debit Cards\n- Net Banking\n- Wallets\n- Cash on Delivery (where applicable)"
+    question: "9. What payment methods do you accept?",
+    answer: "We accept:\n\n- UPI\n- Credit Cards\n- Debit Cards\n- Net Banking\n- Wallets"
   },
   {
-    question: "11. Can I cancel my order after placing it?",
+    question: "10. Can I cancel my order after placing it?",
     answer: "Orders can be cancelled before they are shipped. Once dispatched, cancellations may not be possible."
   },
   {
-    question: "12. How can I contact customer support?",
+    question: "11. How can I contact customer support?",
     answer: "You can reach us through:\n\n- WhatsApp Support\n- Email Support\n- Contact Form\n- Phone Support\n\nOur team is happy to assist you with any queries."
   }
 ];

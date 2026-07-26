@@ -169,10 +169,10 @@ export default function WishlistPage() {
                   {/* Info */}
                   <div className="p-3">
                     <Link href={`/product/${product.slug}`}>
-                      <p className="text-xs text-ink-muted font-semibold uppercase tracking-wide mb-1 line-clamp-1">
+                      <p className="text-xs font-bold text-ink uppercase tracking-wider mb-1 line-clamp-1">
                         {product.brand || product.categories?.name}
                       </p>
-                      <h3 className="font-semibold text-ink text-sm leading-snug line-clamp-2 mb-2 group-hover:text-ink-muted transition-colors">
+                      <h3 className="font-sans font-light text-ink-light text-sm leading-snug line-clamp-2 mb-2 group-hover:text-ink transition-colors">
                         {product.name}
                       </h3>
                     </Link>
@@ -188,13 +188,26 @@ export default function WishlistPage() {
                     </div>
                     <button
                       onClick={() => {
+                        const defaultVariant =
+                          product.product_variants && product.product_variants.length > 0
+                            ? product.product_variants[0]
+                            : undefined;
+
                         addToCart({
                           id: product.id,
-                          name: product.name,
+                          name: product.brand || product.name,
                           slug: product.slug,
                           price: product.price,
                           image: primaryImage?.url || "/images/placeholder.jpg",
                           quantity: 1,
+                          variant: defaultVariant
+                            ? {
+                                id: defaultVariant.id,
+                                name: defaultVariant.name,
+                                value: defaultVariant.value,
+                                price_modifier: defaultVariant.price_modifier,
+                              }
+                            : undefined,
                         });
                         toast.success("Added to cart!");
                       }}

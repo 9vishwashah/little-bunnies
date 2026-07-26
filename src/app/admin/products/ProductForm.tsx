@@ -223,12 +223,20 @@ export default function ProductForm({ categories, initialData, initialImages, pr
             <h2 className="font-display font-semibold text-ink text-lg mb-5">Basic Information</h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-semibold text-ink mb-1.5">Product Name *</label>
+                <label className="block text-sm font-semibold text-ink mb-1.5">Product Name</label>
+                <input
+                  {...register("brand")}
+                  className="input-brand"
+                  placeholder="e.g. Comfy Rider Pro Baby Stroller"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-ink mb-1.5">Description *</label>
                 <input
                   {...register("name")}
                   onBlur={handleNameBlur}
                   className="input-brand"
-                  placeholder="e.g. LuvLap Galaxy Stroller"
+                  placeholder="e.g. 360° Rotating Reversible Seat | Ultra Lightweight Aluminium Frame"
                 />
                 {errors.name && <p className="text-xs text-blush mt-1">{errors.name.message}</p>}
               </div>
@@ -484,8 +492,8 @@ export default function ProductForm({ categories, initialData, initialImages, pr
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-semibold text-ink mb-1.5">Brand</label>
-                <input {...register("brand")} className="input-brand" placeholder="e.g. Pampers" />
+                <label className="block text-sm font-semibold text-ink mb-1.5">Product Name</label>
+                <input {...register("brand")} className="input-brand" placeholder="e.g. Comfy Rider Pro Baby Stroller" />
               </div>
               <div>
                 <label className="block text-sm font-semibold text-ink mb-1.5">SKU</label>

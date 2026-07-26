@@ -97,6 +97,7 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
                 products.map((product: {
                   id: string;
                   name: string;
+                  brand?: string;
                   slug: string;
                   price: number;
                   compare_price?: number;
@@ -121,8 +122,8 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
                             )}
                           </div>
                           <div>
-                            <p className="font-semibold text-ink text-sm line-clamp-1">{product.name}</p>
-                            <p className="text-xs text-ink-muted">{product.slug}</p>
+                            <p className="font-bold text-ink text-sm uppercase tracking-wide line-clamp-1">{product.brand || product.name}</p>
+                            <p className="text-xs text-ink-muted line-clamp-1">{product.name}</p>
                             <div className="flex gap-1 mt-0.5">
                               {product.is_featured && <span className="text-[10px] badge-featured px-1.5 py-0.5">Featured</span>}
                               {product.is_new_arrival && <span className="text-[10px] badge-new px-1.5 py-0.5">New</span>}

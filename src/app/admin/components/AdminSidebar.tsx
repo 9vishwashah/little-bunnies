@@ -9,8 +9,6 @@ import {
   Package,
   Grid2X2,
   ShoppingCart,
-  Users,
-  Star,
   ChevronRight,
   Store,
   X,
@@ -22,8 +20,6 @@ const NAV_ITEMS = [
   { href: "/admin/products", label: "Products", icon: Package },
   { href: "/admin/categories", label: "Categories", icon: Grid2X2 },
   { href: "/admin/orders", label: "Orders", icon: ShoppingCart },
-  { href: "/admin/customers", label: "Customers", icon: Users },
-  { href: "/admin/reviews", label: "Reviews", icon: Star },
 ];
 
 export default function AdminSidebar({ onClose }: { onClose?: () => void }) {

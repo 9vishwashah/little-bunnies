@@ -1,11 +1,11 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Download } from "lucide-react";
 import ClearCartOnMount from "./ClearCartOnMount";
 
 interface Props {
-  searchParams: Promise<{ order?: string }>;
+  searchParams: Promise<{ order?: string; id?: string }>;
 }
 
 const WhatsAppIcon = () => (
@@ -17,6 +17,7 @@ const WhatsAppIcon = () => (
 export default async function OrderSuccessPage({ searchParams }: Props) {
   const params = await searchParams;
   const orderNumber = params.order;
+  const orderId = params.id;
 
   return (
     <div className="section-container py-12 md:py-20 flex flex-col items-center justify-center min-h-[80vh] bg-cream-gradient relative">
@@ -60,6 +61,16 @@ export default async function OrderSuccessPage({ searchParams }: Props) {
           </div>
 
           <div className="flex flex-col gap-3">
+            {orderId && (
+              <a
+                href={`/api/orders/${orderId}/invoice`}
+                className="w-full py-4 px-4 bg-ink hover:bg-ink/85 text-cream rounded-xl font-bold text-[15px] flex items-center justify-center gap-2 transition-all"
+              >
+                <Download size={18} />
+                Download Invoice (PDF)
+              </a>
+            )}
+
             <a
               href={`https://wa.me/918976077070?text=${encodeURIComponent(`Hi Little Bunnies! I would like to track my order ${orderNumber}.`)}`}
               target="_blank"

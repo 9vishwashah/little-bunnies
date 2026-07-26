@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import ProductImage from "./ProductImage";
 import { motion } from "framer-motion";
-import { Clock, Star } from "lucide-react";
-import { cn, formatPrice, calculateDiscount } from "@/lib/utils";
+import { ShoppingCart, Star } from "lucide-react";
+import { cn, formatPrice } from "@/lib/utils";
+import { useCartStore } from "@/store/cartStore";
+import { toast } from "sonner";
 
 import { Product } from "@/types";
 
@@ -16,7 +17,8 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product, className, priority }: ProductCardProps) {
-  const router = useRouter();
+  const addItem = useCartStore((s) => s.addItem);
+  const openCart = useCartStore((s) => s.openCart);
 
   let primaryImage = product.product_images?.find((img) => img.is_primary)
     || product.product_images?.[0];
@@ -34,8 +36,6 @@ export default function ProductCard({ product, className, priority }: ProductCar
       }
     }
   }
-
-  const discount = calculateDiscount(product.price, product.compare_price || 0);
 
 
   return (
@@ -61,7 +61,7 @@ export default function ProductCard({ product, className, priority }: ProductCar
           />
 
           {/* Badges */}
-          <div className="absolute top-3 left-3 flex flex-col gap-1.5">
+          <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-20">
             {product.is_new_arrival && (
               <span className="badge-new">NEW</span>
             )}
@@ -71,31 +71,41 @@ export default function ProductCard({ product, className, priority }: ProductCar
           </div>
 
 
-          {/* Pre-Order CTA — always visible on mobile, hover-reveal on desktop */}
+          {/* Add to Cart CTA — always visible on mobile, hover-reveal on desktop */}
           <div className="absolute bottom-0 left-0 right-0 p-2.5 translate-y-0 md:translate-y-full md:group-hover:translate-y-0 transition-transform duration-300 z-20">
             <button
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                router.push(`/product/${product.slug}`);
+                if (!product.in_stock) return;
+                const primaryImg = product.product_images?.find((img) => img.is_primary) || product.product_images?.[0];
+                addItem({
+                  id: product.id,
+                  name: product.name,
+                  slug: product.slug,
+                  price: product.price,
+                  image: primaryImg?.url || "/images/placeholder.jpg",
+                  quantity: 1,
+                });
+                openCart();
+                toast.success("Added to cart!", { description: product.name });
               }}
+              disabled={!product.in_stock}
               className={cn(
                 "w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold",
-                "bg-peach text-white hover:bg-peach-dark transition-colors",
-                "min-h-[44px]" // WCAG touch target
+                "bg-[#3B7EBD] text-white hover:bg-[#2B659B] hover:shadow-soft transition-all active:scale-[0.98]",
+                "min-h-[44px] disabled:opacity-60 disabled:cursor-not-allowed"
               )}
             >
-              <Clock size={14} />
-              Pre-Order
+              <ShoppingCart size={14} />
+              Shop Now
             </button>
           </div>
 
           {/* Out of stock overlay */}
           {!product.in_stock && (
-            <div className="absolute inset-0 bg-cream/60 flex items-center justify-center">
-              <span className="text-sm font-semibold text-ink-muted bg-cream px-3 py-1.5 rounded-pill shadow-soft-sm">
-                Out of Stock
-              </span>
+            <div className="absolute inset-0 bg-cream/70 backdrop-blur-[1px] flex items-center justify-center z-10">
+              <span className="badge-stock">Out of Stock</span>
             </div>
           )}
         </div>
@@ -104,11 +114,11 @@ export default function ProductCard({ product, className, priority }: ProductCar
         <div className="p-3 md:p-4">
           <div className="min-h-[4rem] mb-2 flex flex-col justify-start">
             {product.brand && (
-              <span className="inline-block px-2 py-0.5 bg-ink/5 border border-ink/10 text-ink-muted text-[10px] font-bold uppercase tracking-widest rounded mb-1.5 self-start">
+              <span className="inline-block px-2.5 py-0.5 bg-ink/5 border border-ink/10 text-ink text-xs font-bold uppercase tracking-wider rounded mb-1.5 self-start">
                 {product.brand}
               </span>
             )}
-            <h3 className="font-light text-ink text-[15px] tracking-wide leading-relaxed line-clamp-2 group-hover:text-peach transition-colors">
+            <h3 className="font-sans font-light text-ink-muted text-xs tracking-wide leading-relaxed line-clamp-2 group-hover:text-[#3B7EBD] transition-colors">
               {product.name}
             </h3>
           </div>
@@ -137,11 +147,11 @@ export default function ProductCard({ product, className, priority }: ProductCar
 
           {/* Price */}
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-bold text-ink text-base">
+            <span className="font-bold text-ink text-base md:text-lg">
               {formatPrice(product.price)}
             </span>
             {product.compare_price && product.compare_price > product.price && (
-              <span className="text-sm text-ink-muted line-through font-medium">
+              <span className="text-xs md:text-sm text-ink-muted line-through font-medium">
                 {formatPrice(product.compare_price)}
               </span>
             )}

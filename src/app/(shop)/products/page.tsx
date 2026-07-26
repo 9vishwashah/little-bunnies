@@ -3,11 +3,42 @@ import { createClient } from "@/lib/supabase/server";
 import ProductsClient from "./ProductsClient";
 import { Product, Category } from "@/types";
 
-export const metadata: Metadata = {
-  title: "All Products — Little Bunnies",
-  description:
-    "Browse our full collection of premium baby products — prams, diapers, feeding, skincare, clothing, toys and more.",
-};
+const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://littlebunnies.co.in";
+
+interface ProductsPageProps {
+  searchParams: Promise<Record<string, string>>;
+}
+
+export async function generateMetadata({ searchParams }: ProductsPageProps): Promise<Metadata> {
+  const params = await searchParams;
+  const page = parseInt(params.page || "1");
+
+  // Canonicalize to the clean paginated listing URL only — filter/sort
+  // combinations (?category=, ?minPrice=, ?sort=, etc.) all consolidate to
+  // this canonical rather than being indexed as distinct pages, per Google's
+  // ecommerce guidance on avoiding indexing of filter/sort variations.
+  const canonical = page > 1 ? `${baseUrl}/products?page=${page}` : `${baseUrl}/products`;
+  const title = page > 1 ? `All Products — Page ${page} — Little Bunnies` : "All Products — Little Bunnies";
+  const description =
+    "Browse our full collection of premium baby products — prams, diapers, feeding, skincare, clothing, toys and more.";
+
+  return {
+    title,
+    description,
+    alternates: { canonical },
+    openGraph: {
+      title,
+      description,
+      url: canonical,
+      siteName: "Little Bunnies",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+    },
+  };
+}
 
 async function getProducts(searchParams: Record<string, string>): Promise<{ products: Product[]; count: number }> {
   try {
@@ -82,10 +113,6 @@ async function getCategories(): Promise<Category[]> {
   } catch {
     return [];
   }
-}
-
-interface ProductsPageProps {
-  searchParams: Promise<Record<string, string>>;
 }
 
 export default async function ProductsPage({ searchParams }: ProductsPageProps) {

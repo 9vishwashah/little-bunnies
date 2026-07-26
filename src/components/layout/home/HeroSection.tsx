@@ -48,8 +48,10 @@ export default function HeroSection() {
                 src={SLIDES[currentSlide]}
                 alt={`Banner Slide ${currentSlide + 1}`}
                 fill
+                sizes="100vw"
                 className="object-cover object-[75%_center] sm:object-center"
                 priority={currentSlide === 0}
+                unoptimized
               />
               {/* Gradient overlay to ensure text readability */}
               <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-white/70 to-transparent sm:from-white/90 sm:via-white/50" />
@@ -65,9 +67,9 @@ export default function HeroSection() {
               className="w-full max-w-xl"
             >
               {/* Pill Tag */}
-              <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3 py-1 sm:px-4 sm:py-1.5 rounded-pill bg-white shadow-soft-sm mb-4 sm:mb-6">
-                <Heart className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-peach fill-peach" />
-                <span className="text-[10px] sm:text-xs font-bold text-ink-light tracking-wide">
+              <div className="inline-flex items-center gap-2.5 sm:gap-3 px-6 py-2 sm:px-10 sm:py-2.5 rounded-pill bg-white shadow-soft mb-4 sm:mb-6">
+                <Heart className="w-4 h-4 sm:w-5 sm:h-5 text-peach fill-peach" />
+                <span className="text-xs sm:text-sm font-extrabold text-ink-light tracking-wider uppercase sm:tracking-widest">
                   Crafted with love
                 </span>
               </div>
@@ -85,14 +87,14 @@ export default function HeroSection() {
               </h1>
 
               <div className="flex flex-col sm:flex-row gap-3">
-                <button 
+                <button
                   onClick={() => setIsPreOrderOpen(true)}
-                  className="group inline-flex items-center gap-3 bg-peach hover:bg-peach-dark text-white px-6 py-3 sm:px-8 sm:py-4 rounded-pill font-bold text-base sm:text-lg transition-all shadow-soft hover:shadow-soft-lg hover:-translate-y-1"
+                  className="group inline-flex items-center gap-2 sm:gap-3 min-h-[38px] sm:min-h-[44px] bg-peach hover:bg-peach-dark text-white px-4 py-2 sm:px-8 sm:py-4 rounded-pill font-bold text-xs sm:text-lg transition-all shadow-soft hover:shadow-soft-lg hover:-translate-y-1 active:scale-[0.98] active:translate-y-0 w-fit self-start"
                 >
-                  <Clock size={18} />
-                  Pre-Order Now
-                  <div className="bg-white text-peach rounded-full p-1 group-hover:translate-x-1 transition-transform">
-                    <ChevronRight size={18} strokeWidth={3} />
+                  <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />
+                  <span>Pre-Order Now</span>
+                  <div className="bg-white text-peach rounded-full p-0.5 sm:p-1 group-hover:translate-x-1 transition-transform">
+                    <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-4 lg:h-4" strokeWidth={3} />
                   </div>
                 </button>
               </div>

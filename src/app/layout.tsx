@@ -3,7 +3,37 @@ import { Quicksand, Fredoka } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Toaster } from "sonner";
 import ScrollToTop from "@/components/ScrollToTop";
+import { SITE_URL, jsonLd } from "@/lib/seo";
 import "./globals.css";
+
+const supabaseOrigin = process.env.NEXT_PUBLIC_SUPABASE_URL
+  ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).origin
+  : null;
+
+const organizationJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "Little Bunnies",
+  url: SITE_URL,
+  logo: `${SITE_URL}/images/logo-full.png`,
+  sameAs: [
+    "https://www.instagram.com/littlebunniesofficial",
+    "https://www.facebook.com/share/1D5pdMpchM/",
+    "https://wa.me/918976077070",
+  ],
+};
+
+const websiteJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "Little Bunnies",
+  url: SITE_URL,
+  potentialAction: {
+    "@type": "SearchAction",
+    target: `${SITE_URL}/products?search={search_term_string}`,
+    "query-input": "required name=search_term_string",
+  },
+};
 
 const quicksand = Quicksand({
   subsets: ["latin"],
@@ -49,6 +79,9 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
+  alternates: {
+    canonical: "/",
+  },
   icons: {
     icon: "/images/logo-full.png",
     shortcut: "/images/logo-full.png",
@@ -85,9 +118,12 @@ export const metadata: Metadata = {
       },
     ],
   },
-  verification: {
-    google: "YOUR_GOOGLE_SEARCH_CONSOLE_VERIFICATION_CODE", // Replace with your actual code from Google Search Console
-  },
+  // Set NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION in .env.local with the code
+  // from Google Search Console — omitted entirely until then, since an
+  // unset placeholder here would just render a meaningless meta tag.
+  ...(process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION && {
+    verification: { google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION },
+  }),
   robots: {
     index: true,
     follow: true,
@@ -110,6 +146,22 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="en" className={`${quicksand.variable} ${fredoka.variable}`}>
+        <head>
+          {supabaseOrigin && (
+            <>
+              <link rel="preconnect" href={supabaseOrigin} crossOrigin="anonymous" />
+              <link rel="dns-prefetch" href={supabaseOrigin} />
+            </>
+          )}
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: jsonLd(organizationJsonLd) }}
+          />
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: jsonLd(websiteJsonLd) }}
+          />
+        </head>
         <body className="font-sans bg-cream text-ink antialiased overflow-x-hidden">
           <ScrollToTop />
           {children}

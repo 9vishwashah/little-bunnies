@@ -9,6 +9,7 @@ export default function AboutPage() {
           src="/images/only-bunny-removebg-preview.png" 
           alt="Little Bunny Watermark"
           fill
+          sizes="150vw"
           className="object-contain"
           priority
         />
@@ -22,6 +23,7 @@ export default function AboutPage() {
               src="/images/only-bunny-removebg-preview.png"
               alt="Little Bunny Icon"
               fill
+              sizes="64px"
               className="object-contain opacity-90"
             />
           </div>

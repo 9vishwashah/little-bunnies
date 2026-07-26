@@ -123,8 +123,10 @@ export interface Order {
   payment_status: PaymentStatus;
   razorpay_order_id?: string;
   razorpay_payment_id?: string;
+  razorpay_signature?: string;
   subtotal: number;
   discount_amount: number;
+  custom_name_charge?: number;
   shipping_amount: number;
   total: number;
   coupon_id?: string;
