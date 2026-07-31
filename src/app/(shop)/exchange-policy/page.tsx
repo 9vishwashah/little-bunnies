@@ -2,8 +2,12 @@ import type { Metadata } from "next";
 import { RefreshCcw } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Exchange & Credit Note Policy",
-  description: "Read Little Bunnies' Exchange & Credit Note Policy.",
+  title: "Exchange & Credit Note Policy | Little Bunnies Baby Products",
+  description:
+    "Read Little Bunnies' exchange & credit note policy for baby products. Learn about product exchanges, credit notes, and eligibility criteria.",
+  alternates: {
+    canonical: "https://littlebunnies.co.in/exchange-policy",
+  },
 };
 
 export default function Page() {

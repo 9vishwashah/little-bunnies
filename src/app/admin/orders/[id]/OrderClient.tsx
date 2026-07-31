@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Save, MapPin, Package, CreditCard, Clock, MessageCircle } from "lucide-react";
+import { ArrowLeft, Save, MapPin, Package, CreditCard, Clock, MessageCircle, FileText, Truck } from "lucide-react";
 import { toast } from "sonner";
 import { formatPrice } from "@/lib/utils";
 
@@ -120,6 +120,40 @@ export default function OrderClient({ order }: Props) {
               <button onClick={handleUpdate} disabled={loading || (status === order.status && paymentStatus === order.payment_status)} className="btn-primary w-full text-sm py-3 mt-2">
                 {loading ? "..." : <><Save size={16} /> Update Status</>}
               </button>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-brand shadow-card p-5 md:p-6">
+            <h2 className="font-display font-semibold text-ink text-lg mb-4 flex items-center gap-2">
+              <FileText size={20} className="text-ink-muted" /> Documents
+            </h2>
+            <div className="space-y-3">
+              {order.payment_status === "paid" ? (
+                <a
+                  href={`/api/admin/orders/${order.id}/invoice`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-secondary w-full text-sm py-3"
+                >
+                  <FileText size={16} /> Invoice / Receipt
+                </a>
+              ) : (
+                <button
+                  disabled
+                  title="Available once the order is paid"
+                  className="btn-secondary w-full text-sm py-3 opacity-50 cursor-not-allowed"
+                >
+                  <FileText size={16} /> Invoice / Receipt
+                </button>
+              )}
+              <a
+                href={`/api/admin/orders/${order.id}/delivery-note`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-secondary w-full text-sm py-3"
+              >
+                <Truck size={16} /> Delivery Note
+              </a>
             </div>
           </div>
 

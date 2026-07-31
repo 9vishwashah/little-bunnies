@@ -8,7 +8,7 @@ import { FaLinkedinIn } from "react-icons/fa6";
 const FOOTER_LINKS = {
   Shop: [
     { label: "Prams", href: "/products?category=prams" },
-    { label: "Diaper Bags", href: "/products?category=diapers" },
+    { label: "Diaper Bags", href: "/products?category=bags" },
     { label: "Utility Bags", href: "/products?category=utility-bags" },
   ],
   "Quick Links": [

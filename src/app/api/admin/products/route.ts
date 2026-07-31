@@ -31,9 +31,18 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { images, variants, ...productData } = body;
+    const { images, variants, stockQuantity, ...productData } = body;
 
     const supabase = createAdminClient();
+
+    // Auto-derive in_stock from provided quantities
+    let totalStock = 0;
+    if (variants && variants.length > 0) {
+      totalStock = variants.reduce((sum: number, v: { stockQuantity?: number }) => sum + (v.stockQuantity ?? 0), 0);
+    } else {
+      totalStock = stockQuantity ?? 0;
+    }
+    productData.in_stock = totalStock > 0;
 
     // Create product
     const { data: product, error: productError } = await supabase
@@ -58,6 +67,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Insert variants
+    let insertedVariants: { id: string }[] = [];
     if (variants && variants.length > 0) {
       const variantRows = variants
         .filter((v: { name: string; value: string }) => v.name && v.value)
@@ -69,15 +79,36 @@ export async function POST(req: NextRequest) {
           image_url: v.imageUrl || null,
         }));
       if (variantRows.length > 0) {
-        await supabase.from("product_variants").insert(variantRows);
+        const { data: savedVariants } = await supabase
+          .from("product_variants")
+          .insert(variantRows)
+          .select("id");
+        insertedVariants = savedVariants || [];
       }
     }
 
-    // Create inventory record
-    await supabase.from("inventory").insert({
-      product_id: product.id,
-      quantity: 100, // default stock
-    });
+    // Insert inventory rows
+    if (insertedVariants.length > 0) {
+      // One inventory row per variant
+      const filteredVariants = variants.filter((v: { name: string; value: string }) => v.name && v.value);
+      const inventoryRows = insertedVariants.map((sv, idx) => ({
+        product_id: product.id,
+        variant_id: sv.id,
+        quantity: filteredVariants[idx]?.stockQuantity ?? 0,
+        reserved: 0,
+        low_stock_threshold: 5,
+      }));
+      await supabase.from("inventory").insert(inventoryRows);
+    } else {
+      // One product-level inventory row (no variants)
+      await supabase.from("inventory").insert({
+        product_id: product.id,
+        variant_id: null,
+        quantity: stockQuantity ?? 0,
+        reserved: 0,
+        low_stock_threshold: 5,
+      });
+    }
 
     return NextResponse.json({ id: product.id, success: true });
   } catch (err) {

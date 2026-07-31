@@ -18,9 +18,20 @@ export async function PATCH(
 
   const { id } = await params;
   const body = await req.json();
-  const { images, variants, ...productData } = body;
+  const { images, variants, stockQuantity, ...productData } = body;
 
   const supabase = createAdminClient();
+
+  // Auto-derive in_stock from provided quantities when stock info is present
+  if (stockQuantity !== undefined || (variants !== undefined)) {
+    let totalStock = 0;
+    if (variants && variants.length > 0) {
+      totalStock = variants.reduce((sum: number, v: { stockQuantity?: number }) => sum + (v.stockQuantity ?? 0), 0);
+    } else if (stockQuantity !== undefined) {
+      totalStock = stockQuantity;
+    }
+    productData.in_stock = totalStock > 0;
+  }
 
   const { error } = await supabase
     .from("products")
@@ -44,6 +55,7 @@ export async function PATCH(
   }
 
   // Replace variants if provided
+  let insertedVariants: { id: string }[] = [];
   if (variants !== undefined) {
     await supabase.from("product_variants").delete().eq("product_id", id);
     if (variants.length > 0) {
@@ -57,8 +69,39 @@ export async function PATCH(
           image_url: v.imageUrl || null,
         }));
       if (variantRows.length > 0) {
-        await supabase.from("product_variants").insert(variantRows);
+        const { data: savedVariants } = await supabase
+          .from("product_variants")
+          .insert(variantRows)
+          .select("id");
+        insertedVariants = savedVariants || [];
       }
+    }
+  }
+
+  // Replace inventory rows to match new variant structure
+  if (variants !== undefined || stockQuantity !== undefined) {
+    await supabase.from("inventory").delete().eq("product_id", id);
+
+    if (insertedVariants.length > 0) {
+      // Per-variant inventory
+      const filteredVariants = variants.filter((v: { name: string; value: string }) => v.name && v.value);
+      const inventoryRows = insertedVariants.map((sv, idx) => ({
+        product_id: id,
+        variant_id: sv.id,
+        quantity: filteredVariants[idx]?.stockQuantity ?? 0,
+        reserved: 0,
+        low_stock_threshold: 5,
+      }));
+      await supabase.from("inventory").insert(inventoryRows);
+    } else {
+      // Product-level inventory (no variants)
+      await supabase.from("inventory").insert({
+        product_id: id,
+        variant_id: null,
+        quantity: stockQuantity ?? 0,
+        reserved: 0,
+        low_stock_threshold: 5,
+      });
     }
   }
 

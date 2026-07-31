@@ -1,4 +1,28 @@
+import type { Metadata } from "next";
 import Image from "next/image";
+
+export const metadata: Metadata = {
+  title: "About Little Bunnies — Our Story & Mission | Baby Products India",
+  description:
+    "Learn about Little Bunnies — India's premium baby essentials brand founded with love. Our story, mission, and promise to parents of newborns aged 0–6 months.",
+  alternates: {
+    canonical: "https://littlebunnies.co.in/about",
+  },
+  openGraph: {
+    title: "About Little Bunnies — Our Story",
+    description:
+      "Learn about Little Bunnies — India's premium baby brand. Our story, mission & promise to parents of newborns.",
+    url: "https://littlebunnies.co.in/about",
+    images: [
+      {
+        url: "https://littlebunnies.co.in/images/LittleBunnies-Banner.png",
+        width: 1200,
+        height: 630,
+        alt: "About Little Bunnies",
+      },
+    ],
+  },
+};
 
 export default function AboutPage() {
   return (

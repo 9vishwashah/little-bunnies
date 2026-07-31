@@ -16,7 +16,8 @@ async function getProduct(id: string) {
     .select(`
       *,
       product_variants (*),
-      product_images (*)
+      product_images (*),
+      inventory (id, variant_id, quantity)
     `)
     .eq("id", id)
     .single();
@@ -37,12 +38,24 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
     notFound();
   }
 
-  const variants = product.product_variants?.map((v: any) => ({
-    name: v.name,
-    value: v.value,
-    priceModifier: v.price_modifier || 0,
-    imageUrl: v.image_url || "",
-  })) || [];
+  const inventoryRows: { id: string; variant_id: string | null; quantity: number }[] =
+    (product as any).inventory || [];
+
+  const variants = product.product_variants?.map((v: any) => {
+    // Find the inventory row for this specific variant
+    const inv = inventoryRows.find((row) => row.variant_id === v.id);
+    return {
+      name: v.name,
+      value: v.value,
+      priceModifier: v.price_modifier || 0,
+      stockQuantity: inv?.quantity ?? 0,
+      imageUrl: v.image_url || "",
+    };
+  }) || [];
+
+  // Product-level stock (when no variants): find inventory row with variant_id = null
+  const productInv = inventoryRows.find((row) => row.variant_id === null);
+  const stockQuantity = productInv?.quantity ?? 0;
 
   // Format images
   const initialImages = product.product_images
@@ -71,6 +84,7 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
     metaTitle: product.meta_title || "",
     metaDescription: product.meta_description || "",
     tags: product.tags?.join(", ") || "",
+    stockQuantity,
     variants,
   };
 

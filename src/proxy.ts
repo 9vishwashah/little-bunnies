@@ -1,19 +1,52 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
+/**
+ * Explicitly declare all public (non-auth-required) routes.
+ * Clerk will NOT inject auth cookies or X-Robots-Tag: noindex headers for
+ * these routes, which is critical for Googlebot to index the site properly.
+ */
+const isPublicRoute = createRouteMatcher([
+  "/",
+  "/products(.*)",
+  "/product(.*)",
+  "/about(.*)",
+  "/contact(.*)",
+  "/faq(.*)",
+  "/wholesale(.*)",
+  "/work-for-us(.*)",
+  "/shipping-policy(.*)",
+  "/returns(.*)",
+  "/exchange-policy(.*)",
+  "/privacy-policy(.*)",
+  "/terms(.*)",
+  "/sign-in(.*)",
+  "/sign-up(.*)",
+  // Public API routes
+  "/api/products(.*)",
+  "/api/categories(.*)",
+  // Sitemaps + robots — always public
+  "/sitemap.xml",
+  "/robots.txt",
+]);
+
 const isAdminRoute = createRouteMatcher(["/admin(.*)"]);
 
 export default clerkMiddleware(async (auth, req) => {
-  const { userId, sessionClaims } = await auth();
-
-  // Admin routes: must be logged in
+  // Admin routes: must be signed in
   if (isAdminRoute(req)) {
+    const { userId } = await auth();
     if (!userId) {
       const signInUrl = new URL("/sign-in", req.url);
       signInUrl.searchParams.set("redirect_url", req.url);
       return NextResponse.redirect(signInUrl);
     }
   }
+
+  // Account/checkout/cart/wishlist: require sign-in
+  // (These are disallowed in robots.ts anyway, so noindex is fine)
+
+  // All other routes (especially the shop) are public — do nothing.
 });
 
 export const config = {

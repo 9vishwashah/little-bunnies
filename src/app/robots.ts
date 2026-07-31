@@ -1,29 +1,61 @@
 import { MetadataRoute } from "next";
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://littlebunnies.co.in";
+  const baseUrl = "https://littlebunnies.co.in";
 
   return {
-    rules: {
-      userAgent: "*",
-      allow: "/",
-      disallow: [
-        // No trailing slash — Next.js doesn't add one to route URLs, and a
-        // trailing-slash prefix (e.g. "/cart/") would fail to match the
-        // bare route itself ("/cart"), only its (nonexistent) subpaths.
-        "/admin",
-        "/account",
-        "/checkout",
-        "/cart",
-        "/wishlist",
-        "/api/",
-        // Avoid indexing duplicate filter/sort variations of listing pages,
-        // per Google's ecommerce pagination guidance.
-        "/*?*sort=",
-        "/*?*minPrice=",
-        "/*?*maxPrice=",
-      ],
-    },
+    rules: [
+      {
+        userAgent: "*",
+        allow: [
+          "/",
+          "/products",
+          "/products/",
+          "/product/",
+          "/about",
+          "/contact",
+          "/faq",
+          "/wholesale",
+          "/work-for-us",
+          "/shipping-policy",
+          "/returns",
+          "/exchange-policy",
+          "/privacy-policy",
+          "/terms",
+        ],
+        disallow: [
+          // Private user routes
+          "/admin",
+          "/admin/",
+          "/account",
+          "/account/",
+          "/checkout",
+          "/checkout/",
+          "/cart",
+          "/wishlist",
+          "/api/",
+          "/sign-in",
+          "/sign-up",
+          // Noise: filter/sort/pagination variations that create duplicate content.
+          // Google's ecommerce guidance says to consolidate these to the canonical
+          // listing page via the canonical tag, and disallow them in robots.txt.
+          "/*?*sort=",
+          "/*?*minPrice=",
+          "/*?*maxPrice=",
+          "/*?*inStock=",
+          "/*?*brand=",
+          "/*?*page=",
+          // Noise: /product/color and similar invalid slug pages seen in GSC
+          "/product/color",
+        ],
+      },
+      // Disallow crawling of Next.js internal chunks
+      {
+        userAgent: "*",
+        disallow: "/_next/",
+      },
+    ],
     sitemap: `${baseUrl}/sitemap.xml`,
+    host: baseUrl,
   };
 }

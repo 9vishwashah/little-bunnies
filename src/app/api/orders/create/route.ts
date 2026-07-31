@@ -111,6 +111,13 @@ export async function POST(req: NextRequest) {
       await supabase.rpc("increment_coupon_uses", { coupon_id: couponId });
     }
 
+    // Decrement inventory stock for COD/UPI orders (confirmed immediately)
+    try {
+      await supabase.rpc("decrement_stock", { p_order_id: order.id });
+    } catch (stockErr) {
+      console.error("Stock decrement error:", stockErr);
+    }
+
     return NextResponse.json({
       success: true,
       orderId: order.id,

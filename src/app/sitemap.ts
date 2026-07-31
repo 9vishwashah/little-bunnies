@@ -1,8 +1,9 @@
 import { MetadataRoute } from "next";
 import { createClient } from "@supabase/supabase-js";
 
+const BASE_URL = "https://littlebunnies.co.in";
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://littlebunnies.co.in";
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -14,103 +15,105 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     .select("slug, updated_at")
     .eq("is_active", true);
 
-  // Fetch all active categories
+  // Fetch all active categories (top-level only — avoid noisy subcategory combos)
   const { data: categories } = await supabase
     .from("categories")
-    .select("slug")
-    .eq("is_active", true);
+    .select("slug, updated_at")
+    .eq("is_active", true)
+    .is("parent_id", null); // Only top-level categories
 
-  const productUrls = (products || []).map((product) => ({
-    url: `${baseUrl}/product/${product.slug}`,
-    lastModified: product.updated_at ? new Date(product.updated_at) : new Date(),
-    changeFrequency: "weekly" as const,
-    priority: 0.8,
-  }));
+  const now = new Date();
 
-  const categoryUrls = (categories || []).map((category) => ({
-    url: `${baseUrl}/products?category=${category.slug}`,
-    lastModified: new Date(),
-    changeFrequency: "weekly" as const,
-    priority: 0.7,
-  }));
-
-  const staticUrls = [
+  // ── Static pages ──────────────────────────────────────────────────────────
+  const staticUrls: MetadataRoute.Sitemap = [
     {
-      url: baseUrl,
-      lastModified: new Date(),
-      changeFrequency: "daily" as const,
+      url: BASE_URL,
+      lastModified: now,
+      changeFrequency: "daily",
       priority: 1.0,
     },
     {
-      url: `${baseUrl}/products`,
-      lastModified: new Date(),
-      changeFrequency: "daily" as const,
+      url: `${BASE_URL}/products`,
+      lastModified: now,
+      changeFrequency: "daily",
       priority: 0.9,
     },
     {
-      url: `${baseUrl}/about`,
-      lastModified: new Date(),
-      changeFrequency: "monthly" as const,
+      url: `${BASE_URL}/about`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.7,
+    },
+    {
+      url: `${BASE_URL}/contact`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.7,
+    },
+    {
+      url: `${BASE_URL}/faq`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.7,
+    },
+    {
+      url: `${BASE_URL}/wholesale`,
+      lastModified: now,
+      changeFrequency: "monthly",
       priority: 0.6,
     },
     {
-      url: `${baseUrl}/contact`,
-      lastModified: new Date(),
-      changeFrequency: "monthly" as const,
-      priority: 0.6,
-    },
-    {
-      url: `${baseUrl}/faq`,
-      lastModified: new Date(),
-      changeFrequency: "monthly" as const,
-      priority: 0.6,
-    },
-    {
-      url: `${baseUrl}/wholesale`,
-      lastModified: new Date(),
-      changeFrequency: "monthly" as const,
+      url: `${BASE_URL}/work-for-us`,
+      lastModified: now,
+      changeFrequency: "monthly",
       priority: 0.5,
     },
     {
-      url: `${baseUrl}/work-for-us`,
-      lastModified: new Date(),
-      changeFrequency: "monthly" as const,
+      url: `${BASE_URL}/shipping-policy`,
+      lastModified: now,
+      changeFrequency: "yearly",
       priority: 0.4,
     },
     {
-      url: `${baseUrl}/shipping-policy`,
-      lastModified: new Date(),
-      changeFrequency: "monthly" as const,
-      priority: 0.5,
-    },
-    {
-      url: `${baseUrl}/returns`,
-      lastModified: new Date(),
-      changeFrequency: "monthly" as const,
-      priority: 0.5,
-    },
-    {
-      url: `${baseUrl}/exchange-policy`,
-      lastModified: new Date(),
-      changeFrequency: "monthly" as const,
+      url: `${BASE_URL}/returns`,
+      lastModified: now,
+      changeFrequency: "yearly",
       priority: 0.4,
     },
     {
-      url: `${baseUrl}/privacy-policy`,
-      lastModified: new Date(),
-      changeFrequency: "yearly" as const,
+      url: `${BASE_URL}/exchange-policy`,
+      lastModified: now,
+      changeFrequency: "yearly",
       priority: 0.4,
     },
     {
-      url: `${baseUrl}/terms`,
-      lastModified: new Date(),
-      changeFrequency: "yearly" as const,
-      priority: 0.4,
+      url: `${BASE_URL}/privacy-policy`,
+      lastModified: now,
+      changeFrequency: "yearly",
+      priority: 0.3,
     },
-    // /cart, /checkout, /account, /wishlist, /admin are intentionally
-    // excluded — they're non-indexable, user-specific or private routes
-    // (see the matching disallow rules in robots.ts).
+    // /cart, /checkout, /account, /wishlist, /admin intentionally excluded —
+    // they are disallowed in robots.ts.
   ];
+
+  // ── Category pages ────────────────────────────────────────────────────────
+  // Use canonical ?category= query format (as used by the products page).
+  // These are only top-level categories; filter combinations are disallowed
+  // in robots.ts to avoid duplicate content.
+  const categoryUrls: MetadataRoute.Sitemap = (categories || []).map((cat) => ({
+    url: `${BASE_URL}/products?category=${cat.slug}`,
+    lastModified: cat.updated_at ? new Date(cat.updated_at) : now,
+    changeFrequency: "weekly",
+    priority: 0.8,
+  }));
+
+  // ── Product pages ─────────────────────────────────────────────────────────
+  const productUrls: MetadataRoute.Sitemap = (products || []).map((product) => ({
+    url: `${BASE_URL}/product/${product.slug}`,
+    lastModified: product.updated_at ? new Date(product.updated_at) : now,
+    changeFrequency: "weekly",
+    priority: 0.8,
+  }));
 
   return [...staticUrls, ...categoryUrls, ...productUrls];
 }

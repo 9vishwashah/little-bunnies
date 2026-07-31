@@ -53,11 +53,6 @@ const nextConfig: NextConfig = {
     ];
   },
 
-  // pdfkit reads its font metrics (.afm) files from disk relative to its own
-  // module location at runtime — bundling it rewrites those paths and breaks
-  // PDF generation, so it must stay an unbundled native require().
-  serverExternalPackages: ["pdfkit"],
-
   experimental: {
     optimizePackageImports: [
       "lucide-react",

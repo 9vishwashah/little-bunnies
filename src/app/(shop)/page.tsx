@@ -8,12 +8,63 @@ import Testimonials from "@/components/layout/home/Testimonials";
 import WhyChooseUs from "@/components/layout/home/WhyChooseUs";
 import ImageMaskText from "@/components/layout/home/ImageMaskText";
 import { Product } from "@/types";
+import { SITE_URL, jsonLd, buildFAQSchema, buildBreadcrumbSchema } from "@/lib/seo";
 
 export const metadata: Metadata = {
-  title: "Little Bunnies — Premium Baby Products for 0-6 Months",
+  title: "Little Bunnies — Premium Baby Products for 0–6 Months | Buy Online India",
   description:
-    "Shop premium baby essentials — prams, diapers, feeding bottles, clothing, nursery & more. Free shipping above ₹5999. Trusted by 10,000+ parents.",
+    "Shop premium baby products online in India — prams, strollers, diaper bags, feeding bottles, baby skincare, clothing & nursery essentials. Free shipping above ₹5999. Crafted for newborns aged 0–6 months.",
+  alternates: {
+    canonical: "https://littlebunnies.co.in",
+  },
+  openGraph: {
+    title: "Little Bunnies — Premium Baby Products for 0–6 Months",
+    description:
+      "India's favourite baby essentials brand. Shop prams, diaper bags, feeding bottles & more — handpicked with love for your little one. Free shipping above ₹5999.",
+    url: "https://littlebunnies.co.in",
+    images: [
+      {
+        url: "https://littlebunnies.co.in/images/LittleBunnies-Banner.png",
+        width: 1200,
+        height: 630,
+        alt: "Little Bunnies — Premium Baby Products India",
+      },
+    ],
+  },
 };
+
+const homeFAQs = [
+  {
+    question: "What age group are Little Bunnies products designed for?",
+    answer:
+      "Little Bunnies products are specially curated for newborns and babies aged 0–6 months, ensuring maximum safety and comfort.",
+  },
+  {
+    question: "Does Little Bunnies offer free shipping?",
+    answer:
+      "Yes! We offer free shipping on all orders above ₹5999 across India. Orders below ₹5999 attract a flat shipping fee of ₹79.",
+  },
+  {
+    question: "How long does delivery take?",
+    answer:
+      "Standard delivery takes 7–15 business days. Most orders arrive within 7–10 business days after dispatch.",
+  },
+  {
+    question: "What baby products does Little Bunnies sell?",
+    answer:
+      "We sell a wide range of baby essentials including prams, strollers, diaper bags, feeding bottles, baby skincare, clothing, nursery products, and more — all crafted for 0–6 month old babies.",
+  },
+  {
+    question: "Are Little Bunnies products safe for newborns?",
+    answer:
+      "Absolutely. All our products comply with applicable Indian safety standards and are tested for newborn safety. We carefully curate every product with safety as the top priority.",
+  },
+  {
+    question: "Can I return a product?",
+    answer:
+      "Yes! You have 15 days from the date of delivery to initiate a return for eligible products. Contact us via WhatsApp at +91 89760 77070.",
+  },
+];
 
 async function getFeaturedProducts(): Promise<Product[]> {
   try {
@@ -37,8 +88,19 @@ async function getFeaturedProducts(): Promise<Product[]> {
 export default async function HomePage() {
   const featured = await getFeaturedProducts();
 
+  const faqSchema = jsonLd(buildFAQSchema(
+    homeFAQs.map((f) => ({ question: f.question, answer: f.answer }))
+  ));
+  const breadcrumbSchema = jsonLd(buildBreadcrumbSchema([
+    { name: "Home", url: SITE_URL },
+  ]));
+
   return (
     <>
+      {/* ── Structured Data for Rich Results ───────────────────────── */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: faqSchema }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: breadcrumbSchema }} />
+
       <HeroSection />
       <CategorySection />
       <WhyChooseUs />

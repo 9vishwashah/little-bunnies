@@ -8,7 +8,7 @@ async function getProducts(search?: string) {
   const supabase = createAdminClient();
   let query = supabase
     .from("products")
-    .select(`*, product_images(url, is_primary), categories(name)`, { count: "exact" })
+    .select(`*, product_images(url, is_primary), categories(name), inventory(quantity)`, { count: "exact" })
     .order("created_at", { ascending: false });
 
   if (search) {
@@ -108,6 +108,7 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
                   is_best_seller: boolean;
                   product_images?: { url: string; is_primary: boolean }[];
                   categories?: { name: string };
+                  inventory?: { quantity: number }[];
                 }) => {
                   const primaryImage = product.product_images?.find((img) => img.is_primary) || product.product_images?.[0];
                   return (
@@ -142,11 +143,23 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
                         )}
                       </td>
                       <td className="px-4 py-3.5">
-                        <span className={`text-xs font-semibold px-2.5 py-1 rounded-pill ${
-                          product.in_stock ? "bg-sage/30 text-sage-dark" : "bg-blush/30 text-blush-dark"
-                        }`}>
-                          {product.in_stock ? "In Stock" : "Out of Stock"}
-                        </span>
+                        {(() => {
+                          const totalQty = product.inventory?.reduce((sum, row) => sum + (row.quantity ?? 0), 0) ?? null;
+                          if (totalQty === null) {
+                            return <span className="text-xs text-ink-muted">—</span>;
+                          }
+                          const color =
+                            totalQty === 0
+                              ? "bg-blush/20 text-blush-dark"
+                              : totalQty <= 10
+                              ? "bg-amber-100 text-amber-700"
+                              : "bg-sage/20 text-sage-dark";
+                          return (
+                            <span className={`text-xs font-semibold px-2.5 py-1 rounded-pill ${color}`}>
+                              {totalQty === 0 ? "Out of stock" : `${totalQty} units`}
+                            </span>
+                          );
+                        })()}
                       </td>
                       <td className="px-4 py-3.5">
                         <span className={`text-xs font-semibold px-2.5 py-1 rounded-pill ${

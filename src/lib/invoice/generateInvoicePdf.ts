@@ -1,4 +1,15 @@
-import PDFDocument from "pdfkit";
+import { PDFPage, rgb } from "pdf-lib";
+import {
+  createLetterheadDoc,
+  formatRs,
+  formatDate,
+  drawText,
+  COLORS,
+  CONTENT_TOP,
+  CONTENT_BOTTOM,
+  CONTENT_LEFT,
+  CONTENT_RIGHT,
+} from "./letterheadDoc";
 
 interface InvoiceOrder {
   order_number: string;
@@ -30,231 +41,164 @@ interface InvoiceItem {
   total_price: number;
 }
 
-const INK = "#24324A";
-const INK_MUTED = "#8A8072";
-const SAGE_DARK = "#5C7A46";
-const LINE = "#E5DFD3";
+const CONTENT_WIDTH = CONTENT_RIGHT - CONTENT_LEFT;
 
-// pdfkit's built-in Helvetica font has no glyph for ₹, so amounts use "Rs." here.
-function formatPdfPrice(amount: number): string {
-  return "Rs. " + new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 }).format(amount);
-}
-
-function formatDate(iso: string): string {
-  const d = new Date(iso);
-  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-  return `${d.getUTCDate()} ${months[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
-}
-
-export function generateInvoicePdf(
+export async function generateInvoicePdf(
   order: InvoiceOrder,
   items: InvoiceItem[],
   customerEmail?: string | null
 ): Promise<Buffer> {
-  return new Promise((resolve, reject) => {
-    const doc = new PDFDocument({ size: "A4", margin: 50 });
-    const chunks: Buffer[] = [];
-    doc.on("data", (chunk) => chunks.push(chunk));
-    doc.on("end", () => resolve(Buffer.concat(chunks)));
-    doc.on("error", reject);
+  const { pdfDoc, fontRegular, fontBold, addPage } = await createLetterheadDoc();
+  let page: PDFPage = await addPage();
+  let y = CONTENT_TOP;
 
-    const pageWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
-    const left = doc.page.margins.left;
-
-    // ── Header ──────────────────────────────────────────────────────────
-    doc
-      .fillColor(INK)
-      .font("Helvetica-Bold")
-      .fontSize(22)
-      .text("LITTLE BUNNIES", left, 50);
-
-    doc
-      .fillColor(INK_MUTED)
-      .font("Helvetica")
-      .fontSize(9)
-      .text("Premium Baby Essentials", left, 76)
-      .text("littlebunnies.co.in  •  info@littlebunnies.co.in", left, 90);
-
-    doc
-      .fillColor(INK)
-      .font("Helvetica-Bold")
-      .fontSize(16)
-      .text("PAYMENT RECEIPT", left, 50, { width: pageWidth, align: "right" });
-
-    doc
-      .fillColor(INK_MUTED)
-      .font("Helvetica")
-      .fontSize(10)
-      .text(`Receipt #: ${order.order_number}`, left, 76, { width: pageWidth, align: "right" })
-      .text(`Date: ${formatDate(order.created_at)}`, left, 90, { width: pageWidth, align: "right" });
-
-    doc.moveTo(left, 118).lineTo(left + pageWidth, 118).strokeColor(LINE).stroke();
-
-    // ── Billed to / Payment details ────────────────────────────────────
-    const address = order.shipping_address;
-    const colWidth = pageWidth / 2 - 10;
-
-    doc
-      .fillColor(INK_MUTED)
-      .font("Helvetica-Bold")
-      .fontSize(9)
-      .text("BILLED TO", left, 136);
-
-    doc
-      .fillColor(INK)
-      .font("Helvetica")
-      .fontSize(10)
-      .text(address.full_name, left, 152, { width: colWidth })
-      .text(
-        `${address.address_line1}${address.address_line2 ? ", " + address.address_line2 : ""}`,
-        { width: colWidth }
-      )
-      .text(`${address.city}, ${address.state} - ${address.pincode}`, { width: colWidth })
-      .text(address.country, { width: colWidth })
-      .text(`Phone: ${address.phone}`, { width: colWidth });
-    if (customerEmail) {
-      doc.text(`Email: ${customerEmail}`, { width: colWidth });
+  const ensureSpace = async (needed: number) => {
+    if (y - needed < CONTENT_BOTTOM) {
+      page = await addPage();
+      y = CONTENT_TOP;
     }
+  };
 
-    const rightColX = left + colWidth + 20;
-    doc
-      .fillColor(INK_MUTED)
-      .font("Helvetica-Bold")
-      .fontSize(9)
-      .text("PAYMENT DETAILS", rightColX, 136);
-
-    doc
-      .fillColor(INK)
-      .font("Helvetica")
-      .fontSize(10)
-      .text(`Order Number: ${order.order_number}`, rightColX, 152, { width: colWidth })
-      .text(`Payment Method: Razorpay`, { width: colWidth })
-      .text(`Payment Status: PAID`, { width: colWidth });
-    if (order.razorpay_payment_id) {
-      doc.text(`Payment ID: ${order.razorpay_payment_id}`, { width: colWidth });
-    }
-
-    // ── Items table ──────────────────────────────────────────────────
-    let y = 250;
-    const col = {
-      item: left,
-      qty: left + pageWidth - 220,
-      price: left + pageWidth - 150,
-      amount: left + pageWidth - 80,
-    };
-
-    doc.rect(left, y, pageWidth, 22).fill(INK);
-    doc
-      .fillColor("#FBF8F3")
-      .font("Helvetica-Bold")
-      .fontSize(9)
-      .text("ITEM", col.item + 10, y + 7)
-      .text("QTY", col.qty, y + 7, { width: 50, align: "right" })
-      .text("PRICE", col.price, y + 7, { width: 60, align: "right" })
-      .text("AMOUNT", col.amount, y + 7, { width: 70, align: "right" });
-
-    y += 22;
-
-    items.forEach((item, i) => {
-      const rowHeight = item.variant_name ? 36 : 26;
-      if (i % 2 === 1) {
-        doc.rect(left, y, pageWidth, rowHeight).fill("#FAF6F0");
-      }
-
-      doc
-        .fillColor(INK)
-        .font("Helvetica")
-        .fontSize(9.5)
-        .text(item.product_name, col.item + 10, y + 7, { width: col.qty - col.item - 20 });
-
-      if (item.variant_name) {
-        doc
-          .fillColor(INK_MUTED)
-          .fontSize(8)
-          .text(item.variant_name, col.item + 10, y + 20, { width: col.qty - col.item - 20 });
-      }
-
-      doc
-        .fillColor(INK)
-        .font("Helvetica")
-        .fontSize(9.5)
-        .text(String(item.quantity), col.qty, y + 7, { width: 50, align: "right" })
-        .text(formatPdfPrice(item.unit_price), col.price, y + 7, { width: 60, align: "right" })
-        .text(formatPdfPrice(item.total_price), col.amount, y + 7, { width: 70, align: "right" });
-
-      y += rowHeight;
-    });
-
-    doc.moveTo(left, y).lineTo(left + pageWidth, y).strokeColor(LINE).stroke();
-    y += 14;
-
-    // ── Totals ──────────────────────────────────────────────────────
-    const totalsX = left + pageWidth - 200;
-    doc
-      .fillColor(INK_MUTED)
-      .font("Helvetica")
-      .fontSize(10)
-      .text("Subtotal", totalsX, y, { width: 120 })
-      .fillColor(INK)
-      .text(formatPdfPrice(order.subtotal), totalsX + 120, y, { width: 80, align: "right" });
-    y += 16;
-
-    if (order.custom_name_charge) {
-      doc
-        .fillColor(INK_MUTED)
-        .text("Custom Name Personalization", totalsX, y, { width: 120 })
-        .fillColor(INK)
-        .text(formatPdfPrice(order.custom_name_charge), totalsX + 120, y, { width: 80, align: "right" });
-      y += 16;
-    }
-
-    if (order.discount_amount) {
-      doc
-        .fillColor(INK_MUTED)
-        .text(order.coupon_code ? `Discount (${order.coupon_code})` : "Discount", totalsX, y, { width: 120 })
-        .fillColor(SAGE_DARK)
-        .text(`- ${formatPdfPrice(order.discount_amount)}`, totalsX + 120, y, { width: 80, align: "right" });
-      y += 16;
-    }
-
-    doc
-      .fillColor(INK_MUTED)
-      .text("Shipping", totalsX, y, { width: 120 })
-      .fillColor(INK)
-      .text(
-        order.shipping_amount === 0 ? "FREE" : formatPdfPrice(order.shipping_amount),
-        totalsX + 120,
-        y,
-        { width: 80, align: "right" }
-      );
-    y += 20;
-
-    doc.moveTo(totalsX, y).lineTo(left + pageWidth, y).strokeColor(LINE).stroke();
-    y += 8;
-
-    doc
-      .fillColor(INK)
-      .font("Helvetica-Bold")
-      .fontSize(12)
-      .text("Total Paid", totalsX, y, { width: 120 })
-      .fillColor(SAGE_DARK)
-      .text(formatPdfPrice(order.total), totalsX + 120, y, { width: 80, align: "right" });
-
-    // ── Footer ──────────────────────────────────────────────────────
-    const footerY = doc.page.height - doc.page.margins.bottom - 40;
-    doc
-      .fillColor(INK_MUTED)
-      .font("Helvetica")
-      .fontSize(9)
-      .text("Thank you for shopping with Little Bunnies!", left, footerY, {
-        width: pageWidth,
-        align: "center",
-      })
-      .text("This is a computer-generated receipt and does not require a signature.", left, footerY + 13, {
-        width: pageWidth,
-        align: "center",
-      });
-
-    doc.end();
+  // ── Title + receipt meta ────────────────────────────────────────────
+  drawText(page, "PAYMENT RECEIPT", { x: CONTENT_LEFT, y, font: fontBold, size: 18, color: COLORS.ink });
+  drawText(page, `Receipt #: ${order.order_number}`, {
+    x: CONTENT_LEFT, y, maxWidth: CONTENT_WIDTH, align: "right", font: fontRegular, size: 10, color: COLORS.inkMuted,
   });
+  y -= 15;
+  drawText(page, `Date: ${formatDate(order.created_at)}`, {
+    x: CONTENT_LEFT, y, maxWidth: CONTENT_WIDTH, align: "right", font: fontRegular, size: 10, color: COLORS.inkMuted,
+  });
+  y -= 20;
+
+  page.drawLine({
+    start: { x: CONTENT_LEFT, y },
+    end: { x: CONTENT_RIGHT, y },
+    thickness: 1,
+    color: COLORS.line,
+  });
+  y -= 25;
+
+  // ── Billed to / Payment details ─────────────────────────────────────
+  const colWidth = CONTENT_WIDTH / 2 - 10;
+  const rightColX = CONTENT_LEFT + colWidth + 20;
+  const address = order.shipping_address;
+  let leftY = y;
+  let rightY = y;
+
+  drawText(page, "BILLED TO", { x: CONTENT_LEFT, y: leftY, font: fontBold, size: 9, color: COLORS.inkMuted });
+  leftY -= 15;
+  const billedToLines = [
+    address.full_name,
+    `${address.address_line1}${address.address_line2 ? ", " + address.address_line2 : ""}`,
+    `${address.city}, ${address.state} - ${address.pincode}`,
+    address.country,
+    `Phone: ${address.phone}`,
+    ...(customerEmail ? [`Email: ${customerEmail}`] : []),
+  ];
+  for (const line of billedToLines) {
+    drawText(page, line, { x: CONTENT_LEFT, y: leftY, font: fontRegular, size: 10, color: COLORS.ink });
+    leftY -= 14;
+  }
+
+  drawText(page, "PAYMENT DETAILS", { x: rightColX, y: rightY, font: fontBold, size: 9, color: COLORS.inkMuted });
+  rightY -= 15;
+  const paymentLines = [
+    `Order Number: ${order.order_number}`,
+    "Payment Method: Razorpay",
+    "Payment Status: PAID",
+    ...(order.razorpay_payment_id ? [`Payment ID: ${order.razorpay_payment_id}`] : []),
+  ];
+  for (const line of paymentLines) {
+    drawText(page, line, { x: rightColX, y: rightY, font: fontRegular, size: 10, color: COLORS.ink });
+    rightY -= 14;
+  }
+
+  y = Math.min(leftY, rightY) - 20;
+
+  // ── Items table ──────────────────────────────────────────────────
+  const col = {
+    item: CONTENT_LEFT,
+    qty: CONTENT_RIGHT - 220,
+    price: CONTENT_RIGHT - 150,
+    amount: CONTENT_RIGHT - 80,
+  };
+
+  await ensureSpace(30);
+  page.drawRectangle({ x: CONTENT_LEFT, y: y - 20, width: CONTENT_WIDTH, height: 22, color: COLORS.ink });
+  drawText(page, "ITEM", { x: col.item + 10, y: y - 14, font: fontBold, size: 9, color: COLORS.white });
+  drawText(page, "QTY", { x: col.qty, y: y - 14, maxWidth: 50, align: "right", font: fontBold, size: 9, color: COLORS.white });
+  drawText(page, "PRICE", { x: col.price, y: y - 14, maxWidth: 60, align: "right", font: fontBold, size: 9, color: COLORS.white });
+  drawText(page, "AMOUNT", { x: col.amount, y: y - 14, maxWidth: 70, align: "right", font: fontBold, size: 9, color: COLORS.white });
+  y -= 22;
+
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    const rowHeight = item.variant_name ? 34 : 24;
+    await ensureSpace(rowHeight);
+
+    if (i % 2 === 1) {
+      page.drawRectangle({
+        x: CONTENT_LEFT, y: y - rowHeight, width: CONTENT_WIDTH, height: rowHeight,
+        color: rgb(0.98, 0.965, 0.945),
+      });
+    }
+
+    drawText(page, item.product_name, {
+      x: col.item + 10, y: y - 14, font: fontRegular, size: 9.5, color: COLORS.ink, maxWidth: col.qty - col.item - 20,
+    });
+    if (item.variant_name) {
+      drawText(page, item.variant_name, {
+        x: col.item + 10, y: y - 27, font: fontRegular, size: 8, color: COLORS.inkMuted,
+      });
+    }
+    drawText(page, String(item.quantity), { x: col.qty, y: y - 14, maxWidth: 50, align: "right", font: fontRegular, size: 9.5, color: COLORS.ink });
+    drawText(page, formatRs(item.unit_price), { x: col.price, y: y - 14, maxWidth: 60, align: "right", font: fontRegular, size: 9.5, color: COLORS.ink });
+    drawText(page, formatRs(item.total_price), { x: col.amount, y: y - 14, maxWidth: 70, align: "right", font: fontRegular, size: 9.5, color: COLORS.ink });
+
+    y -= rowHeight;
+  }
+
+  page.drawLine({ start: { x: CONTENT_LEFT, y }, end: { x: CONTENT_RIGHT, y }, thickness: 1, color: COLORS.line });
+  y -= 20;
+
+  // ── Totals ──────────────────────────────────────────────────────
+  await ensureSpace(120);
+  const totalsX = CONTENT_RIGHT - 200;
+  const totalsLabelWidth = 120;
+
+  const totalRow = (label: string, value: string, opts?: { bold?: boolean; color?: typeof COLORS.ink }) => {
+    const font = opts?.bold ? fontBold : fontRegular;
+    const size = opts?.bold ? 12 : 10;
+    drawText(page, label, { x: totalsX, y, font, size, color: opts?.color || COLORS.inkMuted });
+    drawText(page, value, {
+      x: totalsX + totalsLabelWidth, y, maxWidth: 80, align: "right", font, size, color: opts?.color || COLORS.ink,
+    });
+    y -= opts?.bold ? 18 : 16;
+  };
+
+  totalRow("Subtotal", formatRs(order.subtotal));
+  if (order.custom_name_charge) {
+    totalRow("Custom Name Personalization", formatRs(order.custom_name_charge));
+  }
+  if (order.discount_amount) {
+    totalRow(
+      order.coupon_code ? `Discount (${order.coupon_code})` : "Discount",
+      `- ${formatRs(order.discount_amount)}`,
+      { color: COLORS.sageDark }
+    );
+  }
+  totalRow("Shipping", order.shipping_amount === 0 ? "FREE" : formatRs(order.shipping_amount));
+
+  y -= 4;
+  page.drawLine({ start: { x: totalsX, y }, end: { x: CONTENT_RIGHT, y }, thickness: 1, color: COLORS.line });
+  y -= 14;
+  totalRow("Total Paid", formatRs(order.total), { bold: true, color: COLORS.sageDark });
+
+  // ── Footer sign-off ──────────────────────────────────────────────
+  drawText(page, "Thank you for shopping with Little Bunnies!", {
+    x: CONTENT_LEFT, y: CONTENT_BOTTOM, maxWidth: CONTENT_WIDTH, align: "center", font: fontRegular, size: 9, color: COLORS.inkMuted,
+  });
+
+  const bytes = await pdfDoc.save();
+  return Buffer.from(bytes);
 }

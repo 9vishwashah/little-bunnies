@@ -2,8 +2,12 @@ import type { Metadata } from "next";
 import { Truck } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Shipping Policy",
-  description: "Read Little Bunnies' Shipping Policy — our guidelines for delivery, shipping methods, and timelines.",
+  title: "Shipping Policy — Delivery Times & Free Shipping | Little Bunnies",
+  description:
+    "Little Bunnies shipping policy: free delivery above ₹5999, standard delivery in 7–15 business days across India. Read our complete shipping & delivery guidelines.",
+  alternates: {
+    canonical: "https://littlebunnies.co.in/shipping-policy",
+  },
 };
 
 export default function Page() {

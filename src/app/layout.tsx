@@ -3,37 +3,19 @@ import { Quicksand, Fredoka } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Toaster } from "sonner";
 import ScrollToTop from "@/components/ScrollToTop";
-import { SITE_URL, jsonLd } from "@/lib/seo";
+import {
+  SITE_URL,
+  SITE_NAME,
+  jsonLd,
+  buildLocalBusinessSchema,
+  buildOrganizationSchema,
+  buildWebSiteSchema,
+} from "@/lib/seo";
 import "./globals.css";
 
 const supabaseOrigin = process.env.NEXT_PUBLIC_SUPABASE_URL
   ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).origin
   : null;
-
-const organizationJsonLd = {
-  "@context": "https://schema.org",
-  "@type": "Organization",
-  name: "Little Bunnies",
-  url: SITE_URL,
-  logo: `${SITE_URL}/images/logo-full.png`,
-  sameAs: [
-    "https://www.instagram.com/littlebunniesofficial",
-    "https://www.facebook.com/share/1D5pdMpchM/",
-    "https://wa.me/918976077070",
-  ],
-};
-
-const websiteJsonLd = {
-  "@context": "https://schema.org",
-  "@type": "WebSite",
-  name: "Little Bunnies",
-  url: SITE_URL,
-  potentialAction: {
-    "@type": "SearchAction",
-    target: `${SITE_URL}/products?search={search_term_string}`,
-    "query-input": "required name=search_term_string",
-  },
-};
 
 const quicksand = Quicksand({
   subsets: ["latin"],
@@ -50,29 +32,53 @@ const fredoka = Fredoka({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://littlebunnies.co.in"),
+  metadataBase: new URL("https://littlebunnies.co.in"),
   title: {
-    default: "Little Bunnies — Premium Baby Products for 0-6 Months",
+    default: "Little Bunnies — Premium Baby Products for 0–6 Months | India",
     template: "%s | Little Bunnies",
   },
   description:
-    "Little Bunnies is India's premium baby essentials brand. Shop prams, strollers, diapers, feeding bottles, baby care, clothing, and nursery products crafted for newborns aged 0-6 months.",
+    "Little Bunnies is India's premium baby essentials brand. Shop prams, strollers, diaper bags, feeding bottles, baby skincare, clothing & nursery products — crafted with love for newborns aged 0–6 months. Free shipping above ₹5999.",
   applicationName: "Little Bunnies",
-  authors: [{ name: "Little Bunnies" }],
+  authors: [{ name: "Little Bunnies", url: "https://littlebunnies.co.in" }],
   generator: "Next.js",
   creator: "Little Bunnies",
   publisher: "Little Bunnies",
   keywords: [
+    // Brand
     "Little Bunnies",
-    "little bunnies",
+    "littlebunnies",
     "little bunnies india",
+    "littlebunnies.co.in",
+    // Products
     "baby products india",
-    "newborn essentials",
-    "baby prams",
-    "baby strollers",
-    "infant care",
-    "baby clothing",
-    "0-6 months baby",
+    "newborn essentials india",
+    "baby prams india",
+    "baby strollers india",
+    "baby pram online",
+    "stroller for newborn",
+    "infant pram",
+    "baby carrier",
+    "diaper bag india",
+    "multipurpose diaper bag",
+    "baby feeding bottles",
+    "baby skincare products",
+    "baby clothing 0-6 months",
+    "nursery essentials",
+    "baby toys 0-6 months",
+    "baby gifts india",
+    // Intent
+    "buy baby products online india",
+    "premium baby brand india",
+    "baby shop online india",
+    "newborn shopping india",
+    "0 to 6 months baby products",
+    "infant care products",
+    "best baby products india 2024",
+    // City/Local
+    "baby products mumbai",
+    "baby shop mumbai",
+    "baby products online delivery india",
   ],
   formatDetection: {
     email: false,
@@ -80,54 +86,69 @@ export const metadata: Metadata = {
     telephone: false,
   },
   alternates: {
-    canonical: "/",
+    canonical: "https://littlebunnies.co.in",
   },
   icons: {
-    icon: "/images/logo-full.png",
-    shortcut: "/images/logo-full.png",
+    icon: [
+      { url: "/images/logo-full.png", type: "image/png" },
+      { url: "/favicon.ico", type: "image/x-icon" },
+    ],
+    shortcut: "/favicon.ico",
     apple: "/images/logo-full.png",
   },
   openGraph: {
     type: "website",
     locale: "en_IN",
-    url: "/",
-    siteName: "Little Bunnies",
-    title: "Little Bunnies — Premium Baby Products for 0-6 Months",
+    url: "https://littlebunnies.co.in",
+    siteName: SITE_NAME,
+    title: "Little Bunnies — Premium Baby Products for 0–6 Months",
     description:
-      "India's premium baby essentials brand. Shop prams, strollers, diapers, feeding bottles & more — handpicked with love for your little one.",
+      "India's premium baby essentials brand. Shop prams, strollers, diaper bags, feeding bottles & more — handpicked with love for your little one. Free shipping above ₹5999.",
     images: [
       {
-        url: "/images/LittleBunnies-Banner.png",
+        url: "https://littlebunnies.co.in/images/LittleBunnies-Banner.png",
         width: 1200,
         height: 630,
-        alt: "Little Bunnies — Premium Baby Products",
+        alt: "Little Bunnies — Premium Baby Products India",
+        type: "image/png",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Little Bunnies — Premium Baby Products for 0-6 Months",
+    title: "Little Bunnies — Premium Baby Products for 0–6 Months",
     description:
-      "India's premium baby essentials brand. Shop prams, strollers, diapers, feeding bottles & more — handpicked with love for your little one.",
+      "India's premium baby essentials brand. Shop prams, strollers, diaper bags, feeding bottles & more — handpicked with love for your little one.",
     images: [
       {
-        url: "/images/LittleBunnies-Banner.png",
-        width: 1200,
-        height: 630,
-        alt: "Little Bunnies — Premium Baby Products",
+        url: "https://littlebunnies.co.in/images/LittleBunnies-Banner.png",
+        alt: "Little Bunnies — Premium Baby Products India",
       },
     ],
+    site: "@littlebunniesofficial",
+    creator: "@littlebunniesofficial",
   },
-  // Set NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION in .env.local with the code
-  // from Google Search Console — omitted entirely until then, since an
-  // unset placeholder here would just render a meaningless meta tag.
-  ...(process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION && {
-    verification: { google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION },
-  }),
   robots: {
     index: true,
     follow: true,
-    googleBot: { index: true, follow: true, "max-image-preview": "large", "max-video-preview": -1, "max-snippet": -1 },
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-video-preview": -1,
+      "max-snippet": -1,
+    },
+  },
+  // Google Search Console domain verification
+  ...(process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION && {
+    verification: { google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION },
+  }),
+  // Geo / Local SEO
+  other: {
+    "geo.region": "IN-MH",
+    "geo.placename": "Mumbai, Maharashtra, India",
+    "geo.position": "19.0760;72.8777",
+    ICBM: "19.0760, 72.8777",
   },
 };
 
@@ -145,21 +166,31 @@ export default function RootLayout({
 }) {
   return (
     <ClerkProvider>
-      <html lang="en" className={`${quicksand.variable} ${fredoka.variable}`}>
+      <html lang="en-IN" className={`${quicksand.variable} ${fredoka.variable}`}>
         <head>
+          {/* DNS prefetch for performance */}
           {supabaseOrigin && (
             <>
               <link rel="preconnect" href={supabaseOrigin} crossOrigin="anonymous" />
               <link rel="dns-prefetch" href={supabaseOrigin} />
             </>
           )}
+
+          {/* ── Structured Data (JSON-LD) ───────────────────────────────── */}
+          {/* Organization */}
           <script
             type="application/ld+json"
-            dangerouslySetInnerHTML={{ __html: jsonLd(organizationJsonLd) }}
+            dangerouslySetInnerHTML={{ __html: jsonLd(buildOrganizationSchema()) }}
           />
+          {/* LocalBusiness */}
           <script
             type="application/ld+json"
-            dangerouslySetInnerHTML={{ __html: jsonLd(websiteJsonLd) }}
+            dangerouslySetInnerHTML={{ __html: jsonLd(buildLocalBusinessSchema()) }}
+          />
+          {/* WebSite with SearchAction */}
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: jsonLd(buildWebSiteSchema()) }}
           />
         </head>
         <body className="font-sans bg-cream text-ink antialiased overflow-x-hidden">

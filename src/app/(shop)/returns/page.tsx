@@ -2,8 +2,12 @@ import type { Metadata } from "next";
 import { RefreshCw } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Return & Refund Policy",
-  description: "Read Little Bunnies' Return & Refund Policy — our rules regarding cancellations and returns.",
+  title: "Return & Refund Policy — 15 Day Returns | Little Bunnies",
+  description:
+    "Little Bunnies return & refund policy: 15-day return window on eligible products. Refunds processed within 5–7 business days. Read our complete return guidelines for baby products.",
+  alternates: {
+    canonical: "https://littlebunnies.co.in/returns",
+  },
 };
 
 export default function Page() {

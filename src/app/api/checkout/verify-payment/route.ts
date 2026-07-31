@@ -85,6 +85,13 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // ── Decrement inventory stock — best-effort, never blocks the paid response ──
+    try {
+      await supabase.rpc("decrement_stock", { p_order_id: orderId });
+    } catch (stockErr) {
+      console.error("Stock decrement error:", stockErr);
+    }
+
     // ── Confirmation email + invoice PDF — best-effort, never blocks the paid response ──
     try {
       const { data: orderItems } = await supabase

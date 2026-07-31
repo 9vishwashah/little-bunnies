@@ -17,8 +17,8 @@ import { cn } from "@/lib/utils";
 
 const CATEGORIES = [
   { name: "Stroller", slug: "prams", color: "bg-sage-light/50", icon: Car, image: "/images/pram.png?v=2" },
-  { name: "Diaper Bags", slug: "diapers", color: "bg-lavender-brand-light/50", icon: Package, image: "/images/diapers.png?v=2" },
-  { name: "Utility Bags", slug: "bags", color: "bg-sage-light/30", icon: HeartPulse, image: "/images/bags.png?v=2" },
+  { name: "Diaper Bags", slug: "bags", color: "bg-lavender-brand-light/50", icon: Package, image: "/images/diapers.png?v=2" },
+  { name: "Utility Bags", slug: "utility-bags", color: "bg-sage-light/30", icon: HeartPulse, image: "/images/bags.png?v=2" },
 ];
 
 export default function CategorySection() {

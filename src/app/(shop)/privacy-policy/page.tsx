@@ -2,8 +2,16 @@ import type { Metadata } from "next";
 import { ShieldCheck } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy",
-  description: "Read Little Bunnies' Privacy Policy — learn how we collect, use, and protect your information.",
+  title: "Privacy Policy | Little Bunnies — Baby Products India",
+  description:
+    "Read the Little Bunnies privacy policy. Learn how we collect, use, store, and protect your personal information when you shop for baby products on our site.",
+  alternates: {
+    canonical: "https://littlebunnies.co.in/privacy-policy",
+  },
+  robots: {
+    index: true,
+    follow: false,
+  },
 };
 
 export default function Page() {
