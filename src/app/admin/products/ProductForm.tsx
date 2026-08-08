@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn, slugify } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/client";
 
 const productSchema = z.object({
   name: z.string().min(2, "Product name is required"),
@@ -199,23 +200,40 @@ export default function ProductForm({ categories, initialData, initialImages, in
     toast.success(`Variant ${type} uploaded!`, { id: "variantUpload" });
   };
 
+  /**
+   * Uploads a file directly from the browser to Supabase Storage using a
+   * short-lived signed URL, instead of routing the file through our own
+   * serverless function — Netlify (and most serverless hosts) cap function
+   * request bodies at a few MB, which video files easily exceed.
+   */
+  const uploadDirectToStorage = async (file: File, folder: string): Promise<string> => {
+    const signRes = await fetch("/api/upload/sign", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ bucket: "products", folder, fileName: file.name, fileType: file.type }),
+    });
+    const signData = await signRes.json();
+    if (!signRes.ok || !signData.token) {
+      throw new Error(signData.error || "Failed to prepare upload");
+    }
+
+    const supabase = createClient();
+    const { error } = await supabase.storage
+      .from("products")
+      .uploadToSignedUrl(signData.path, signData.token, file, { contentType: file.type });
+    if (error) throw error;
+
+    return signData.url as string;
+  };
+
   const handleVideoUpload = async (videoType: VideoType, file: File) => {
     setUploadingVideo(videoType);
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("bucket", "products");
-    formData.append("folder", "product-videos");
     try {
-      const res = await fetch("/api/upload", { method: "POST", body: formData });
-      const data = await res.json();
-      if (data.url) {
-        setVideos((prev) => ({ ...prev, [videoType]: { ...prev[videoType], url: data.url } }));
-        toast.success(`${videoType === "assembly" ? "Assembly" : "Features"} video uploaded!`);
-      } else {
-        toast.error(data.error || "Failed to upload video");
-      }
-    } catch {
-      toast.error("Failed to upload video");
+      const url = await uploadDirectToStorage(file, "product-videos");
+      setVideos((prev) => ({ ...prev, [videoType]: { ...prev[videoType], url } }));
+      toast.success(`${videoType === "assembly" ? "Assembly" : "Features"} video uploaded!`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to upload video");
     } finally {
       setUploadingVideo(null);
     }
@@ -223,21 +241,12 @@ export default function ProductForm({ categories, initialData, initialImages, in
 
   const handleVideoThumbnailUpload = async (videoType: VideoType, file: File) => {
     setUploadingThumb(videoType);
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("bucket", "products");
-    formData.append("folder", "product-video-thumbnails");
     try {
-      const res = await fetch("/api/upload", { method: "POST", body: formData });
-      const data = await res.json();
-      if (data.url) {
-        setVideos((prev) => ({ ...prev, [videoType]: { ...prev[videoType], url: prev[videoType]?.url || "", thumbnailUrl: data.url } }));
-        toast.success("Thumbnail uploaded!");
-      } else {
-        toast.error(data.error || "Failed to upload thumbnail");
-      }
-    } catch {
-      toast.error("Failed to upload thumbnail");
+      const url = await uploadDirectToStorage(file, "product-video-thumbnails");
+      setVideos((prev) => ({ ...prev, [videoType]: { url: prev[videoType]?.url || "", thumbnailUrl: url } }));
+      toast.success("Thumbnail uploaded!");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to upload thumbnail");
     } finally {
       setUploadingThumb(null);
     }
