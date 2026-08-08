@@ -70,14 +70,56 @@ export function buildLocalBusinessSchema() {
     sameAs: [SITE_INSTAGRAM, SITE_FACEBOOK, `https://wa.me/${SITE_WHATSAPP}`],
     hasOfferCatalog: {
       "@type": "OfferCatalog",
-      name: "Baby Products",
+      name: "Baby Products & Essentials",
       itemListElement: [
-        { "@type": "Offer", itemOffered: { "@type": "Product", name: "Baby Prams & Strollers" } },
-        { "@type": "Offer", itemOffered: { "@type": "Product", name: "Diaper Bags" } },
-        { "@type": "Offer", itemOffered: { "@type": "Product", name: "Baby Clothing" } },
-        { "@type": "Offer", itemOffered: { "@type": "Product", name: "Feeding Bottles & Accessories" } },
-        { "@type": "Offer", itemOffered: { "@type": "Product", name: "Baby Skincare" } },
-        { "@type": "Offer", itemOffered: { "@type": "Product", name: "Nursery Essentials" } },
+        {
+          "@type": "Offer",
+          itemOffered: {
+            "@type": "Service",
+            name: "Baby Prams & Strollers",
+            url: `${SITE_URL}/prams-strollers`,
+          },
+        },
+        {
+          "@type": "Offer",
+          itemOffered: {
+            "@type": "Service",
+            name: "Diaper Bags",
+            url: `${SITE_URL}/products?category=bags`,
+          },
+        },
+        {
+          "@type": "Offer",
+          itemOffered: {
+            "@type": "Service",
+            name: "Baby Clothing",
+            url: `${SITE_URL}/products?category=clothing`,
+          },
+        },
+        {
+          "@type": "Offer",
+          itemOffered: {
+            "@type": "Service",
+            name: "Feeding Bottles & Accessories",
+            url: `${SITE_URL}/products?category=feeding`,
+          },
+        },
+        {
+          "@type": "Offer",
+          itemOffered: {
+            "@type": "Service",
+            name: "Baby Skincare",
+            url: `${SITE_URL}/products?category=skincare`,
+          },
+        },
+        {
+          "@type": "Offer",
+          itemOffered: {
+            "@type": "Service",
+            name: "Nursery Essentials",
+            url: `${SITE_URL}/products?category=nursery`,
+          },
+        },
       ],
     },
   };

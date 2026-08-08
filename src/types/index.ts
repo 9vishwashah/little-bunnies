@@ -36,6 +36,16 @@ export interface ProductVariant {
   image_url?: string;
 }
 
+export type ProductVideoType = "assembly" | "features";
+
+export interface ProductVideo {
+  id: string;
+  product_id: string;
+  type: ProductVideoType;
+  url: string;
+  thumbnail_url?: string;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -63,6 +73,7 @@ export interface Product {
   categories?: Category;
   product_images?: ProductImage[];
   product_variants?: ProductVariant[];
+  product_videos?: ProductVideo[];
   reviews?: Review[];
   avg_rating?: number;
   review_count?: number;

@@ -12,7 +12,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Fetch all active products
   const { data: products } = await supabase
     .from("products")
-    .select("slug, updated_at")
+    .select("slug, updated_at, product_images(url)")
     .eq("is_active", true);
 
   // Fetch all active categories (top-level only — avoid noisy subcategory combos)
@@ -31,6 +31,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: now,
       changeFrequency: "daily",
       priority: 1.0,
+    },
+    {
+      url: `${BASE_URL}/prams-strollers`,
+      lastModified: now,
+      changeFrequency: "daily",
+      priority: 0.9,
+    },
+    {
+      url: `${BASE_URL}/prams`,
+      lastModified: now,
+      changeFrequency: "daily",
+      priority: 0.9,
     },
     {
       url: `${BASE_URL}/products`,
@@ -108,11 +120,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }));
 
   // ── Product pages ─────────────────────────────────────────────────────────
-  const productUrls: MetadataRoute.Sitemap = (products || []).map((product) => ({
+  const productUrls: MetadataRoute.Sitemap = (products || []).map((product: any) => ({
     url: `${BASE_URL}/product/${product.slug}`,
     lastModified: product.updated_at ? new Date(product.updated_at) : now,
     changeFrequency: "weekly",
     priority: 0.8,
+    images: product.product_images?.length
+      ? product.product_images.map((img: { url: string }) => img.url)
+      : [`${BASE_URL}/images/LittleBunnies-Banner.png`],
   }));
 
   return [...staticUrls, ...categoryUrls, ...productUrls];

@@ -118,9 +118,12 @@ export default function Footer() {
 
       {/* Bottom bar */}
       <div className="border-t border-cream/10">
-        <div className="section-container py-5 flex items-center justify-center gap-3 text-sm text-cream/40 font-medium">
+        <div className="section-container py-5 flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-4 text-sm text-cream/40 font-medium">
           <p suppressHydrationWarning>
             &copy; {new Date().getFullYear()} Little Bunnies. All rights reserved.
+          </p>
+          <p className="text-cream/60">
+            Developed by <span className="font-semibold text-cream">VJAS</span>
           </p>
         </div>
       </div>

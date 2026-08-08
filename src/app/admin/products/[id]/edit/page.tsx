@@ -17,6 +17,7 @@ async function getProduct(id: string) {
       *,
       product_variants (*),
       product_images (*),
+      product_videos (*),
       inventory (id, variant_id, quantity)
     `)
     .eq("id", id)
@@ -65,6 +66,12 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
       isNew: false,
     })) || [];
 
+  // Format videos (assembly / features)
+  const initialVideos: Record<string, { url: string; thumbnailUrl?: string }> = {};
+  for (const v of (product.product_videos || []) as { type: string; url: string; thumbnail_url?: string }[]) {
+    initialVideos[v.type] = { url: v.url, thumbnailUrl: v.thumbnail_url || undefined };
+  }
+
   const initialData = {
     name: product.name,
     slug: product.slug,
@@ -94,11 +101,12 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
         <h1 className="font-display text-2xl font-bold text-ink">Edit Product</h1>
         <p className="text-ink-muted text-sm mt-1">Update your product listing</p>
       </div>
-      <ProductForm 
-        categories={categories} 
-        initialData={initialData} 
+      <ProductForm
+        categories={categories}
+        initialData={initialData}
         initialImages={initialImages}
-        productId={product.id} 
+        initialVideos={initialVideos}
+        productId={product.id}
       />
     </div>
   );

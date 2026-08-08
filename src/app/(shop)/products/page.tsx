@@ -12,25 +12,69 @@ interface ProductsPageProps {
 export async function generateMetadata({ searchParams }: ProductsPageProps): Promise<Metadata> {
   const params = await searchParams;
   const page = parseInt(params.page || "1");
+  const category = params.category;
 
-  // Canonicalize to the clean paginated listing URL only — filter/sort
-  // combinations (?category=, ?minPrice=, ?sort=, etc.) all consolidate to
-  // this canonical rather than being indexed as distinct pages, per Google's
-  // ecommerce guidance on avoiding indexing of filter/sort variations.
-  const canonical = page > 1 ? `${baseUrl}/products?page=${page}` : `${baseUrl}/products`;
-  const title = page > 1 ? `All Products — Page ${page} — Little Bunnies` : "All Products — Little Bunnies";
-  const description =
+  let canonical = page > 1 ? `${baseUrl}/products?page=${page}` : `${baseUrl}/products`;
+  let title = page > 1 ? `All Products — Page ${page} — Little Bunnies` : "All Products — Little Bunnies";
+  let description =
     "Browse our full collection of premium baby products — prams, diapers, feeding, skincare, clothing, toys and more.";
+  let keywords = [
+    "baby products india",
+    "little bunnies products",
+    "newborn essentials",
+    "buy baby products online",
+  ];
+
+  if (category) {
+    if (category === "prams" || category === "strollers") {
+      canonical = `${baseUrl}/prams-strollers`;
+      title = "Baby Prams & Strollers Online India | Buy Comfy Rider Pro | Little Bunnies";
+      description =
+        "Shop India's best baby prams & strollers including the Little Bunnies Comfy Rider Pro 360° reversible seat stroller. Ultra lightweight aluminium frame, UPF 50++ canopy.";
+      keywords = [
+        "Little Bunnies Pram",
+        "Little Bunnies Prams",
+        "baby prams india",
+        "strollers online india",
+        "Comfy Rider Pro",
+        "Comfy Rider Pro Stroller",
+        "360 rotating baby stroller",
+        "lightweight stroller newborn",
+      ];
+    } else {
+      const categoryName = category.charAt(0).toUpperCase() + category.slice(1).replace(/-/g, " ");
+      canonical =
+        page > 1
+          ? `${baseUrl}/products?category=${category}&page=${page}`
+          : `${baseUrl}/products?category=${category}`;
+      title = `${categoryName} — Premium Baby Products | Little Bunnies`;
+      description = `Shop premium ${categoryName} online from Little Bunnies. Crafted with safety and care for newborns aged 0–6 months.`;
+      keywords = [
+        `Little Bunnies ${categoryName}`,
+        `buy ${categoryName} india`,
+        "baby essentials 0-6 months",
+      ];
+    }
+  }
 
   return {
     title,
     description,
+    keywords,
     alternates: { canonical },
     openGraph: {
       title,
       description,
       url: canonical,
       siteName: "Little Bunnies",
+      images: [
+        {
+          url: `${baseUrl}/images/LittleBunnies-Banner.png`,
+          width: 1200,
+          height: 630,
+          alt: title,
+        },
+      ],
     },
     twitter: {
       card: "summary_large_image",
@@ -76,7 +120,9 @@ async function getProducts(searchParams: Record<string, string>): Promise<{ prod
     if (searchParams.maxPrice) query = query.lte("price", parseFloat(searchParams.maxPrice));
     if (searchParams.inStock === "true") query = query.eq("in_stock", true);
     if (searchParams.brand) query = query.ilike("brand", `%${searchParams.brand}%`);
-    if (searchParams.search) query = query.ilike("name", `%${searchParams.search}%`);
+    if (searchParams.search) {
+      query = query.or(`name.ilike.%${searchParams.search}%,brand.ilike.%${searchParams.search}%,slug.ilike.%${searchParams.search}%`);
+    }
     if (searchParams.featured === "true") query = query.eq("is_featured", true);
 
     // Sorting

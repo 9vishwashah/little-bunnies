@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -41,6 +42,45 @@ export default function ProductsClient({
 
   const [gridCols, setGridCols] = useState<2 | 4>(2);
   const [localSearch, setLocalSearch] = useState(searchParams.search || "");
+  const [previewResults, setPreviewResults] = useState<Product[]>([]);
+  const [showPreview, setShowPreview] = useState(false);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!localSearch.trim() || localSearch.trim().length < 2) {
+      setPreviewResults([]);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(
+          `/api/products?search=${encodeURIComponent(localSearch.trim())}&limit=5`
+        );
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          setPreviewResults(data);
+        }
+      } catch {
+        setPreviewResults([]);
+      }
+    }, 200);
+
+    return () => clearTimeout(timer);
+  }, [localSearch]);
+
+  // Click outside to close preview dropdown
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        searchContainerRef.current &&
+        !searchContainerRef.current.contains(e.target as Node)
+      ) {
+        setShowPreview(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const currentPage = parseInt(searchParams.page || "1");
   const totalPages = Math.ceil(totalCount / 24);
@@ -187,22 +227,97 @@ export default function ProductsClient({
         </p>
       </div>
 
-      {/* Search bar */}
-      <form onSubmit={handleSearch} className="flex gap-2 mb-4 md:hidden">
-        <div className="flex-1 flex items-center gap-2 bg-white rounded-brand border border-ink/8 px-4 py-2.5">
-          <Search size={16} className="text-ink-muted flex-shrink-0" />
-          <input
-            type="text"
-            value={localSearch}
-            onChange={(e) => setLocalSearch(e.target.value)}
-            placeholder="Search products..."
-            className="flex-1 bg-transparent text-sm text-ink placeholder-ink-muted outline-none"
-          />
-        </div>
-        <button type="submit" className="btn-primary px-4 py-2.5 text-sm">
-          Search
-        </button>
-      </form>
+      {/* Search bar with matching product preview */}
+      <div ref={searchContainerRef} className="relative w-full max-w-xl mb-6">
+        <form onSubmit={handleSearch} className="flex gap-2">
+          <div className="flex-1 flex items-center gap-2 bg-white rounded-brand border border-ink/8 px-4 py-2.5 shadow-soft focus-within:border-ink/20">
+            <Search size={18} className="text-ink-muted flex-shrink-0" />
+            <input
+              type="text"
+              value={localSearch}
+              onFocus={() => setShowPreview(true)}
+              onChange={(e) => {
+                setLocalSearch(e.target.value);
+                setShowPreview(true);
+              }}
+              placeholder="Search products by name or brand..."
+              className="flex-1 bg-transparent text-sm md:text-base text-ink placeholder-ink-muted outline-none"
+            />
+            {localSearch && (
+              <button
+                type="button"
+                onClick={() => {
+                  setLocalSearch("");
+                  setPreviewResults([]);
+                }}
+                className="p-1 hover:bg-cream rounded-full"
+              >
+                <X size={14} className="text-ink-muted" />
+              </button>
+            )}
+          </div>
+          <button type="submit" className="btn-primary px-5 py-2.5 text-sm md:text-base font-semibold">
+            Search
+          </button>
+        </form>
+
+        {/* Live Matching Product Preview Dropdown */}
+        <AnimatePresence>
+          {showPreview && localSearch.trim().length >= 2 && previewResults.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              className="absolute top-full left-0 right-0 mt-2 bg-white rounded-brand shadow-soft-xl border border-ink/8 p-3 z-50 max-h-[70vh] overflow-y-auto"
+            >
+              <div className="text-xs font-bold text-ink-muted uppercase tracking-wider px-2 pb-2 mb-2 border-b border-ink/5">
+                Matching Product Previews ({previewResults.length})
+              </div>
+              <div className="space-y-1.5">
+                {previewResults.map((item) => {
+                  const primaryImg =
+                    item.product_images?.find((img: any) => img.is_primary) ||
+                    item.product_images?.[0];
+                  const imgUrl =
+                    primaryImg?.url || "/images/LittleBunnies-Banner.png";
+
+                  const shortName = item.name.includes(" | ") ? item.name.split(" | ")[0] : item.name;
+                  const displayName =
+                    item.brand &&
+                    item.brand !== "Little Bunnies" &&
+                    !shortName.toLowerCase().includes(item.brand.toLowerCase())
+                      ? `${item.brand} ${shortName}`
+                      : shortName;
+
+                  return (
+                    <Link
+                      key={item.id}
+                      href={`/product/${item.slug}`}
+                      onClick={() => setShowPreview(false)}
+                      className="flex items-center gap-3 p-2 rounded-xl hover:bg-cream-dark transition-all group"
+                    >
+                      <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-cream flex-shrink-0">
+                        <Image
+                          src={imgUrl}
+                          alt={displayName}
+                          fill
+                          sizes="48px"
+                          className="object-contain group-hover:scale-105 transition-transform"
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-sm font-semibold text-ink truncate group-hover:text-peach-dark transition-colors">
+                          {displayName}
+                        </h4>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
 
       {/* Toolbar */}
       <div className="flex items-center justify-between gap-3 mb-6">

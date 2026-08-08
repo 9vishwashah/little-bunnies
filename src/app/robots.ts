@@ -9,6 +9,9 @@ export default function robots(): MetadataRoute.Robots {
         userAgent: "*",
         allow: [
           "/",
+          "/prams-strollers",
+          "/prams",
+          "/baby-prams-strollers",
           "/products",
           "/products/",
           "/product/",
@@ -49,10 +52,15 @@ export default function robots(): MetadataRoute.Robots {
           "/product/color",
         ],
       },
-      // Disallow crawling of Next.js internal chunks
+      // Disallow crawling of Next.js internal chunks, but explicitly allow next/image for Google Lens & image SEO
       {
         userAgent: "*",
-        disallow: "/_next/",
+        allow: ["/_next/image*", "/images/"],
+        disallow: ["/_next/static/", "/_next/data/"],
+      },
+      {
+        userAgent: "Googlebot-Image",
+        allow: ["/", "/_next/image*", "/images/"],
       },
     ],
     sitemap: `${baseUrl}/sitemap.xml`,

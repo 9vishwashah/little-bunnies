@@ -111,7 +111,7 @@ export default async function HomePage() {
           subtitle="Handpicked products for your little one"
           badge="Editor's Choice"
           products={featured}
-          viewAllHref="/products?featured=true"
+          viewAllHref="/products?category=prams"
           scrollable
         />
       )}

@@ -21,14 +21,21 @@ export async function POST(req: NextRequest) {
     }
 
     // Validate file type
-    const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/avif"];
-    if (!allowedTypes.includes(file.type)) {
-      return NextResponse.json({ error: "Invalid file type. Use JPG, PNG, or WebP." }, { status: 400 });
+    const allowedImageTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/avif"];
+    const allowedVideoTypes = ["video/mp4", "video/webm", "video/quicktime"];
+    const isVideo = allowedVideoTypes.includes(file.type);
+
+    if (!isVideo && !allowedImageTypes.includes(file.type)) {
+      return NextResponse.json({ error: "Invalid file type. Use JPG, PNG, WebP, MP4, or WebM." }, { status: 400 });
     }
 
-    // Validate file size (5MB max)
-    if (file.size > 5 * 1024 * 1024) {
-      return NextResponse.json({ error: "File too large. Max 5MB." }, { status: 400 });
+    // Validate file size (5MB max for images, 100MB max for videos)
+    const maxSize = isVideo ? 100 * 1024 * 1024 : 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      return NextResponse.json(
+        { error: isVideo ? "Video too large. Max 100MB." : "File too large. Max 5MB." },
+        { status: 400 }
+      );
     }
 
     const supabase = createAdminClient();

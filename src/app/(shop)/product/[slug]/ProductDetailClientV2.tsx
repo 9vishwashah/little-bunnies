@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import ProductImage from "@/components/ui/ProductImage";
 import Link from "next/link";
@@ -22,11 +22,13 @@ import {
   Heart,
   BookOpen,
   Tag,
+  Play,
+  Film,
 } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
 import { useRecentlyViewedStore } from "@/store/recentlyViewedStore";
 import { useWishlistStore } from "@/store/wishlistStore";
-import { Product, ProductVariant } from "@/types";
+import { Product, ProductVariant, ProductVideo, ProductVideoType } from "@/types";
 import {
   formatPrice,
   calculateDiscount,
@@ -41,13 +43,88 @@ import { toast } from "sonner";
 interface ProductDetailClientProps {
   product: Product;
   relatedProducts: Product[];
+  initialVideo?: string;
+}
+
+/** A gallery slide showing a poster + play button until clicked, so the
+ *  video itself is never fetched until the user actually wants to watch it.
+ *  The container always renders (even before a video is uploaded) so its
+ *  URL can be copied / turned into a QR code ahead of time. */
+function VideoGallerySlide({
+  video,
+  label,
+  posterFallback,
+  productName,
+}: {
+  video: ProductVideo | null;
+  label: string;
+  posterFallback?: string;
+  productName: string;
+}) {
+  const [playing, setPlaying] = useState(false);
+  const poster = video?.thumbnail_url || posterFallback || "/images/placeholder.jpg";
+
+  if (playing && video) {
+    return (
+      <video
+        className="absolute inset-0 w-full h-full object-contain bg-black"
+        src={video.url}
+        poster={poster}
+        controls
+        autoPlay
+        playsInline
+        preload="auto"
+      />
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => video && setPlaying(true)}
+      disabled={!video}
+      className={cn(
+        "absolute inset-0 w-full h-full group/video",
+        video ? "cursor-pointer" : "cursor-default"
+      )}
+      aria-label={video ? `Play ${label}` : `${label} — coming soon`}
+    >
+      <ProductImage
+        src={poster}
+        alt={`${productName} — ${label}`}
+        fill
+        className="object-cover"
+        sizes="(max-width: 768px) 100vw, 50vw"
+      />
+      <span className="absolute inset-0 bg-black/25 group-hover/video:bg-black/35 transition-colors" />
+      {video ? (
+        <span className="absolute inset-0 flex items-center justify-center">
+          <span className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-white/95 backdrop-blur-sm shadow-soft-lg flex items-center justify-center transition-transform group-hover/video:scale-110">
+            <Play size={30} className="text-ink fill-ink ml-1" />
+          </span>
+        </span>
+      ) : (
+        <span className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+          <span className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-white/70 backdrop-blur-sm flex items-center justify-center">
+            <Film size={26} className="text-ink/60" />
+          </span>
+          <span className="px-3 py-1.5 rounded-full bg-ink/80 backdrop-blur-sm text-white text-xs font-bold">
+            Video coming soon
+          </span>
+        </span>
+      )}
+    </button>
+  );
 }
 
 export default function ProductDetailClient({
   product,
   relatedProducts,
+  initialVideo,
 }: ProductDetailClientProps) {
-  const [selectedImage, setSelectedImage] = useState(0);
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
+
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(
     () => product.product_variants?.[0] || null
   );
@@ -113,7 +190,86 @@ export default function ProductDetailClient({
     } catch (e) {}
   }
 
-  const primaryImage = images[selectedImage] || images[0];
+  // Video slides (Assembly / Features) — appended after the image slides.
+  // Always shown (even before a video is uploaded) so the slide's URL can
+  // be copied / turned into a QR code ahead of time; the video itself is
+  // just a "coming soon" placeholder until the admin uploads it.
+  const videoSlideDefs: { type: ProductVideoType; label: string }[] = [
+    { type: "assembly", label: "Assembly Video" },
+    { type: "features", label: "Features Video" },
+  ];
+  const videoSlides = videoSlideDefs.map(({ type, label }) => ({
+    type,
+    label,
+    video: product.product_videos?.find((v) => v.type === type) || null,
+  }));
+
+  type GallerySlide =
+    | { kind: "image"; image: (typeof images)[number] }
+    | { kind: "video"; type: ProductVideoType; label: string; video: ProductVideo | null };
+
+  const slides: GallerySlide[] = [
+    ...images.map((image) => ({ kind: "image" as const, image })),
+    ...videoSlides.map((v) => ({ kind: "video" as const, ...v })),
+  ];
+
+  const [activeSlide, setActiveSlide] = useState(() => {
+    if (initialVideo) {
+      const idx = slides.findIndex((s) => s.kind === "video" && s.type === initialVideo);
+      if (idx !== -1) return idx;
+    }
+    return 0;
+  });
+
+  const currentSlide = slides[activeSlide];
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent, slideCount: number) => {
+    if (
+      touchStartX.current === null ||
+      touchStartY.current === null ||
+      slideCount <= 1 ||
+      currentSlide?.kind === "video"
+    )
+      return;
+    const diffX = e.changedTouches[0].clientX - touchStartX.current;
+    const diffY = Math.abs(e.changedTouches[0].clientY - touchStartY.current);
+
+    if (Math.abs(diffX) > 40 && Math.abs(diffX) > diffY) {
+      if (diffX < 0) {
+        setActiveSlide((i) => (i + 1) % slideCount);
+      } else {
+        setActiveSlide((i) => (i - 1 + slideCount) % slideCount);
+      }
+    }
+    touchStartX.current = null;
+    touchStartY.current = null;
+  };
+
+  // Keep the URL in sync with the active slide so a video slide can be
+  // copy-linked and reopened directly (?video=assembly / ?video=features).
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    if (currentSlide?.kind === "video") {
+      url.searchParams.set("video", currentSlide.type);
+    } else {
+      url.searchParams.delete("video");
+    }
+    const next = `${url.pathname}${url.search}`;
+    const prev = `${window.location.pathname}${window.location.search}`;
+    if (next !== prev) {
+      window.history.replaceState(null, "", next);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeSlide]);
+
+  const primaryImage =
+    (currentSlide?.kind === "image" ? currentSlide.image : images[0]) || images[0];
   const discount = calculateDiscount(product.price, product.compare_price || 0);
   const currentPrice = product.price + (selectedVariant?.price_modifier || 0);
   const finalPrice = currentPrice;
@@ -123,6 +279,14 @@ export default function ProductDetailClient({
   const handleCopyCoupon = () => {
     navigator.clipboard.writeText(PROMO_COUPON_CODE);
     toast.success(`Coupon code ${PROMO_COUPON_CODE} copied!`);
+  };
+
+  const handleCopyVideoLink = (type: ProductVideoType) => {
+    if (typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    url.searchParams.set("video", type);
+    navigator.clipboard.writeText(url.toString());
+    toast.success("Video link copied!");
   };
 
   const handleShareCoupon = async () => {
@@ -238,31 +402,68 @@ export default function ProductDetailClient({
         {/* ── Gallery ─────────────────────────────── */}
         <div className="relative">
           {/* Main image */}
-          <div className="relative aspect-square rounded-brand overflow-hidden bg-white mb-3 group">
+          <div
+            onTouchStart={handleTouchStart}
+            onTouchEnd={(e) => handleTouchEnd(e, slides.length)}
+            className="relative aspect-square rounded-brand overflow-hidden bg-white mb-3 group touch-pan-y select-none"
+          >
             <AnimatePresence mode="wait">
               <motion.div
-                key={selectedImage}
+                key={activeSlide}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.2 }}
-                className="absolute inset-0"
+                drag={slides.length > 1 && currentSlide?.kind !== "video" ? "x" : false}
+                dragConstraints={{ left: 0, right: 0 }}
+                dragElastic={0.15}
+                onDragEnd={(e, { offset, velocity }) => {
+                  if (slides.length <= 1 || currentSlide?.kind === "video") return;
+                  const swipeThreshold = 40;
+                  if (offset.x < -swipeThreshold || velocity.x < -300) {
+                    setActiveSlide((i) => (i + 1) % slides.length);
+                  } else if (offset.x > swipeThreshold || velocity.x > 300) {
+                    setActiveSlide((i) => (i - 1 + slides.length) % slides.length);
+                  }
+                }}
+                className="absolute inset-0 cursor-grab active:cursor-grabbing"
               >
-                <ProductImage
-                  src={primaryImage?.url || "/images/placeholder.jpg"}
-                  alt={primaryImage?.alt || product.name}
-                  fill
-                  className="object-contain"
-                  priority
-                  sizes="(max-width: 768px) 100vw, 50vw"
-                />
+                {currentSlide?.kind === "video" ? (
+                  <VideoGallerySlide
+                    video={currentSlide.video}
+                    label={currentSlide.label}
+                    posterFallback={images[0]?.url}
+                    productName={product.name}
+                  />
+                ) : (
+                  <ProductImage
+                    src={primaryImage?.url || "/images/placeholder.jpg"}
+                    alt={primaryImage?.alt || product.name}
+                    fill
+                    className="object-contain"
+                    priority
+                    sizes="(max-width: 768px) 100vw, 50vw"
+                  />
+                )}
               </motion.div>
             </AnimatePresence>
 
+            {/* Mobile swipe indicator pill */}
+            {slides.length > 1 && (
+              <div className="absolute top-4 right-16 z-10 md:hidden px-2.5 py-1 rounded-full bg-ink/75 backdrop-blur-sm text-white text-[11px] font-bold tracking-wider pointer-events-none shadow-sm">
+                {activeSlide + 1} / {slides.length}
+              </div>
+            )}
+
             {/* Badges */}
             <div className="absolute top-4 left-4 flex flex-col gap-2 z-10">
-
-              {product.is_new_arrival && <span className="badge-new">NEW</span>}
+              {currentSlide?.kind === "video" ? (
+                <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-ink/80 backdrop-blur-sm text-white text-[11px] font-bold tracking-wide">
+                  {currentSlide.label}
+                </span>
+              ) : (
+                product.is_new_arrival && <span className="badge-new">NEW</span>
+              )}
             </div>
 
             {/* Wishlist heart button */}
@@ -289,11 +490,11 @@ export default function ProductDetailClient({
             </button>
 
             {/* Navigation arrows */}
-            {images.length > 1 && (
+            {slides.length > 1 && (
               <>
                 <button
                   onClick={() =>
-                    setSelectedImage((i) => (i - 1 + images.length) % images.length)
+                    setActiveSlide((i) => (i - 1 + slides.length) % slides.length)
                   }
                   className="absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded-xl bg-white/80 backdrop-blur-sm shadow-soft hover:shadow-soft-lg transition-all"
                 >
@@ -301,7 +502,7 @@ export default function ProductDetailClient({
                 </button>
                 <button
                   onClick={() =>
-                    setSelectedImage((i) => (i + 1) % images.length)
+                    setActiveSlide((i) => (i + 1) % slides.length)
                   }
                   className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-xl bg-white/80 backdrop-blur-sm shadow-soft hover:shadow-soft-lg transition-all"
                 >
@@ -309,31 +510,96 @@ export default function ProductDetailClient({
                 </button>
               </>
             )}
+
+            {/* Google Lens Visual Search Button (image slides) / Copy Video Link (video slides) */}
+            {currentSlide?.kind === "video" ? (
+              <button
+                type="button"
+                onClick={() => handleCopyVideoLink(currentSlide.type)}
+                title="Copy a direct link to this video"
+                className="absolute bottom-4 left-4 z-10 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/95 backdrop-blur-sm text-ink text-xs font-bold shadow-soft hover:shadow-soft-lg hover:bg-cream transition-all border border-ink/10 hover:scale-105"
+              >
+                <Copy size={14} />
+                <span>Copy Link</span>
+              </button>
+            ) : (
+              <a
+                href={`https://lens.google.com/uploadbyurl?url=${encodeURIComponent(
+                  primaryImage?.url
+                    ? primaryImage.url.startsWith("http")
+                      ? primaryImage.url
+                      : `https://littlebunnies.co.in${primaryImage.url}`
+                    : "https://littlebunnies.co.in/images/LittleBunnies-Banner.png"
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Circle & search this product with Google Lens"
+                className="absolute bottom-4 left-4 z-10 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/95 backdrop-blur-sm text-ink text-xs font-bold shadow-soft hover:shadow-soft-lg hover:bg-cream transition-all border border-ink/10 hover:scale-105 group/lens"
+              >
+                <svg
+                  className="w-4 h-4 text-blue-600 transition-transform group-hover/lens:scale-110"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M10 4H5C4.44772 4 4 4.44772 4 5V10M14 4H19C19.5523 4 20 4.44772 20 5V10M20 14V19C20 19.5523 19.5523 20 19 20H14M10 20H5C4.44772 20 4 19.5523 4 19V14"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2" />
+                </svg>
+                <span>Google Lens</span>
+              </a>
+            )}
           </div>
 
 
           {/* Thumbnail strip */}
-          {images.length > 1 && (
+          {slides.length > 1 && (
             <div className="flex gap-2 overflow-x-auto scrollbar-hide">
-              {images.map((img, i) => (
+              {slides.map((slide, i) => (
                 <button
-                  key={img.id}
-                  onClick={() => setSelectedImage(i)}
+                  key={slide.kind === "image" ? slide.image.id : `video-${slide.type}`}
+                  onClick={() => setActiveSlide(i)}
+                  title={slide.kind === "video" ? slide.label : undefined}
                   className={cn(
-                    "flex-shrink-0 w-16 h-16 md:w-20 md:h-20 rounded-xl overflow-hidden border-2 transition-all",
-                    i === selectedImage
+                    "relative flex-shrink-0 w-16 h-16 md:w-20 md:h-20 rounded-xl overflow-hidden border-2 transition-all bg-cream-dark/30",
+                    i === activeSlide
                       ? "border-ink scale-105"
                       : "border-transparent hover:border-ink/30"
                   )}
                 >
-                  <ProductImage
-                    src={img.url}
-                    alt={img.alt || product.name}
-                    width={80}
-                    height={80}
-                    className="object-cover w-full h-full"
-                    showSkeleton={false}
-                  />
+                  {slide.kind === "video" ? (
+                    <>
+                      <ProductImage
+                        src={slide.video?.thumbnail_url || images[0]?.url || "/images/placeholder.jpg"}
+                        alt={slide.label}
+                        width={80}
+                        height={80}
+                        className="object-cover w-full h-full"
+                        showSkeleton={false}
+                      />
+                      <span className="absolute inset-0 bg-black/25 flex items-center justify-center">
+                        {slide.video ? (
+                          <Play size={16} className="text-white fill-white" />
+                        ) : (
+                          <Film size={15} className="text-white/80" />
+                        )}
+                      </span>
+                    </>
+                  ) : (
+                    <ProductImage
+                      src={slide.image.url}
+                      alt={slide.image.alt || product.name}
+                      width={80}
+                      height={80}
+                      className="object-cover w-full h-full"
+                      showSkeleton={false}
+                    />
+                  )}
                 </button>
               ))}
             </div>

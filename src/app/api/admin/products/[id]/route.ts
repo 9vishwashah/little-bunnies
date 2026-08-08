@@ -18,7 +18,7 @@ export async function PATCH(
 
   const { id } = await params;
   const body = await req.json();
-  const { images, variants, stockQuantity, ...productData } = body;
+  const { images, variants, videos, stockQuantity, ...productData } = body;
 
   const supabase = createAdminClient();
 
@@ -51,6 +51,24 @@ export async function PATCH(
         is_primary: i === 0,
       }));
       await supabase.from("product_images").insert(imageRows);
+    }
+  }
+
+  // Replace videos if provided
+  if (videos !== undefined) {
+    await supabase.from("product_videos").delete().eq("product_id", id);
+    if (Array.isArray(videos)) {
+      const videoRows = videos
+        .filter((v: { type: string; url?: string }) => v.url)
+        .map((v: { type: string; url: string; thumbnailUrl?: string }) => ({
+          product_id: id,
+          type: v.type,
+          url: v.url,
+          thumbnail_url: v.thumbnailUrl || null,
+        }));
+      if (videoRows.length > 0) {
+        await supabase.from("product_videos").insert(videoRows);
+      }
     }
   }
 

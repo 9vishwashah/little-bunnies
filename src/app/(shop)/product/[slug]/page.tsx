@@ -8,6 +8,7 @@ import { truncate } from "@/lib/utils";
 
 interface Props {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ video?: string }>;
 }
 
 async function getProduct(slug: string): Promise<Product | null> {
@@ -19,6 +20,7 @@ async function getProduct(slug: string): Promise<Product | null> {
         `*,
         product_images(id, url, alt, is_primary, sort_order),
         product_variants(id, name, value, price_modifier, image_url),
+        product_videos(id, type, url, thumbnail_url),
         categories(id, name, slug),
         reviews(id, rating, title, body, guest_name, created_at, is_approved, is_verified_purchase)`
       )
@@ -70,7 +72,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!product) return { title: "Product Not Found" };
 
   const image = product.product_images?.find((img) => img.is_primary)?.url;
-  const fallbackImage = "/images/LittleBunnies-Banner.png";
+  const fallbackImage = `${SITE_URL}/images/LittleBunnies-Banner.png`;
   const ogImage = image || fallbackImage;
   const canonical = `${SITE_URL}/product/${product.slug}`;
 
@@ -81,29 +83,50 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     160
   );
 
+  const titleString = product.meta_title || `${product.name} | Little Bunnies - Premium Baby Products`;
+
+  const keywords = [
+    product.name,
+    "Little Bunnies " + product.name,
+    product.brand || "Little Bunnies",
+    product.categories?.name || "Baby Products",
+    "baby stroller",
+    "pram",
+    "newborn stroller india",
+    "buy " + product.name + " online",
+    "little bunnies pram",
+    "comfy rider pro",
+    "comfy rider pro stroller",
+    "comfy rider pro pram",
+    "360 degree stroller",
+    "lightweight baby stroller",
+    ...(product.tags ? product.tags : []),
+  ];
+
+  const allImages = product.product_images?.length
+    ? product.product_images.slice(0, 4).map((img) => ({
+        url: img.url,
+        width: 800,
+        height: 800,
+        alt: img.alt || product.name,
+      }))
+    : [{ url: fallbackImage, width: 1200, height: 630, alt: product.name }];
+
   return {
-    // Bypasses the root layout's "%s | Little Bunnies" title template so we
-    // control the exact string shown in search results / share previews.
-    title: { absolute: `${product.name} | Little Bunnies - Premium Baby Products` },
+    title: { absolute: titleString },
     description,
+    keywords,
     alternates: { canonical },
     openGraph: {
-      title: product.name,
+      title: titleString,
       description,
       url: canonical,
       siteName: "Little Bunnies",
-      images: [
-        {
-          url: ogImage,
-          width: image ? 800 : 1200,
-          height: image ? 800 : 630,
-          alt: product.name,
-        },
-      ],
+      images: allImages,
     },
     twitter: {
       card: "summary_large_image",
-      title: product.name,
+      title: titleString,
       description,
       images: [
         {
@@ -128,6 +151,17 @@ function buildProductJsonLd(product: Product) {
     product.description || product.short_description || product.name
   );
 
+  const isPramOrStroller =
+    product.categories?.slug === "prams" ||
+    product.categories?.slug === "strollers" ||
+    product.name.toLowerCase().includes("pram") ||
+    product.name.toLowerCase().includes("stroller") ||
+    product.name.toLowerCase().includes("comfy rider");
+
+  const variantColors = product.product_variants
+    ?.map((v) => v.value)
+    ?.filter(Boolean);
+
   const schema: Record<string, unknown> = {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -135,16 +169,72 @@ function buildProductJsonLd(product: Product) {
     image: images,
     description,
     sku: product.sku || product.id,
+    mpn: product.sku || product.id,
     brand: { "@type": "Brand", name: product.brand || "Little Bunnies" },
+    color: variantColors?.length ? variantColors.join(", ") : "Standard / Premium Multicolor",
+    material: isPramOrStroller
+      ? "Aerospace-grade Aluminium Frame, UPF 50++ Linen Weather Canopy, High-density EVA Wheels"
+      : "Baby-Safe Certified Premium Material",
+    pattern: "Solid",
+    audience: {
+      "@type": "PeopleAudience",
+      suggestedMinAge: 0,
+      suggestedMaxAge: 4,
+      suggestedAgeUnit: "Years",
+    },
+    category: isPramOrStroller
+      ? "Baby & Toddler > Baby Transport > Baby Strollers"
+      : product.categories?.name || "Baby & Toddler > Baby Essentials",
     offers: {
       "@type": "Offer",
       url: canonical,
       priceCurrency: "INR",
       price: String(product.price),
+      priceValidUntil: "2027-12-31",
       availability: product.in_stock
         ? "https://schema.org/InStock"
         : "https://schema.org/OutOfStock",
       itemCondition: "https://schema.org/NewCondition",
+      seller: {
+        "@type": "Organization",
+        name: "Little Bunnies",
+        url: SITE_URL,
+      },
+      shippingDetails: {
+        "@type": "OfferShippingDetails",
+        shippingRate: {
+          "@type": "MonetaryAmount",
+          value: "0",
+          currency: "INR",
+        },
+        shippingDestination: {
+          "@type": "DefinedRegion",
+          addressCountry: "IN",
+        },
+        deliveryTime: {
+          "@type": "ShippingDeliveryTime",
+          handlingTime: {
+            "@type": "QuantitativeValue",
+            minValue: 1,
+            maxValue: 2,
+            unitCode: "DAY",
+          },
+          transitTime: {
+            "@type": "QuantitativeValue",
+            minValue: 5,
+            maxValue: 10,
+            unitCode: "DAY",
+          },
+        },
+      },
+      hasMerchantReturnPolicy: {
+        "@type": "MerchantReturnPolicy",
+        applicableCountry: "IN",
+        returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow",
+        merchantReturnDays: 15,
+        returnMethod: "https://schema.org/ReturnByMail",
+        returnFees: "https://schema.org/FreeReturn",
+      },
     },
   };
 
@@ -152,12 +242,27 @@ function buildProductJsonLd(product: Product) {
     schema.category = product.categories.name;
   }
 
-  if (product.review_count && product.review_count > 0) {
+  const approvedReviews = product.reviews?.filter((r) => r.is_approved) || [];
+  if (approvedReviews.length > 0) {
     schema.aggregateRating = {
       "@type": "AggregateRating",
       ratingValue: (product.avg_rating || 0).toFixed(1),
-      reviewCount: product.review_count,
+      reviewCount: approvedReviews.length,
     };
+    schema.review = approvedReviews.slice(0, 10).map((r) => ({
+      "@type": "Review",
+      reviewRating: {
+        "@type": "Rating",
+        ratingValue: r.rating,
+        bestRating: "5",
+      },
+      author: {
+        "@type": "Person",
+        name: r.guest_name || "Verified Customer",
+      },
+      datePublished: r.created_at ? r.created_at.split("T")[0] : undefined,
+      reviewBody: r.body || r.title || "Great product!",
+    }));
   }
 
   return schema;
@@ -190,8 +295,9 @@ function buildBreadcrumbJsonLd(product: Product) {
   };
 }
 
-export default async function ProductDetailPage({ params }: Props) {
+export default async function ProductDetailPage({ params, searchParams }: Props) {
   const { slug } = await params;
+  const { video } = await searchParams;
   const product = await getProduct(slug);
 
   if (!product) notFound();
@@ -212,7 +318,7 @@ export default async function ProductDetailPage({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: jsonLd(buildBreadcrumbJsonLd(product)) }}
       />
-      <ProductDetailClient product={product} relatedProducts={[]} />
+      <ProductDetailClient product={product} relatedProducts={[]} initialVideo={video} />
       {product.category_id && (
         <Suspense fallback={null}>
           <RelatedProducts categoryId={product.category_id} currentId={product.id} categorySlug={product.categories?.slug} />

@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
   const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("products")
-    .select(`*, product_images(*), product_variants(*), categories(name, slug)`)
+    .select(`*, product_images(*), product_variants(*), product_videos(*), categories(name, slug)`)
     .order("created_at", { ascending: false });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { images, variants, stockQuantity, ...productData } = body;
+    const { images, variants, videos, stockQuantity, ...productData } = body;
 
     const supabase = createAdminClient();
 
@@ -64,6 +64,21 @@ export async function POST(req: NextRequest) {
         is_primary: i === 0,
       }));
       await supabase.from("product_images").insert(imageRows);
+    }
+
+    // Insert videos (assembly / features)
+    if (videos && Array.isArray(videos)) {
+      const videoRows = videos
+        .filter((v: { type: string; url?: string }) => v.url)
+        .map((v: { type: string; url: string; thumbnailUrl?: string }) => ({
+          product_id: product.id,
+          type: v.type,
+          url: v.url,
+          thumbnail_url: v.thumbnailUrl || null,
+        }));
+      if (videoRows.length > 0) {
+        await supabase.from("product_videos").insert(videoRows);
+      }
     }
 
     // Insert variants

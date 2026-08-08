@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
       .eq("is_active", true);
 
     if (search) {
-      query = query.ilike("name", `%${search}%`);
+      query = query.or(`name.ilike.%${search}%,brand.ilike.%${search}%,slug.ilike.%${search}%`);
     }
 
     if (category) {

@@ -62,6 +62,38 @@ const nextConfig: NextConfig = {
       "@radix-ui/react-dialog",
     ],
   },
+
+  async redirects() {
+    return [
+      {
+        source: "/strollers",
+        destination: "/prams-strollers",
+        permanent: true,
+      },
+      {
+        source: "/baby-prams-strollers",
+        destination: "/prams-strollers",
+        permanent: true,
+      },
+      {
+        source: "/pram",
+        destination: "/prams-strollers",
+        permanent: true,
+      },
+      {
+        source: "/comfy-rider-pro",
+        destination:
+          "/product/little-bunnies-comfy-rider-pro-baby-stroller-360-rotating-reversible-seat-ultra-lightweight-aluminium-frame-upf-50-canopy-one-touch-fold-travel-friendly",
+        permanent: true,
+      },
+      {
+        source: "/product/comfy-rider-pro",
+        destination:
+          "/product/little-bunnies-comfy-rider-pro-baby-stroller-360-rotating-reversible-seat-ultra-lightweight-aluminium-frame-upf-50-canopy-one-touch-fold-travel-friendly",
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

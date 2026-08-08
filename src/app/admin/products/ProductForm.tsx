@@ -16,6 +16,8 @@ import {
   Eye,
   GripVertical,
   Star,
+  Video,
+  Film,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn, slugify } from "@/lib/utils";
@@ -51,16 +53,28 @@ const productSchema = z.object({
 
 type ProductFormData = z.infer<typeof productSchema>;
 
+type VideoSlot = { url: string; thumbnailUrl?: string };
+type VideoType = "assembly" | "features";
+
 interface ProductFormProps {
   categories: { id: string; name: string }[];
   initialData?: Partial<ProductFormData>;
   initialImages?: { url: string; file?: File; isNew?: boolean }[];
+  initialVideos?: Partial<Record<VideoType, VideoSlot>>;
   productId?: string;
 }
 
-export default function ProductForm({ categories, initialData, initialImages, productId }: ProductFormProps) {
+const VIDEO_TYPES: { type: VideoType; label: string; hint: string }[] = [
+  { type: "assembly", label: "Assembly Video", hint: "Shows how to assemble the product" },
+  { type: "features", label: "Features Video", hint: "Highlights the product's key features" },
+];
+
+export default function ProductForm({ categories, initialData, initialImages, initialVideos, productId }: ProductFormProps) {
   const router = useRouter();
   const [images, setImages] = useState<{ url: string; file?: File; isNew?: boolean }[]>(initialImages || []);
+  const [videos, setVideos] = useState<Partial<Record<VideoType, VideoSlot>>>(initialVideos || {});
+  const [uploadingVideo, setUploadingVideo] = useState<VideoType | null>(null);
+  const [uploadingThumb, setUploadingThumb] = useState<VideoType | null>(null);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -185,6 +199,62 @@ export default function ProductForm({ categories, initialData, initialImages, pr
     toast.success(`Variant ${type} uploaded!`, { id: "variantUpload" });
   };
 
+  const handleVideoUpload = async (videoType: VideoType, file: File) => {
+    setUploadingVideo(videoType);
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("bucket", "products");
+    formData.append("folder", "product-videos");
+    try {
+      const res = await fetch("/api/upload", { method: "POST", body: formData });
+      const data = await res.json();
+      if (data.url) {
+        setVideos((prev) => ({ ...prev, [videoType]: { ...prev[videoType], url: data.url } }));
+        toast.success(`${videoType === "assembly" ? "Assembly" : "Features"} video uploaded!`);
+      } else {
+        toast.error(data.error || "Failed to upload video");
+      }
+    } catch {
+      toast.error("Failed to upload video");
+    } finally {
+      setUploadingVideo(null);
+    }
+  };
+
+  const handleVideoThumbnailUpload = async (videoType: VideoType, file: File) => {
+    setUploadingThumb(videoType);
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("bucket", "products");
+    formData.append("folder", "product-video-thumbnails");
+    try {
+      const res = await fetch("/api/upload", { method: "POST", body: formData });
+      const data = await res.json();
+      if (data.url) {
+        setVideos((prev) => ({ ...prev, [videoType]: { ...prev[videoType], url: prev[videoType]?.url || "", thumbnailUrl: data.url } }));
+        toast.success("Thumbnail uploaded!");
+      } else {
+        toast.error(data.error || "Failed to upload thumbnail");
+      }
+    } catch {
+      toast.error("Failed to upload thumbnail");
+    } finally {
+      setUploadingThumb(null);
+    }
+  };
+
+  const removeVideo = (videoType: VideoType) => {
+    setVideos((prev) => {
+      const next = { ...prev };
+      delete next[videoType];
+      return next;
+    });
+  };
+
+  const removeVideoThumbnail = (videoType: VideoType) => {
+    setVideos((prev) => ({ ...prev, [videoType]: { url: prev[videoType]?.url || "", thumbnailUrl: undefined } }));
+  };
+
   const removeVariantImage = (index: number, type: "swatch" | "gallery", imgIndex?: number) => {
     const currentImageUrlStr = watch(`variants.${index}.imageUrl`) || "{}";
     let currentData: { swatch?: string; gallery?: string[] } = {};
@@ -237,6 +307,7 @@ export default function ProductForm({ categories, initialData, initialImages, pr
           ...payload,
           images,
           variants: data.variants,
+          videos: VIDEO_TYPES.map(({ type }) => ({ type, ...videos[type] })).filter((v) => v.url),
           stockQuantity: data.stockQuantity ?? 0,
         }),
       });
@@ -462,6 +533,102 @@ export default function ProductForm({ categories, initialData, initialImages, pr
                 </div>
               </>
             )}
+          </div>
+
+          {/* Videos */}
+          <div className="bg-white rounded-brand shadow-card p-5 md:p-6">
+            <div className="mb-5">
+              <h2 className="font-display font-semibold text-ink text-lg">Product Videos</h2>
+              <p className="text-xs text-ink-muted mt-0.5">
+                Shown as two extra slides at the end of the image carousel on the product page.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {VIDEO_TYPES.map(({ type, label, hint }) => {
+                const slot = videos[type];
+                return (
+                  <div key={type} className="p-4 border border-ink/10 rounded-xl bg-cream-dark/20">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Film size={15} className="text-ink-muted" />
+                      <span className="font-semibold text-ink text-sm">{label}</span>
+                    </div>
+                    <p className="text-xs text-ink-muted mb-3">{hint}</p>
+
+                    {/* Video file */}
+                    {slot?.url ? (
+                      <div className="relative rounded-lg overflow-hidden bg-black mb-3" style={{ aspectRatio: "16/9" }}>
+                        <video src={slot.url} className="w-full h-full object-contain" controls preload="metadata" />
+                        <button
+                          type="button"
+                          onClick={() => removeVideo(type)}
+                          className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-blush text-white flex items-center justify-center shadow"
+                        >
+                          <X size={12} />
+                        </button>
+                      </div>
+                    ) : (
+                      <label
+                        className={cn(
+                          "flex flex-col items-center justify-center gap-1.5 rounded-lg border-2 border-dashed border-ink/20 cursor-pointer hover:border-ink/40 hover:bg-cream transition-colors mb-3",
+                          "text-ink-muted"
+                        )}
+                        style={{ aspectRatio: "16/9" }}
+                      >
+                        {uploadingVideo === type ? (
+                          <div className="w-6 h-6 border-2 border-ink/20 border-t-ink rounded-full animate-spin" />
+                        ) : (
+                          <>
+                            <Video size={22} />
+                            <span className="text-xs font-semibold">Upload {label}</span>
+                            <span className="text-[10px]">MP4 or WebM, up to 100MB</span>
+                          </>
+                        )}
+                        <input
+                          type="file"
+                          accept="video/mp4,video/webm,video/quicktime"
+                          className="hidden"
+                          onChange={(e) => e.target.files?.[0] && handleVideoUpload(type, e.target.files[0])}
+                        />
+                      </label>
+                    )}
+
+                    {/* Thumbnail / poster */}
+                    <span className="text-[11px] font-semibold text-ink-muted uppercase tracking-wider">Thumbnail (optional)</span>
+                    <div className="flex items-center gap-2 mt-1.5">
+                      {slot?.thumbnailUrl ? (
+                        <div className="relative w-14 h-14 rounded-lg overflow-hidden border border-ink/10 group shadow-sm shrink-0">
+                          <img src={slot.thumbnailUrl} alt="Thumbnail" className="w-full h-full object-cover" />
+                          <button
+                            type="button"
+                            onClick={() => removeVideoThumbnail(type)}
+                            className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X size={13} className="text-white" />
+                          </button>
+                        </div>
+                      ) : (
+                        <label className="w-14 h-14 rounded-lg border-2 border-dashed border-ink/20 flex items-center justify-center cursor-pointer hover:bg-cream hover:border-ink/40 transition-colors shrink-0">
+                          {uploadingThumb === type ? (
+                            <div className="w-4 h-4 border-2 border-ink/20 border-t-ink rounded-full animate-spin" />
+                          ) : (
+                            <ImageIcon size={16} className="text-ink/40" />
+                          )}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => e.target.files?.[0] && handleVideoThumbnailUpload(type, e.target.files[0])}
+                          />
+                        </label>
+                      )}
+                      <p className="text-[10px] text-ink-muted leading-snug">
+                        Shown before the video plays, for a fast, instant preview. Falls back to the cover photo if left blank.
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
           {/* Variants */}

@@ -10,6 +10,7 @@ import {
   Menu,
   ChevronDown,
   Heart,
+  Search,
 } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
 import { useWishlistStore } from "@/store/wishlistStore";
@@ -234,8 +235,18 @@ export default function Header() {
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: 8 }}
                             transition={{ duration: 0.15 }}
-                            className="absolute top-full left-0 mt-1 w-52 bg-white rounded-brand shadow-soft-lg border border-ink/5 py-2 z-50"
+                            className="absolute top-full left-0 mt-1 w-56 bg-white rounded-brand shadow-soft-lg border border-ink/5 py-2 z-50"
                           >
+                            {nav.slug === "prams" && (
+                              <div className="border-b border-ink/5 pb-2 mb-1">
+                                <Link
+                                  href="/product/little-bunnies-comfy-rider-pro-baby-stroller-360-rotating-reversible-seat-ultra-lightweight-aluminium-frame-upf-50-canopy-one-touch-fold-travel-friendly"
+                                  className="block px-4 py-2 text-xs font-bold text-peach-dark hover:bg-cream transition-colors"
+                                >
+                                  ★ Comfy Rider Pro (Featured)
+                                </Link>
+                              </div>
+                            )}
                             {subs.length > 0 ? (
                               <>
                                 {subs.map((sub) => (
@@ -302,6 +313,18 @@ export default function Header() {
 
             {/* Right section: Icons */}
             <div className="flex-1 flex items-center justify-end gap-0 md:gap-1">
+              {/* Search */}
+              <button
+                onClick={() => setSearchOpen(true)}
+                className="btn-ghost p-1.5 md:p-2.5 rounded-xl flex items-center gap-1.5 text-ink-muted hover:text-ink"
+                aria-label="Search products"
+              >
+                <Search size={20} />
+                <span className="hidden md:inline text-xs font-semibold bg-cream-dark px-2.5 py-1 rounded-lg">
+                  Search...
+                </span>
+              </button>
+
               {/* Wishlist */}
               <Link
                 href="/wishlist"
