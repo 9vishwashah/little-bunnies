@@ -21,6 +21,7 @@ interface InvoiceOrder {
   shipping_amount: number;
   total: number;
   razorpay_payment_id?: string | null;
+  payment_method_label?: string;
   shipping_address: {
     full_name: string;
     phone: string;
@@ -42,6 +43,7 @@ interface InvoiceItem {
 }
 
 const CONTENT_WIDTH = CONTENT_RIGHT - CONTENT_LEFT;
+const LABEL_COL_WIDTH = 140;
 
 export async function generateInvoicePdf(
   order: InvoiceOrder,
@@ -50,72 +52,81 @@ export async function generateInvoicePdf(
 ): Promise<Buffer> {
   const { pdfDoc, fontRegular, fontBold, addPage } = await createLetterheadDoc();
   let page: PDFPage = await addPage();
-  let y = CONTENT_TOP;
+  // Extra headroom under the letterhead tagline before anything is drawn,
+  // so the receipt title doesn't crowd the artwork above it.
+  let y = CONTENT_TOP - 15;
 
   const ensureSpace = async (needed: number) => {
     if (y - needed < CONTENT_BOTTOM) {
       page = await addPage();
-      y = CONTENT_TOP;
+      y = CONTENT_TOP - 15;
     }
   };
 
-  // ── Title + receipt meta ────────────────────────────────────────────
-  drawText(page, "PAYMENT RECEIPT", { x: CONTENT_LEFT, y, font: fontBold, size: 18, color: COLORS.ink });
-  drawText(page, `Receipt #: ${order.order_number}`, {
-    x: CONTENT_LEFT, y, maxWidth: CONTENT_WIDTH, align: "right", font: fontRegular, size: 10, color: COLORS.inkMuted,
-  });
-  y -= 15;
-  drawText(page, `Date: ${formatDate(order.created_at)}`, {
-    x: CONTENT_LEFT, y, maxWidth: CONTENT_WIDTH, align: "right", font: fontRegular, size: 10, color: COLORS.inkMuted,
-  });
-  y -= 20;
+  // ── Order meta strip (mirrors a booking-confirmation receipt: reference
+  // numbers sit above the title, not below it) ────────────────────────────
+  drawText(page, "Order Number", { x: CONTENT_LEFT, y, font: fontBold, size: 9.5, color: COLORS.inkMuted });
+  drawText(page, order.order_number, { x: CONTENT_LEFT + 90, y, font: fontRegular, size: 9.5, color: COLORS.ink });
+  y -= 14;
+  drawText(page, "Payment Date", { x: CONTENT_LEFT, y, font: fontBold, size: 9.5, color: COLORS.inkMuted });
+  drawText(page, formatDate(order.created_at), { x: CONTENT_LEFT + 90, y, font: fontRegular, size: 9.5, color: COLORS.ink });
+  y -= 34;
 
-  page.drawLine({
-    start: { x: CONTENT_LEFT, y },
-    end: { x: CONTENT_RIGHT, y },
-    thickness: 1,
-    color: COLORS.line,
+  // ── Centered title ──────────────────────────────────────────────────
+  drawText(page, "PAYMENT RECEIPT", {
+    x: CONTENT_LEFT, y, maxWidth: CONTENT_WIDTH, align: "center", font: fontBold, size: 18, color: COLORS.ink,
   });
+  y -= 22;
+  page.drawLine({ start: { x: CONTENT_LEFT, y }, end: { x: CONTENT_RIGHT, y }, thickness: 1, color: COLORS.line });
   y -= 25;
 
-  // ── Billed to / Payment details ─────────────────────────────────────
-  const colWidth = CONTENT_WIDTH / 2 - 10;
-  const rightColX = CONTENT_LEFT + colWidth + 20;
+  // ── Box 1: Order & Customer Details ─────────────────────────────────
   const address = order.shipping_address;
-  let leftY = y;
-  let rightY = y;
-
-  drawText(page, "BILLED TO", { x: CONTENT_LEFT, y: leftY, font: fontBold, size: 9, color: COLORS.inkMuted });
-  leftY -= 15;
-  const billedToLines = [
-    address.full_name,
-    `${address.address_line1}${address.address_line2 ? ", " + address.address_line2 : ""}`,
-    `${address.city}, ${address.state} - ${address.pincode}`,
-    address.country,
-    `Phone: ${address.phone}`,
-    ...(customerEmail ? [`Email: ${customerEmail}`] : []),
+  const rows: [string, string][] = [
+    ["Payment Method", order.payment_method_label || "Razorpay"],
+    ["Payment Status", "PAID"],
+    ...(order.razorpay_payment_id ? ([["Payment ID", order.razorpay_payment_id]] as [string, string][]) : []),
+    ["Name", address.full_name],
+    ["Address", `${address.address_line1}${address.address_line2 ? ", " + address.address_line2 : ""}`],
+    ["", `${address.city}, ${address.state} - ${address.pincode}, ${address.country}`],
+    ["Phone", address.phone],
+    ...(customerEmail ? ([["Email", customerEmail]] as [string, string][]) : []),
   ];
-  for (const line of billedToLines) {
-    drawText(page, line, { x: CONTENT_LEFT, y: leftY, font: fontRegular, size: 10, color: COLORS.ink });
-    leftY -= 14;
+
+  const rowHeight = 16;
+  const headerHeight = 22;
+  const boxPadding = 10;
+  const box1Height = headerHeight + rows.length * rowHeight + boxPadding;
+
+  await ensureSpace(box1Height + 20);
+
+  const box1Top = y;
+  page.drawRectangle({ x: CONTENT_LEFT, y: box1Top - headerHeight, width: CONTENT_WIDTH, height: headerHeight, color: COLORS.ink });
+  drawText(page, "ORDER & CUSTOMER DETAILS", {
+    x: CONTENT_LEFT, y: box1Top - headerHeight + 8, maxWidth: CONTENT_WIDTH, align: "center", font: fontBold, size: 9.5, color: COLORS.white,
+  });
+
+  let rowY = box1Top - headerHeight - boxPadding / 2 - 11;
+  for (const [label, value] of rows) {
+    if (label) {
+      drawText(page, label, { x: CONTENT_LEFT + 14, y: rowY, font: fontBold, size: 9.5, color: COLORS.inkMuted });
+    }
+    drawText(page, value, {
+      x: CONTENT_LEFT + LABEL_COL_WIDTH, y: rowY, font: fontRegular, size: 9.5, color: COLORS.ink,
+      maxWidth: CONTENT_WIDTH - LABEL_COL_WIDTH - 14,
+    });
+    rowY -= rowHeight;
   }
 
-  drawText(page, "PAYMENT DETAILS", { x: rightColX, y: rightY, font: fontBold, size: 9, color: COLORS.inkMuted });
-  rightY -= 15;
-  const paymentLines = [
-    `Order Number: ${order.order_number}`,
-    "Payment Method: Razorpay",
-    "Payment Status: PAID",
-    ...(order.razorpay_payment_id ? [`Payment ID: ${order.razorpay_payment_id}`] : []),
-  ];
-  for (const line of paymentLines) {
-    drawText(page, line, { x: rightColX, y: rightY, font: fontRegular, size: 10, color: COLORS.ink });
-    rightY -= 14;
-  }
+  const box1Bottom = box1Top - box1Height;
+  page.drawRectangle({
+    x: CONTENT_LEFT, y: box1Bottom, width: CONTENT_WIDTH, height: box1Height,
+    borderColor: COLORS.line, borderWidth: 1,
+  });
 
-  y = Math.min(leftY, rightY) - 20;
+  y = box1Bottom - 25;
 
-  // ── Items table ──────────────────────────────────────────────────
+  // ── Box 2: Items + totals ──────────────────────────────────────────
   const col = {
     item: CONTENT_LEFT,
     qty: CONTENT_RIGHT - 220,
@@ -124,21 +135,24 @@ export async function generateInvoicePdf(
   };
 
   await ensureSpace(30);
-  page.drawRectangle({ x: CONTENT_LEFT, y: y - 20, width: CONTENT_WIDTH, height: 22, color: COLORS.ink });
-  drawText(page, "ITEM", { x: col.item + 10, y: y - 14, font: fontBold, size: 9, color: COLORS.white });
-  drawText(page, "QTY", { x: col.qty, y: y - 14, maxWidth: 50, align: "right", font: fontBold, size: 9, color: COLORS.white });
-  drawText(page, "PRICE", { x: col.price, y: y - 14, maxWidth: 60, align: "right", font: fontBold, size: 9, color: COLORS.white });
-  drawText(page, "AMOUNT", { x: col.amount, y: y - 14, maxWidth: 70, align: "right", font: fontBold, size: 9, color: COLORS.white });
+  const startPage = page;
+  const box2Top = y;
+
+  page.drawRectangle({ x: CONTENT_LEFT, y: y - 22, width: CONTENT_WIDTH, height: 22, color: COLORS.ink });
+  drawText(page, "ITEM", { x: col.item + 10, y: y - 15, font: fontBold, size: 9, color: COLORS.white });
+  drawText(page, "QTY", { x: col.qty, y: y - 15, maxWidth: 50, align: "right", font: fontBold, size: 9, color: COLORS.white });
+  drawText(page, "PRICE", { x: col.price, y: y - 15, maxWidth: 60, align: "right", font: fontBold, size: 9, color: COLORS.white });
+  drawText(page, "AMOUNT", { x: col.amount, y: y - 15, maxWidth: 70, align: "right", font: fontBold, size: 9, color: COLORS.white });
   y -= 22;
 
   for (let i = 0; i < items.length; i++) {
     const item = items[i];
-    const rowHeight = item.variant_name ? 34 : 24;
-    await ensureSpace(rowHeight);
+    const rowHeightItem = item.variant_name ? 34 : 24;
+    await ensureSpace(rowHeightItem);
 
     if (i % 2 === 1) {
       page.drawRectangle({
-        x: CONTENT_LEFT, y: y - rowHeight, width: CONTENT_WIDTH, height: rowHeight,
+        x: CONTENT_LEFT, y: y - rowHeightItem, width: CONTENT_WIDTH, height: rowHeightItem,
         color: rgb(0.98, 0.965, 0.945),
       });
     }
@@ -155,13 +169,13 @@ export async function generateInvoicePdf(
     drawText(page, formatRs(item.unit_price), { x: col.price, y: y - 14, maxWidth: 60, align: "right", font: fontRegular, size: 9.5, color: COLORS.ink });
     drawText(page, formatRs(item.total_price), { x: col.amount, y: y - 14, maxWidth: 70, align: "right", font: fontRegular, size: 9.5, color: COLORS.ink });
 
-    y -= rowHeight;
+    y -= rowHeightItem;
   }
 
   page.drawLine({ start: { x: CONTENT_LEFT, y }, end: { x: CONTENT_RIGHT, y }, thickness: 1, color: COLORS.line });
   y -= 20;
 
-  // ── Totals ──────────────────────────────────────────────────────
+  // ── Totals — visually the closing rows of the same box ─────────────
   await ensureSpace(120);
   const totalsX = CONTENT_RIGHT - 200;
   const totalsLabelWidth = 120;
@@ -194,7 +208,21 @@ export async function generateInvoicePdf(
   y -= 14;
   totalRow("Total Paid", formatRs(order.total), { bold: true, color: COLORS.sageDark });
 
+  // Enclose the items+totals section in a box border, matching Box 1 —
+  // only when it stayed on a single page (pagination already reads fine
+  // without it, so this is skipped rather than risked across page breaks).
+  if (page === startPage) {
+    const box2Bottom = y - 6;
+    page.drawRectangle({
+      x: CONTENT_LEFT, y: box2Bottom, width: CONTENT_WIDTH, height: box2Top - box2Bottom,
+      borderColor: COLORS.line, borderWidth: 1,
+    });
+  }
+
   // ── Footer sign-off ──────────────────────────────────────────────
+  drawText(page, "This receipt is system-generated and does not require a signature.", {
+    x: CONTENT_LEFT, y: CONTENT_BOTTOM + 14, maxWidth: CONTENT_WIDTH, align: "center", font: fontRegular, size: 8, color: COLORS.inkMuted,
+  });
   drawText(page, "Thank you for shopping with Little Bunnies!", {
     x: CONTENT_LEFT, y: CONTENT_BOTTOM, maxWidth: CONTENT_WIDTH, align: "center", font: fontRegular, size: 9, color: COLORS.inkMuted,
   });

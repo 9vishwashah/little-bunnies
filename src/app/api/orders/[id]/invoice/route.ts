@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
 import { generateInvoicePdf } from "@/lib/invoice/generateInvoicePdf";
+import { getPaymentMethodLabel } from "@/lib/orders/paymentMethodLabel";
 
 export async function GET(
   req: NextRequest,
@@ -13,7 +14,7 @@ export async function GET(
     const { data: order, error } = await supabase
       .from("orders")
       .select(
-        "order_number, created_at, subtotal, discount_amount, custom_name_charge, coupon_id, shipping_amount, total, razorpay_payment_id, payment_status, user_id, guest_email, shipping_address"
+        "order_number, created_at, subtotal, discount_amount, custom_name_charge, coupon_id, shipping_amount, total, razorpay_payment_id, payment_method, payment_status, user_id, guest_email, shipping_address"
       )
       .eq("id", id)
       .single();
@@ -45,7 +46,11 @@ export async function GET(
       couponCode = coupon?.code || null;
     }
 
-    const pdf = await generateInvoicePdf({ ...order, coupon_code: couponCode }, items || [], email);
+    const pdf = await generateInvoicePdf(
+      { ...order, coupon_code: couponCode, payment_method_label: getPaymentMethodLabel(order.payment_method) },
+      items || [],
+      email
+    );
 
     return new NextResponse(new Uint8Array(pdf), {
       status: 200,

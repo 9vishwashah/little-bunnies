@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Save, MapPin, Package, CreditCard, Clock, MessageCircle, FileText, Truck } from "lucide-react";
+import { ArrowLeft, Save, MapPin, Package, CreditCard, Clock, MessageCircle, FileText, Truck, Receipt, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { formatPrice } from "@/lib/utils";
 
@@ -122,6 +122,39 @@ export default function OrderClient({ order }: Props) {
               </button>
             </div>
           </div>
+
+          {order.payment_proof_url && (
+            <div className="bg-white rounded-brand shadow-card p-5 md:p-6">
+              <h2 className="font-display font-semibold text-ink text-lg mb-4 flex items-center gap-2">
+                <Receipt size={20} className="text-ink-muted" /> Payment Proof
+              </h2>
+              <a href={order.payment_proof_url} target="_blank" rel="noopener noreferrer" className="block">
+                <img
+                  src={order.payment_proof_url}
+                  alt="Transaction screenshot"
+                  className="w-full rounded-xl border border-ink/10 object-contain max-h-80 bg-cream-dark/20"
+                />
+              </a>
+              {order.payment_proof_declared && (
+                <p className="flex items-center gap-1.5 text-xs text-sage-dark font-semibold mt-3">
+                  <ShieldCheck size={14} />
+                  Customer declared this screenshot is correct
+                </p>
+              )}
+              <p className="text-xs text-peach-dark font-medium mt-2 bg-peach/10 border border-peach/30 rounded-lg px-3 py-2">
+                Payment is auto-marked as Paid on submission — please verify the screenshot
+                above and set Payment Status to Failed/Refunded if anything looks wrong.
+              </p>
+              <a
+                href={order.payment_proof_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-secondary w-full text-sm py-2.5 mt-3"
+              >
+                View Full Size
+              </a>
+            </div>
+          )}
 
           <div className="bg-white rounded-brand shadow-card p-5 md:p-6">
             <h2 className="font-display font-semibold text-ink text-lg mb-4 flex items-center gap-2">

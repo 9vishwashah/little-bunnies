@@ -9,8 +9,7 @@ import { z } from "zod";
 import confetti from "canvas-confetti";
 import { useCartStore } from "@/store/cartStore";
 import { formatPrice, calculateShipping } from "@/lib/utils";
-import { loadRazorpayScript } from "@/lib/loadRazorpayScript";
-import { Check, MapPin, Package, CreditCard, Tag, X } from "lucide-react";
+import { Check, MapPin, Package, CreditCard, Tag, X, Upload } from "lucide-react";
 import { toast } from "sonner";
 
 const addressSchema = z.object({
@@ -60,6 +59,39 @@ export default function CheckoutPage() {
   const [couponDiscount, setCouponDiscount] = useState(0);
   const [couponLoading, setCouponLoading] = useState(false);
   const [couponError, setCouponError] = useState("");
+
+  const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
+  const [qrCodeLoading, setQrCodeLoading] = useState(true);
+  const [proofUrl, setProofUrl] = useState<string | null>(null);
+  const [proofUploading, setProofUploading] = useState(false);
+  const [declarationAccepted, setDeclarationAccepted] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/settings/bank-qr")
+      .then((r) => r.json())
+      .then((data) => setQrCodeUrl(data.url || null))
+      .catch(() => {})
+      .finally(() => setQrCodeLoading(false));
+  }, []);
+
+  const handleProofUpload = async (file: File) => {
+    setProofUploading(true);
+    const formData = new FormData();
+    formData.append("file", file);
+    try {
+      const res = await fetch("/api/checkout/upload-proof", { method: "POST", body: formData });
+      const data = await res.json();
+      if (data.url) {
+        setProofUrl(data.url);
+      } else {
+        toast.error(data.error || "Failed to upload screenshot");
+      }
+    } catch {
+      toast.error("Failed to upload screenshot");
+    } finally {
+      setProofUploading(false);
+    }
+  };
 
   const subtotal = getTotalPrice();
   const shipping = calculateShipping(subtotal);
@@ -128,9 +160,17 @@ export default function CheckoutPage() {
       toast.error("Please enter the child's name for customization.");
       return;
     }
+    if (!proofUrl) {
+      toast.error("Please upload a screenshot of your transaction.");
+      return;
+    }
+    if (!declarationAccepted) {
+      toast.error("Please confirm the declaration before placing your order.");
+      return;
+    }
     setOrderLoading(true);
     try {
-      const res = await fetch("/api/checkout/create-order", {
+      const res = await fetch("/api/checkout/create-bank-transfer-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -138,6 +178,8 @@ export default function CheckoutPage() {
           address,
           customName: isCustomNameEnabled ? customName.trim() : null,
           couponCode,
+          paymentProofUrl: proofUrl,
+          declarationAccepted: true,
         }),
       });
       const data = await res.json();
@@ -145,68 +187,9 @@ export default function CheckoutPage() {
         throw new Error(data.error || "Order creation failed");
       }
 
-      const scriptLoaded = await loadRazorpayScript();
-      if (!scriptLoaded || !window.Razorpay) {
-        toast.error("Couldn't load the payment gateway. Please check your connection and try again.");
-        setOrderLoading(false);
-        return;
-      }
-
-      const razorpay = new window.Razorpay({
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-        amount: data.amount,
-        currency: data.currency,
-        order_id: data.razorpayOrderId,
-        name: "Little Bunnies",
-        description: `Order ${data.orderNumber}`,
-        prefill: {
-          name: address.fullName,
-          email: address.email,
-          contact: address.phone,
-        },
-        theme: { color: "#8FAD78" },
-        handler: async (response: {
-          razorpay_order_id: string;
-          razorpay_payment_id: string;
-          razorpay_signature: string;
-        }) => {
-          try {
-            const verifyRes = await fetch("/api/checkout/verify-payment", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                orderId: data.orderId,
-                ...response,
-              }),
-            });
-            const verifyData = await verifyRes.json();
-            if (!verifyRes.ok || !verifyData.success) {
-              throw new Error(verifyData.error || "Payment verification failed");
-            }
-            orderPlacedRef.current = true;
-            setOrderPlaced(true);
-            window.location.href = `/checkout/success?order=${verifyData.orderNumber}&id=${data.orderId}`;
-          } catch {
-            toast.error(
-              "We couldn't confirm your payment. If money was deducted, please contact support with your order details."
-            );
-            setOrderLoading(false);
-          }
-        },
-        modal: {
-          ondismiss: () => {
-            toast("Payment cancelled. Your order has not been placed.");
-            setOrderLoading(false);
-          },
-        },
-      });
-
-      razorpay.on("payment.failed", () => {
-        toast.error("Payment failed. Please try again.");
-        setOrderLoading(false);
-      });
-
-      razorpay.open();
+      orderPlacedRef.current = true;
+      setOrderPlaced(true);
+      window.location.href = `/checkout/success?order=${data.orderNumber}&id=${data.orderId}`;
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to place order. Please try again.");
       setOrderLoading(false);
@@ -548,27 +531,99 @@ export default function CheckoutPage() {
                   <CreditCard size={16} className="text-ink-muted" />
                   Payment Method
                 </h3>
-                <div className="space-y-3">
-                  <label className="flex items-center gap-3 p-4 rounded-xl border-2 border-ink cursor-pointer bg-cream-light/30">
-                    <input type="radio" checked readOnly className="accent-ink" />
-                    <div>
-                      <p className="font-semibold text-ink text-sm">Online Payment</p>
-                      <p className="text-xs text-ink-muted">Pay securely via UPI, Card, Net Banking or Wallets</p>
-                    </div>
-                    <span className="ml-auto badge-new bg-sage-dark text-white px-2 py-0.5 rounded-full text-[10px] uppercase font-bold tracking-wider">Available</span>
+
+                <div className="rounded-xl border-2 border-ink p-4 bg-cream-light/30 space-y-5">
+                  <div>
+                    <p className="font-semibold text-ink text-sm">Bank Transfer via QR Code</p>
+                    <p className="text-xs text-ink-muted mt-0.5">
+                      Scan the QR code below, pay the total amount, then upload a screenshot of
+                      the transaction.
+                    </p>
+                  </div>
+
+                  {/* QR Code */}
+                  <div className="flex flex-col items-center py-1">
+                    {qrCodeLoading ? (
+                      <div className="w-full max-w-sm aspect-square rounded-xl bg-cream-dark/40 animate-pulse" />
+                    ) : qrCodeUrl ? (
+                      <div className="w-full max-w-sm aspect-square rounded-xl overflow-hidden border border-ink/10 bg-white">
+                        <img src={qrCodeUrl} alt="Bank QR code" className="w-full h-full object-contain" />
+                      </div>
+                    ) : (
+                      <div className="w-full max-w-sm aspect-square rounded-xl border-2 border-dashed border-ink/15 flex items-center justify-center text-center px-4">
+                        <p className="text-xs text-ink-muted">
+                          QR code not available yet. Please contact us before paying.
+                        </p>
+                      </div>
+                    )}
+                    <p className="text-sm font-bold text-ink mt-3">Amount to pay: {formatPrice(total)}</p>
+                  </div>
+
+                  {/* Screenshot upload */}
+                  <div>
+                    <label className="block text-sm font-semibold text-ink mb-2">
+                      Upload Transaction Screenshot *
+                    </label>
+                    <input
+                      type="file"
+                      id="proof-upload"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => e.target.files?.[0] && handleProofUpload(e.target.files[0])}
+                    />
+                    {proofUrl ? (
+                      <div className="relative w-28 h-28 rounded-xl overflow-hidden border-2 border-sage-dark/40">
+                        <img src={proofUrl} alt="Transaction screenshot" className="w-full h-full object-cover" />
+                        <button
+                          type="button"
+                          onClick={() => setProofUrl(null)}
+                          className="absolute top-1 right-1 w-6 h-6 rounded-full bg-blush text-white flex items-center justify-center shadow"
+                        >
+                          <X size={12} />
+                        </button>
+                      </div>
+                    ) : (
+                      <label
+                        htmlFor="proof-upload"
+                        className="flex flex-col items-center justify-center gap-1.5 w-full py-6 rounded-xl border-2 border-dashed border-ink/20 cursor-pointer hover:border-ink/40 hover:bg-cream transition-colors text-ink-muted"
+                      >
+                        {proofUploading ? (
+                          <div className="w-6 h-6 border-2 border-ink/20 border-t-ink rounded-full animate-spin" />
+                        ) : (
+                          <>
+                            <Upload size={20} />
+                            <span className="text-xs font-semibold">Attach screenshot</span>
+                          </>
+                        )}
+                      </label>
+                    )}
+                  </div>
+
+                  {/* Declaration */}
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={declarationAccepted}
+                      onChange={(e) => setDeclarationAccepted(e.target.checked)}
+                      className="mt-0.5 accent-ink w-4 h-4 flex-shrink-0"
+                    />
+                    <span className="text-xs text-ink-muted leading-relaxed">
+                      I declare that I have completed the payment and uploaded the correct
+                      transaction screenshot for this order.
+                    </span>
                   </label>
                 </div>
               </div>
 
               <button
                 onClick={handlePlaceOrder}
-                disabled={orderLoading}
-                className="btn-primary w-full py-4 text-base"
+                disabled={orderLoading || !proofUrl || !declarationAccepted}
+                className="btn-primary w-full py-4 text-base disabled:opacity-50"
               >
                 {orderLoading ? (
                   <span className="inline-block w-5 h-5 border-2 border-cream/30 border-t-cream rounded-full animate-spin" />
                 ) : (
-                  "Proceed to Pay & Place Order"
+                  "Place Order"
                 )}
               </button>
             </motion.div>

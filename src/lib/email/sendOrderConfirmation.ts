@@ -9,6 +9,8 @@ interface EmailOrder {
   custom_name_charge?: number;
   coupon_code?: string | null;
   shipping_amount: number;
+  payment_method_label?: string;
+  payment_proof_url?: string | null;
   shipping_address: {
     full_name: string;
     phone: string;
@@ -136,13 +138,18 @@ function buildAdminNotificationHtml(
   <div style="font-family:Arial,sans-serif;background:#faf6f0;padding:24px 16px;">
     <div style="max-width:520px;margin:0 auto;background:#ffffff;border-radius:12px;padding:24px;border:1px solid #eee;">
       <h2 style="margin:0 0 4px;color:#24324A;">New order received 🎉</h2>
-      <p style="margin:0 0 20px;color:#666;font-size:13px;">Order <strong>${order.order_number}</strong> has been paid via Razorpay.</p>
+      <p style="margin:0 0 20px;color:#666;font-size:13px;">Order <strong>${order.order_number}</strong> has been paid via ${order.payment_method_label || "Razorpay"}.</p>
       <table style="width:100%;border-collapse:collapse;">
         ${itemRows}
       </table>
       ${order.custom_name_charge ? `<p style="margin:8px 0 0;color:#666;font-size:13px;">+ Custom Name Personalization: ${formatPrice(order.custom_name_charge)}</p>` : ""}
       ${order.discount_amount ? `<p style="margin:4px 0 0;color:#3f7a3f;font-size:13px;">- Discount${order.coupon_code ? ` (${order.coupon_code})` : ""}: ${formatPrice(order.discount_amount)}</p>` : ""}
       <p style="margin:16px 0 4px;font-weight:bold;color:#24324A;">Total: ${formatPrice(order.total)}</p>
+      ${
+        order.payment_proof_url
+          ? `<p style="margin:8px 0 0;font-size:13px;"><a href="${order.payment_proof_url}" style="color:#3B7EBD;font-weight:bold;">View uploaded transaction screenshot →</a></p>`
+          : ""
+      }
       <div style="margin-top:16px;padding-top:16px;border-top:1px dashed #ddd;font-size:13px;color:#333;line-height:1.6;">
         <strong>Ship to:</strong><br />
         ${address.full_name}<br />
