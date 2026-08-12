@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { RefreshCcw } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Exchange & Credit Note Policy | Little Bunnies Baby Products",
+  // `absolute` bypasses the root layout's title template (see about/page.tsx).
+  title: { absolute: "Exchange & Credit Note Policy | Little Bunnies Baby Products" },
   description:
     "Read Little Bunnies' exchange & credit note policy for baby products. Learn about product exchanges, credit notes, and eligibility criteria.",
   alternates: {

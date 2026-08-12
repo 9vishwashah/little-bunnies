@@ -27,7 +27,7 @@ import CartDrawer from "@/components/cart/CartDrawer";
 //   category page without opening any sub-menu popup.
 const FIXED_NAV: { label: string; slug: string; dropdownEnabled: boolean }[] = [
   { label: "Prams",     slug: "prams",     dropdownEnabled: true  },
-  { label: "Bags",      slug: "bags",      dropdownEnabled: false },
+  { label: "Diaper Bags", slug: "bags",    dropdownEnabled: false },
   { label: "Utilities", slug: "utility-bags", dropdownEnabled: false },
 ];
 

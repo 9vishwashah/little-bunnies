@@ -19,13 +19,13 @@ export async function GET(req: NextRequest) {
     }
 
     if (category) {
-      const { data: cat } = await supabase.from("categories").select("id").eq("slug", category).single();
+      const { data: cat } = await supabase
+        .from("categories")
+        .select("id, children:categories!parent_id(id)")
+        .eq("slug", category)
+        .single();
       if (cat) {
-        const { data: subCats } = await supabase.from("categories").select("id").eq("parent_id", cat.id);
-        const catIds = [cat.id];
-        if (subCats) {
-          catIds.push(...subCats.map((c) => c.id));
-        }
+        const catIds = [cat.id, ...(cat.children || []).map((c: { id: string }) => c.id)];
         query = query.in("category_id", catIds);
       }
     }

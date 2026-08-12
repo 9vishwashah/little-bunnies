@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { ShieldCheck } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy | Little Bunnies — Baby Products India",
+  // `absolute` bypasses the root layout's title template (see about/page.tsx).
+  title: { absolute: "Privacy Policy | Little Bunnies — Baby Products India" },
   description:
     "Read the Little Bunnies privacy policy. Learn how we collect, use, store, and protect your personal information when you shop for baby products on our site.",
   alternates: {

@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { Truck } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Shipping Policy — Delivery Times & Free Shipping | Little Bunnies",
+  // `absolute` bypasses the root layout's title template (see about/page.tsx).
+  title: { absolute: "Shipping Policy — Delivery Times & Free Shipping | Little Bunnies" },
   description:
     "Little Bunnies shipping policy: free delivery above ₹5999, standard delivery in 7–15 business days across India. Read our complete shipping & delivery guidelines.",
   alternates: {

@@ -3,7 +3,8 @@ import { jsonLd, buildFAQSchema } from "@/lib/seo";
 import FAQClient from "./FAQClient";
 
 export const metadata: Metadata = {
-  title: "FAQ — Frequently Asked Questions | Little Bunnies Baby Products",
+  // `absolute` bypasses the root layout's title template (see about/page.tsx).
+  title: { absolute: "FAQ — Frequently Asked Questions | Little Bunnies Baby Products" },
   description:
     "Find answers to common questions about Little Bunnies — delivery times, return policy, payment methods, product safety, and more. Baby products for 0–6 months.",
   alternates: {

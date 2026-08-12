@@ -5,7 +5,8 @@ import { Product } from "@/types";
 import { SITE_URL, jsonLd, buildFAQSchema, buildBreadcrumbSchema } from "@/lib/seo";
 
 export const metadata: Metadata = {
-  title: "Little Bunnies Prams & Strollers — 360° Reversible & Ultra Lightweight | India",
+  // `absolute` bypasses the root layout's title template (see about/page.tsx).
+  title: { absolute: "Little Bunnies Prams & Strollers — 360° Reversible & Ultra Lightweight | India" },
   description:
     "Shop India's favourite baby prams and strollers including the Little Bunnies Comfy Rider Pro with 360° rotating reversible seat, ultra lightweight aluminium frame, UPF 50++ canopy, and one-touch fold. Free shipping above ₹5999.",
   keywords: [

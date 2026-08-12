@@ -45,8 +45,6 @@ export default function CheckoutPage() {
   const [step, setStep] = useState(1);
   const [address, setAddress] = useState<AddressFormData | null>(null);
   const [orderLoading, setOrderLoading] = useState(false);
-  const [isCustomNameEnabled, setIsCustomNameEnabled] = useState(false);
-  const [customName, setCustomName] = useState("");
   // useRef is synchronous — immune to React batching — so the guard
   // useEffect always sees the correct value even when Zustand fires
   // its subscription synchronously on clearCart().
@@ -95,8 +93,7 @@ export default function CheckoutPage() {
 
   const subtotal = getTotalPrice();
   const shipping = calculateShipping(subtotal);
-  const customNameCharge = isCustomNameEnabled ? 299 : 0;
-  const total = Math.max(0, subtotal + shipping + customNameCharge - couponDiscount);
+  const total = Math.max(0, subtotal + shipping - couponDiscount);
 
   const applyCoupon = async () => {
     const code = couponInput.trim();
@@ -156,10 +153,6 @@ export default function CheckoutPage() {
 
   const handlePlaceOrder = async () => {
     if (!address) return;
-    if (isCustomNameEnabled && !customName.trim()) {
-      toast.error("Please enter the child's name for customization.");
-      return;
-    }
     if (!proofUrl) {
       toast.error("Please upload a screenshot of your transaction.");
       return;
@@ -176,7 +169,7 @@ export default function CheckoutPage() {
         body: JSON.stringify({
           items,
           address,
-          customName: isCustomNameEnabled ? customName.trim() : null,
+          customName: null,
           couponCode,
           paymentProofUrl: proofUrl,
           declarationAccepted: true,
@@ -273,54 +266,6 @@ export default function CheckoutPage() {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
             >
-              {/* Customization Block */}
-              <div className="relative overflow-hidden rounded-brand shadow-soft-sm mb-8 border border-sage-dark/20 bg-sage-light/20">
-                <div className="absolute inset-0 bg-sage-gradient opacity-10 pointer-events-none" />
-                <div className="relative p-6">
-                  <label className="flex items-start gap-4 cursor-pointer">
-                    <div className="relative flex items-center justify-center mt-1">
-                      <input
-                        type="checkbox"
-                        checked={isCustomNameEnabled}
-                        onChange={(e) => setIsCustomNameEnabled(e.target.checked)}
-                        className="peer absolute opacity-0 w-0 h-0"
-                      />
-                      <div className="w-6 h-6 rounded-md border-2 border-ink/20 peer-checked:border-ink peer-checked:bg-ink transition-colors flex items-center justify-center">
-                        <Check size={14} className={`text-white transition-opacity duration-200 ${isCustomNameEnabled ? 'opacity-100' : 'opacity-0'}`} />
-                      </div>
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-display font-semibold text-ink text-lg">Custom Name</span>
-                        <span className="bg-sage-dark/20 text-ink text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full">✨ Special</span>
-                      </div>
-                      <p className="font-semibold text-ink text-sm">Add Your Childs Name on {items.map(item => item.name).join(" & ")} (+₹299)</p>
-                      <p className="text-xs text-ink-muted mt-1 leading-relaxed">
-                        Make it truly theirs! We will beautifully customize your product with your little one's name.
-                      </p>
-                    </div>
-                  </label>
-                  
-                  {isCustomNameEnabled && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      className="mt-5 pt-5 border-t border-ink/10"
-                    >
-                      <label className="block text-sm font-semibold text-ink mb-2">Child's Name *</label>
-                      <input
-                        type="text"
-                        value={customName}
-                        onChange={(e) => setCustomName(e.target.value)}
-                        placeholder="Enter name (e.g., Aaryan)"
-                        className="w-full bg-white border border-ink/20 rounded-xl px-4 py-3 text-ink text-sm focus:outline-none focus:border-ink focus:ring-1 focus:ring-ink transition-all"
-                        required
-                      />
-                    </motion.div>
-                  )}
-                </div>
-              </div>
-
               <div className="bg-white rounded-brand shadow-card p-6">
                 <h2 className="font-display font-semibold text-ink text-xl mb-6 flex items-center gap-2">
                   <MapPin size={20} className="text-ink-muted" />
@@ -413,7 +358,7 @@ export default function CheckoutPage() {
                 onClick={() => setStep(1)}
                 className="flex items-center gap-2 text-sm font-semibold text-ink-muted hover:text-ink transition-colors mb-2"
               >
-                ← Go Back to Address & Customization
+                ← Go Back to Address
               </button>
 
               {/* Address summary */}
@@ -645,12 +590,6 @@ export default function CheckoutPage() {
                   {shipping === 0 ? "FREE" : formatPrice(shipping)}
                 </span>
               </div>
-              {isCustomNameEnabled && (
-                <div className="flex justify-between text-ink-light font-medium">
-                  <span>Custom Name</span>
-                  <span>{formatPrice(299)}</span>
-                </div>
-              )}
               {couponCode && (
                 <div className="flex justify-between text-sage-dark font-semibold">
                   <span>Discount ({couponCode})</span>

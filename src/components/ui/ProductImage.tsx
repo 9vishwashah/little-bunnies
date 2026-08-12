@@ -18,6 +18,23 @@ function isSupabaseUrl(src: string): boolean {
   return typeof src === "string" && src.startsWith(SUPABASE_URL);
 }
 
+/**
+ * Rewrites a Supabase Storage public-object URL to Supabase's own image
+ * transform endpoint, requesting a size/quality appropriate to how large the
+ * image is actually displayed. Admin-uploaded product photos can be several
+ * MB at full resolution — serving that untouched to an 80px thumbnail is
+ * what made galleries take the better part of a minute to load. The
+ * transform endpoint also auto-negotiates WebP/AVIF via the browser's
+ * Accept header, which on its own typically cuts payload size 20-40x.
+ * Falls back to the original URL untouched for non-Supabase sources.
+ */
+export function getOptimizedImageUrl(src: string, width: number, quality = 75): string {
+  if (!isSupabaseUrl(src)) return src;
+  const transformed = src.replace("/storage/v1/object/public/", "/storage/v1/render/image/public/");
+  const separator = transformed.includes("?") ? "&" : "?";
+  return `${transformed}${separator}width=${Math.max(1, Math.round(width))}&quality=${quality}`;
+}
+
 type ProductImageProps = Omit<ImageProps, "src"> & {
   src: string;
   /** Show a shimmer skeleton while the image loads. Defaults to true. */
@@ -27,6 +44,7 @@ type ProductImageProps = Omit<ImageProps, "src"> & {
 /**
  * Smart product image component with:
  * - Direct Supabase CDN delivery (no local proxy, no 500 errors)
+ * - Server-side resize + WebP/AVIF negotiation via Supabase's transform endpoint
  * - Shimmer skeleton loader while loading
  * - Graceful fallback to placeholder on error
  * - Fade-in reveal on load
@@ -37,14 +55,22 @@ export default function ProductImage({
   showSkeleton = true,
   className = "",
   style,
+  width,
   ...props
 }: ProductImageProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
-  const imageSrc = error ? "/images/placeholder.jpg" : src;
+  const rawSrc = error ? "/images/placeholder.jpg" : src;
   // Bypass local Next.js image optimizer for Supabase URLs — use CDN directly
-  const useUnoptimized = isSupabaseUrl(imageSrc);
+  const useUnoptimized = isSupabaseUrl(rawSrc);
+
+  // `fill` images don't have a known display width ahead of time — 800px
+  // comfortably covers hero/gallery use while still being a fraction of a
+  // multi-MB original. Explicit `width` usages (cards, thumbnails) request
+  // ~2x that for retina screens.
+  const requestWidth = typeof width === "number" ? Math.min(width * 2, 1600) : 800;
+  const imageSrc = useUnoptimized ? getOptimizedImageUrl(rawSrc, requestWidth) : rawSrc;
 
   return (
     <span className="relative block w-full h-full" style={style}>
@@ -58,6 +84,7 @@ export default function ProductImage({
       )}
       <Image
         {...props}
+        width={width}
         src={imageSrc}
         alt={alt}
         unoptimized={useUnoptimized}

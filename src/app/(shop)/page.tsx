@@ -11,23 +11,26 @@ import { Product } from "@/types";
 import { SITE_URL, jsonLd, buildFAQSchema, buildBreadcrumbSchema } from "@/lib/seo";
 
 export const metadata: Metadata = {
-  title: "Little Bunnies — Premium Baby Products for 0–6 Months | Buy Online India",
+  // No "| Little Bunnies" suffix here — the root layout's title.template
+  // ("%s | Little Bunnies") appends it automatically; adding it here too
+  // would render a duplicated "| Little Bunnies | Little Bunnies" title.
+  title: "Premium Baby Strollers, Diaper Bags & Baby Essentials",
   description:
-    "Shop premium baby products online in India — prams, strollers, diaper bags, feeding bottles, baby skincare, clothing & nursery essentials. Free shipping above ₹5999. Crafted for newborns aged 0–6 months.",
+    "Shop premium baby strollers, diaper bags & everyday baby essentials online in India. Designed for effortless, everyday parenting. Free shipping above ₹5999.",
   alternates: {
     canonical: "https://littlebunnies.co.in",
   },
   openGraph: {
-    title: "Little Bunnies — Premium Baby Products for 0–6 Months",
+    title: "Premium Baby Strollers, Diaper Bags & Baby Essentials | Little Bunnies",
     description:
-      "India's favourite baby essentials brand. Shop prams, diaper bags, feeding bottles & more — handpicked with love for your little one. Free shipping above ₹5999.",
+      "India's favourite baby essentials brand. Shop premium strollers, diaper bags & more — designed for effortless everyday parenting. Free shipping above ₹5999.",
     url: "https://littlebunnies.co.in",
     images: [
       {
         url: "https://littlebunnies.co.in/images/LittleBunnies-Banner.png",
         width: 1200,
         height: 630,
-        alt: "Little Bunnies — Premium Baby Products India",
+        alt: "Little Bunnies — Premium Baby Strollers & Essentials India",
       },
     ],
   },

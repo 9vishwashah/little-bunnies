@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import ProductImage from "@/components/ui/ProductImage";
+import ProductImage, { getOptimizedImageUrl } from "@/components/ui/ProductImage";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -133,12 +133,21 @@ export default function ProductDetailClient({
   const [pageUrl, setPageUrl] = useState("");
   const [pincode, setPincode] = useState("");
   const [pincodeResult, setPincodeResult] = useState<"idle" | "valid" | "invalid">("idle");
+  const [buyNowLoading, setBuyNowLoading] = useState(false);
 
   const router = useRouter();
   const addItem = useCartStore((s) => s.addItem);
   const addRecentlyViewed = useRecentlyViewedStore((s) => s.addItem);
   const toggleWishlist = useWishlistStore((s) => s.toggleItem);
   const isWishlisted = useWishlistStore((s) => s.isWishlisted);
+
+  // Warm the /checkout route on mount so "Buy Now" doesn't have to wait on
+  // a cold RSC fetch — under a slow connection that delay can read as the
+  // button "not working."
+  useEffect(() => {
+    router.prefetch("/checkout");
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   let images = product.product_images
     ? [...product.product_images].sort((a, b) => a.sort_order - b.sort_order)
@@ -346,6 +355,11 @@ export default function ProductDetailClient({
   };
 
   const handleBuyNow = () => {
+    // Guards against a slow/laggy navigation being mistaken for "nothing
+    // happened" and re-clicked — without this, a second click before the
+    // route transition completes would silently add the item twice.
+    if (buyNowLoading) return;
+    setBuyNowLoading(true);
     handleAddToCart();
     router.push("/checkout");
   };
@@ -580,7 +594,6 @@ export default function ProductDetailClient({
                         width={80}
                         height={80}
                         className="object-cover w-full h-full"
-                        showSkeleton={false}
                       />
                       <span className="absolute inset-0 bg-black/25 flex items-center justify-center">
                         {slide.video ? (
@@ -597,7 +610,6 @@ export default function ProductDetailClient({
                       width={80}
                       height={80}
                       className="object-cover w-full h-full"
-                      showSkeleton={false}
                     />
                   )}
                 </button>
@@ -635,7 +647,12 @@ export default function ProductDetailClient({
                       )}
                     >
                       {swatchUrl ? (
-                        <img src={swatchUrl} alt={variant.value} className="w-full h-full object-cover" />
+                        <img
+                          src={getOptimizedImageUrl(swatchUrl, 96)}
+                          alt={variant.value}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                        />
                       ) : (
                         <>
                           {variant.value}
@@ -754,10 +771,14 @@ export default function ProductDetailClient({
             </button>
             <button
               onClick={handleBuyNow}
-              disabled={!product.in_stock}
-              className="btn-primary flex-1 text-sm h-12 max-h-12 flex items-center justify-center gap-2"
+              disabled={!product.in_stock || buyNowLoading}
+              className="btn-primary flex-1 text-sm h-12 max-h-12 flex items-center justify-center gap-2 disabled:opacity-80"
             >
-              <span className="truncate">Buy Now</span>
+              {buyNowLoading ? (
+                <span className="inline-block w-4 h-4 border-2 border-cream/30 border-t-cream rounded-full animate-spin" />
+              ) : (
+                <span className="truncate">Buy Now</span>
+              )}
             </button>
           </div>
           {!product.in_stock && (

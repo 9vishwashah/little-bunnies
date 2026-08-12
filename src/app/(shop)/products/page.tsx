@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import ProductsClient from "./ProductsClient";
 import { Product, Category } from "@/types";
+import { SITE_URL, jsonLd, buildBreadcrumbSchema, buildItemListSchema } from "@/lib/seo";
 
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://littlebunnies.co.in";
 
@@ -41,6 +42,34 @@ export async function generateMetadata({ searchParams }: ProductsPageProps): Pro
         "360 rotating baby stroller",
         "lightweight stroller newborn",
       ];
+    } else if (category === "bags") {
+      canonical =
+        page > 1 ? `${baseUrl}/products?category=bags&page=${page}` : `${baseUrl}/products?category=bags`;
+      title = "Diaper Bags Online India | Waterproof & Multipurpose Baby Bags | Little Bunnies";
+      description =
+        "Shop Little Bunnies diaper bags — waterproof, multipurpose baby bags with insulated bottle pockets, stroller straps & spacious storage. Free shipping above ₹5999.";
+      keywords = [
+        "Little Bunnies Diaper Bags",
+        "diaper bags india",
+        "diaper bag online india",
+        "waterproof diaper bag",
+        "multipurpose baby bag",
+        "baby backpack diaper bag",
+        "maternity bag india",
+      ];
+    } else if (category === "utility-bags") {
+      canonical =
+        page > 1
+          ? `${baseUrl}/products?category=utility-bags&page=${page}`
+          : `${baseUrl}/products?category=utility-bags`;
+      title = "Utility Bags for Babies & Parents Online India | Little Bunnies";
+      description =
+        "Shop Little Bunnies utility bags — compact, functional everyday bags for parents on the go. Free shipping above ₹5999.";
+      keywords = [
+        "Little Bunnies Utility Bags",
+        "baby utility bags india",
+        "buy utility bags online",
+      ];
     } else {
       const categoryName = category.charAt(0).toUpperCase() + category.slice(1).replace(/-/g, " ");
       canonical =
@@ -58,7 +87,10 @@ export async function generateMetadata({ searchParams }: ProductsPageProps): Pro
   }
 
   return {
-    title,
+    // `absolute` bypasses the root layout's "%s | Little Bunnies" title
+    // template — these `title` variants already end with the brand name,
+    // so without it they'd render duplicated ("...| Little Bunnies | Little Bunnies").
+    title: { absolute: title },
     description,
     keywords,
     alternates: { canonical },
@@ -96,20 +128,17 @@ async function getProducts(searchParams: Record<string, string>): Promise<{ prod
 
     // Apply filters
     if (searchParams.category) {
+      // Fetches the category and its children in a single round trip
+      // (self-referencing embed) instead of two sequential queries — this
+      // was adding a full extra network hop before the product query could
+      // even start, on every category-filtered page load.
       const { data: cat } = await supabase
         .from("categories")
-        .select("id")
+        .select("id, children:categories!parent_id(id)")
         .eq("slug", searchParams.category)
         .single();
       if (cat) {
-        const { data: subCats } = await supabase
-          .from("categories")
-          .select("id")
-          .eq("parent_id", cat.id);
-        const catIds = [cat.id];
-        if (subCats) {
-          catIds.push(...subCats.map((c) => c.id));
-        }
+        const catIds = [cat.id, ...(cat.children || []).map((c: { id: string }) => c.id)];
         query = query.in("category_id", catIds);
       } else {
         // Category not found, force empty result
@@ -168,12 +197,36 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
     getCategories(),
   ]);
 
+  const activeCategory = categories.find((c) => c.slug === params.category);
+  const breadcrumbSchema = jsonLd(
+    buildBreadcrumbSchema([
+      { name: "Home", url: SITE_URL },
+      ...(activeCategory
+        ? [{ name: activeCategory.name, url: `${SITE_URL}/products?category=${activeCategory.slug}` }]
+        : [{ name: "All Products", url: `${SITE_URL}/products` }]),
+    ])
+  );
+  const itemListSchema = jsonLd(
+    buildItemListSchema(
+      products.map((p) => ({
+        name: p.name,
+        url: `${SITE_URL}/product/${p.slug}`,
+        image: p.product_images?.find((img) => img.is_primary)?.url || p.product_images?.[0]?.url,
+        price: p.price,
+      }))
+    )
+  );
+
   return (
-    <ProductsClient
-      initialProducts={products}
-      totalCount={count}
-      categories={categories}
-      searchParams={params}
-    />
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: breadcrumbSchema }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: itemListSchema }} />
+      <ProductsClient
+        initialProducts={products}
+        totalCount={count}
+        categories={categories}
+        searchParams={params}
+      />
+    </>
   );
 }
