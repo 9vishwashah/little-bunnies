@@ -367,7 +367,7 @@ $$ LANGUAGE plpgsql;
 
 -- Seed the site-wide promotional coupon shown on product pages
 INSERT INTO public.coupons (code, type, value, min_order_amount, is_active)
-VALUES ('FAMILY10', 'percentage', 10, 0, TRUE)
+VALUES ('FREEDOM20', 'percentage', 20, 0, TRUE)
 ON CONFLICT (code) DO NOTHING;
 
 -- =============================================

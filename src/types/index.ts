@@ -67,6 +67,11 @@ export interface Product {
   weight?: number;
   meta_title?: string;
   meta_description?: string;
+  // Whether the empty Assembly/Features video "coming soon" slides should
+  // show on the gallery when no video has been uploaded yet. Products that
+  // never get a video (e.g. diaper bags) can turn this off. A real uploaded
+  // video always shows regardless of this setting.
+  show_video_placeholders?: boolean;
   created_at: string;
   updated_at: string;
   // Relations

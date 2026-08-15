@@ -200,18 +200,23 @@ export default function ProductDetailClient({
   }
 
   // Video slides (Assembly / Features) — appended after the image slides.
-  // Always shown (even before a video is uploaded) so the slide's URL can
-  // be copied / turned into a QR code ahead of time; the video itself is
-  // just a "coming soon" placeholder until the admin uploads it.
+  // Shown even before a video is uploaded (as a "coming soon" placeholder)
+  // so the slide's URL can be copied / turned into a QR code ahead of
+  // time — unless the admin has turned that off for products that will
+  // never have one (e.g. diaper bags). An already-uploaded video always
+  // shows regardless of that setting.
+  const showEmptyVideoSlots = product.show_video_placeholders !== false;
   const videoSlideDefs: { type: ProductVideoType; label: string }[] = [
     { type: "assembly", label: "Assembly Video" },
     { type: "features", label: "Features Video" },
   ];
-  const videoSlides = videoSlideDefs.map(({ type, label }) => ({
-    type,
-    label,
-    video: product.product_videos?.find((v) => v.type === type) || null,
-  }));
+  const videoSlides = videoSlideDefs
+    .map(({ type, label }) => ({
+      type,
+      label,
+      video: product.product_videos?.find((v) => v.type === type) || null,
+    }))
+    .filter((slide) => slide.video || showEmptyVideoSlots);
 
   type GallerySlide =
     | { kind: "image"; image: (typeof images)[number] }
@@ -401,15 +406,17 @@ export default function ProductDetailClient({
 
 
       {/* Mobile product title — shown instead of breadcrumb */}
+      {/* The concise brand/model name is the real page heading — the
+          long feature-list `name` is descriptive body copy, not a title. */}
       <div className="md:hidden mb-4">
+        <h1 className="text-base sm:text-lg font-bold text-ink uppercase tracking-widest mb-1.5">
+          {product.brand || product.name}
+        </h1>
         {product.brand && (
-          <p className="text-base sm:text-lg font-bold text-ink uppercase tracking-widest mb-1.5">
-            {product.brand}
+          <p className="font-sans font-light text-xs sm:text-sm text-ink-muted leading-relaxed">
+            {product.name}
           </p>
         )}
-        <h1 className="font-sans font-light text-xs sm:text-sm text-ink-muted leading-relaxed">
-          {product.name}
-        </h1>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 xl:gap-16">
@@ -678,17 +685,19 @@ export default function ProductDetailClient({
 
         {/* ── Product Info ─────────────────────────── */}
         <div>
-          {/* Brand — desktop only (mobile brand shown above gallery) */}
-          {product.brand && (
-            <p className="hidden md:block text-lg md:text-xl font-bold text-ink uppercase tracking-widest mb-2">
-              {product.brand}
-            </p>
-          )}
+          {/* Brand — desktop only (mobile brand shown above gallery). This is
+              the real page heading; the long feature-list `name` below is
+              descriptive body copy, not a title. */}
+          <h1 className="hidden md:block text-lg md:text-xl font-bold text-ink uppercase tracking-widest mb-2">
+            {product.brand || product.name}
+          </h1>
 
           {/* Name — desktop only (mobile title shown above gallery) */}
-          <h1 className="hidden md:block font-sans font-light text-sm md:text-base text-ink-muted leading-relaxed mb-4">
-            {product.name}
-          </h1>
+          {product.brand && (
+            <p className="hidden md:block font-sans font-light text-sm md:text-base text-ink-muted leading-relaxed mb-4">
+              {product.name}
+            </p>
+          )}
 
           {/* Rating */}
           {product.review_count && product.review_count > 0 ? (

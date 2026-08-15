@@ -83,7 +83,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     160
   );
 
-  const titleString = product.meta_title || `${product.name} | Little Bunnies - Premium Baby Products`;
+  // Falls back to the short brand/model name when a hand-written meta_title
+  // is missing, rather than the raw feature-list `name` — a title tag made
+  // of pipe-separated features doesn't read as a real product name in
+  // search results.
+  const titleString =
+    product.meta_title ||
+    (product.brand
+      ? `Little Bunnies ${product.brand} | Premium Baby Products`
+      : `${product.name} | Little Bunnies - Premium Baby Products`);
 
   const keywords = [
     product.name,
@@ -162,15 +170,23 @@ function buildProductJsonLd(product: Product) {
     ?.map((v) => v.value)
     ?.filter(Boolean);
 
+  // `product.brand` in this catalog actually stores a short model name
+  // (e.g. "Multipurpose Quilted Diaper Bag"), not a manufacturer — `name`
+  // is a pipe-separated feature list, not a real product name. Neither is
+  // fit to use as-is for structured data: schema.org's Product `name`
+  // should be a clean, searchable title, and `brand` should be the actual
+  // brand consistently across every product.
+  const schemaName = product.brand ? `Little Bunnies ${product.brand}` : product.name;
+
   const schema: Record<string, unknown> = {
     "@context": "https://schema.org",
     "@type": "Product",
-    name: product.name,
+    name: schemaName,
     image: images,
     description,
     sku: product.sku || product.id,
     mpn: product.sku || product.id,
-    brand: { "@type": "Brand", name: product.brand || "Little Bunnies" },
+    brand: { "@type": "Brand", name: "Little Bunnies" },
     color: variantColors?.length ? variantColors.join(", ") : "Standard / Premium Multicolor",
     material: isPramOrStroller
       ? "Aerospace-grade Aluminium Frame, UPF 50++ Linen Weather Canopy, High-density EVA Wheels"

@@ -16,6 +16,7 @@ const FOOTER_LINKS = {
     { label: "Exchange & Credit Note Policy", href: "/exchange-policy" },
     { label: "Cancellation and Return Policy", href: "/returns" },
     { label: "Privacy Policy", href: "/privacy-policy" },
+    { label: "Terms & Conditions", href: "/terms" },
   ],
   Company: [
     { label: "Wholesale Inquiry", href: "/wholesale" },

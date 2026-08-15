@@ -61,5 +61,5 @@ export function calculateShipping(subtotal: number): number {
 
 // Site-wide promotional coupon shown on product pages; actual redemption
 // and discount amount are always re-validated server-side at checkout.
-export const PROMO_COUPON_CODE = "FAMILY10";
-export const PROMO_COUPON_LABEL = "10% off your order";
+export const PROMO_COUPON_CODE = "FREEDOM20";
+export const PROMO_COUPON_LABEL = "20% off your order";

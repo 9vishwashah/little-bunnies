@@ -88,6 +88,7 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
     isBestSeller: product.is_best_seller,
     isActive: product.is_active,
     inStock: product.in_stock,
+    showVideoPlaceholders: product.show_video_placeholders ?? true,
     metaTitle: product.meta_title || "",
     metaDescription: product.meta_description || "",
     tags: product.tags?.join(", ") || "",

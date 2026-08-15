@@ -39,6 +39,7 @@ const productSchema = z.object({
   isBestSeller: z.boolean().default(false),
   isActive: z.boolean().default(true),
   inStock: z.boolean().default(true),
+  showVideoPlaceholders: z.boolean().default(true),
   metaTitle: z.string().optional(),
   metaDescription: z.string().optional(),
   tags: z.string().optional(),
@@ -124,6 +125,7 @@ export default function ProductForm({ categories, initialData, initialImages, in
     defaultValues: {
       isActive: true,
       inStock: true,
+      showVideoPlaceholders: true,
       isFeatured: false,
       isNewArrival: false,
       isBestSeller: false,
@@ -299,6 +301,7 @@ export default function ProductForm({ categories, initialData, initialImages, in
         is_best_seller: data.isBestSeller,
         is_active: data.isActive,
         in_stock: data.inStock,
+        show_video_placeholders: data.showVideoPlaceholders,
         meta_title: data.metaTitle || null,
         meta_description: data.metaDescription || null,
         tags: data.tags ? data.tags.split(",").map((t) => t.trim()) : [],
@@ -552,6 +555,26 @@ export default function ProductForm({ categories, initialData, initialImages, in
                 Shown as two extra slides at the end of the image carousel on the product page.
               </p>
             </div>
+
+            <label className="flex items-start gap-3 cursor-pointer mb-5 p-3 rounded-xl bg-cream-dark/20 border border-ink/8">
+              <input
+                type="checkbox"
+                {...register("showVideoPlaceholders")}
+                className="accent-ink w-4 h-4 mt-0.5"
+              />
+              <span className="text-sm">
+                <span className="font-medium text-ink block">
+                  Show empty video slides before a video is uploaded
+                </span>
+                <span className="text-xs text-ink-muted">
+                  Turn this off for products that will never have a video (e.g. diaper bags,
+                  utility bags) so the carousel doesn&apos;t end with empty &ldquo;coming
+                  soon&rdquo; slides. Already-uploaded videos always show regardless of this
+                  setting.
+                </span>
+              </span>
+            </label>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {VIDEO_TYPES.map(({ type, label, hint }) => {
                 const slot = videos[type];

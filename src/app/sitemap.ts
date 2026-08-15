@@ -104,6 +104,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "yearly",
       priority: 0.3,
     },
+    {
+      url: `${BASE_URL}/terms`,
+      lastModified: now,
+      changeFrequency: "yearly",
+      priority: 0.3,
+    },
     // /cart, /checkout, /account, /wishlist, /admin intentionally excluded —
     // they are disallowed in robots.ts.
   ];
