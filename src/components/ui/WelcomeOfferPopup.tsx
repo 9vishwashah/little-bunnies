@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
@@ -73,7 +74,7 @@ export default function WelcomeOfferPopup() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={handleClose}
-            className="fixed inset-0 bg-ink/60 backdrop-blur-sm z-[100]"
+            className="fixed inset-0 bg-black/20 z-[100]"
           />
 
           <motion.div
@@ -84,61 +85,76 @@ export default function WelcomeOfferPopup() {
             className="fixed inset-0 z-[110] flex items-center justify-center p-4"
             aria-modal="true"
             role="dialog"
-            aria-label="Independence Day special offer"
+            aria-label="Launch special offer"
             onClick={handleClose}
           >
             <div
-              className="relative bg-white rounded-[2rem] shadow-2xl w-full max-w-sm overflow-hidden"
+              className="relative bg-white rounded-[1.5rem] sm:rounded-[2rem] shadow-2xl w-full max-w-[320px] sm:max-w-sm overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Tricolor ribbon */}
-              <div className="h-3 w-full flex">
+              <div className="h-2.5 sm:h-3 w-full flex">
                 <div className="flex-1" style={{ backgroundColor: SAFFRON }} />
                 <div className="flex-1 bg-white" />
                 <div className="flex-1" style={{ backgroundColor: INDIA_GREEN }} />
               </div>
 
+              {/* Light bunny watermark, in place of the flat white background */}
+              <div
+                aria-hidden="true"
+                className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.07]"
+              >
+                <Image
+                  src="/images/only-bunny-removebg-preview.png"
+                  alt=""
+                  width={260}
+                  height={260}
+                  className="object-contain -rotate-6 w-[70%] h-auto"
+                />
+              </div>
+
               <button
                 onClick={handleClose}
-                className="absolute top-5 right-4 p-2 rounded-full bg-cream-dark hover:bg-cream-darker transition-colors z-10"
+                className="absolute top-3.5 right-3 sm:top-5 sm:right-4 p-1.5 sm:p-2 rounded-full bg-cream-dark hover:bg-cream-darker transition-colors z-10"
                 aria-label="Close"
               >
-                <X size={18} />
+                <X size={16} className="sm:hidden" />
+                <X size={18} className="hidden sm:block" />
               </button>
 
-              <div className="px-7 pt-7 pb-8 flex flex-col items-center text-center">
+              <div className="px-5 pt-5 pb-5 sm:px-7 sm:pt-7 sm:pb-8 flex flex-col items-center text-center">
                 <motion.div
                   initial={{ scale: 0, rotate: -60 }}
                   animate={{ scale: 1, rotate: 0 }}
                   transition={{ type: "spring", damping: 14, delay: 0.15 }}
-                  className="mb-3"
+                  className="mb-2 sm:mb-3"
                 >
-                  <AshokaChakra size={44} />
+                  <AshokaChakra size={34} />
                 </motion.div>
 
-                <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-pill bg-cream-dark mb-3">
-                  <span className="text-[11px] font-bold text-ink tracking-widest uppercase">
-                    Independence Day Special
+                <div className="inline-flex items-center gap-1.5 px-3 py-0.5 sm:px-3.5 sm:py-1 rounded-pill bg-cream-dark mb-2 sm:mb-3">
+                  <span className="text-[10px] sm:text-[11px] font-bold text-ink tracking-widest uppercase">
+                    Launch Special
                   </span>
                 </div>
 
-                <h2 className="font-display font-black text-ink text-2xl sm:text-3xl leading-tight mb-2">
+                <h2 className="font-display font-black text-ink text-xl sm:text-3xl leading-tight mb-1.5 sm:mb-2">
                   Celebrate Freedom.
                   <br />
                   Save Big!
                 </h2>
 
-                <p className="text-ink-muted font-medium text-sm mb-6">
+                <p className="text-ink-muted font-medium text-xs sm:text-sm mb-4 sm:mb-6">
                   Get <span className="font-bold" style={{ color: INDIA_GREEN }}>{PROMO_COUPON_LABEL}</span>.
                 </p>
 
                 <button
                   onClick={handleCopy}
-                  className="group w-full flex items-center justify-between gap-3 rounded-2xl border-2 border-dashed px-5 py-3.5 mb-5 transition-transform hover:scale-[1.02] active:scale-[0.98]"
+                  className="group w-full flex items-center justify-between gap-3 rounded-2xl border-2 border-dashed px-4 py-2.5 sm:px-5 sm:py-3.5 mb-4 sm:mb-5 transition-transform hover:scale-[1.02] active:scale-[0.98]"
                   style={{ borderColor: SAFFRON, background: "linear-gradient(135deg, rgba(255,153,51,0.08), rgba(19,136,8,0.08))" }}
                 >
                   <span
-                    className="font-mono font-black text-lg tracking-widest"
+                    className="font-mono font-black text-base sm:text-lg tracking-widest"
                     style={{ color: CHAKRA_NAVY }}
                   >
                     {PROMO_COUPON_CODE}
@@ -152,7 +168,7 @@ export default function WelcomeOfferPopup() {
                 <a
                   href="/products"
                   onClick={handleCopy}
-                  className="w-full flex items-center justify-center gap-2 text-white font-bold py-3.5 rounded-pill text-sm transition-all hover:shadow-soft-lg hover:-translate-y-0.5"
+                  className="w-full flex items-center justify-center gap-2 text-white font-bold py-3 sm:py-3.5 rounded-pill text-sm transition-all hover:shadow-soft-lg hover:-translate-y-0.5"
                   style={{ background: `linear-gradient(90deg, ${SAFFRON}, ${INDIA_GREEN})` }}
                 >
                   <ShoppingBag size={16} />
@@ -161,7 +177,7 @@ export default function WelcomeOfferPopup() {
 
                 <button
                   onClick={handleClose}
-                  className="text-xs text-ink-muted font-medium mt-4 hover:text-ink transition-colors"
+                  className="text-xs text-ink-muted font-medium mt-3 sm:mt-4 hover:text-ink transition-colors"
                 >
                   Maybe later
                 </button>
