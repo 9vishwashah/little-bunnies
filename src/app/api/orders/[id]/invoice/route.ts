@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
 import { generateInvoicePdf } from "@/lib/invoice/generateInvoicePdf";
 import { getPaymentMethodLabel } from "@/lib/orders/paymentMethodLabel";
+import { formatInvoiceNumber } from "@/lib/utils";
 
 export async function GET(
   req: NextRequest,
@@ -46,17 +47,23 @@ export async function GET(
       couponCode = coupon?.code || null;
     }
 
+    const { data: invoiceNumberRaw } = await supabase.rpc("get_or_create_invoice_number", {
+      p_order_id: id,
+    });
+    const invoiceNumber = typeof invoiceNumberRaw === "number" ? formatInvoiceNumber(invoiceNumberRaw) : null;
+
     const pdf = await generateInvoicePdf(
       { ...order, coupon_code: couponCode, payment_method_label: getPaymentMethodLabel(order.payment_method) },
       items || [],
-      email
+      email,
+      invoiceNumber
     );
 
     return new NextResponse(new Uint8Array(pdf), {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="invoice-${order.order_number}.pdf"`,
+        "Content-Disposition": `attachment; filename="invoice-${invoiceNumber || order.order_number}.pdf"`,
         "Cache-Control": "private, no-store",
       },
     });

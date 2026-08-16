@@ -13,6 +13,7 @@ import {
   Store,
   Settings,
   X,
+  HandCoins,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -21,6 +22,7 @@ const NAV_ITEMS = [
   { href: "/admin/products", label: "Products", icon: Package },
   { href: "/admin/categories", label: "Categories", icon: Grid2X2 },
   { href: "/admin/orders", label: "Orders", icon: ShoppingCart },
+  { href: "/admin/orders/new", label: "New Walk-in Sale", icon: HandCoins, exact: true },
   { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 

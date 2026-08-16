@@ -48,7 +48,8 @@ const LABEL_COL_WIDTH = 140;
 export async function generateInvoicePdf(
   order: InvoiceOrder,
   items: InvoiceItem[],
-  customerEmail?: string | null
+  customerEmail?: string | null,
+  invoiceNumber?: string | null
 ): Promise<Buffer> {
   const { pdfDoc, fontRegular, fontBold, addPage } = await createLetterheadDoc();
   let page: PDFPage = await addPage();
@@ -65,8 +66,11 @@ export async function generateInvoicePdf(
 
   // ── Order meta strip (mirrors a booking-confirmation receipt: reference
   // numbers sit above the title, not below it) ────────────────────────────
-  drawText(page, "Order Number", { x: CONTENT_LEFT, y, font: fontBold, size: 9.5, color: COLORS.inkMuted });
-  drawText(page, order.order_number, { x: CONTENT_LEFT + 90, y, font: fontRegular, size: 9.5, color: COLORS.ink });
+  // Order No. shown here is the sequential LB001-style number — the same
+  // one used as the invoice number, so there's a single reference on the
+  // receipt rather than two different-looking order/invoice numbers.
+  drawText(page, "Order No.", { x: CONTENT_LEFT, y, font: fontBold, size: 9.5, color: COLORS.inkMuted });
+  drawText(page, invoiceNumber || order.order_number, { x: CONTENT_LEFT + 90, y, font: fontRegular, size: 9.5, color: COLORS.ink });
   y -= 14;
   drawText(page, "Payment Date", { x: CONTENT_LEFT, y, font: fontBold, size: 9.5, color: COLORS.inkMuted });
   drawText(page, formatDate(order.created_at), { x: CONTENT_LEFT + 90, y, font: fontRegular, size: 9.5, color: COLORS.ink });
@@ -127,11 +131,14 @@ export async function generateInvoicePdf(
   y = box1Bottom - 25;
 
   // ── Box 2: Items + totals ──────────────────────────────────────────
+  // Columns widen from left to right (qty needs little room, amount needs
+  // the most — up to 6-7 digit rupee totals) and each keeps a real gap
+  // before the next, so values never crowd their column edge.
   const col = {
     item: CONTENT_LEFT,
-    qty: CONTENT_RIGHT - 220,
-    price: CONTENT_RIGHT - 150,
-    amount: CONTENT_RIGHT - 80,
+    qty: { x: CONTENT_RIGHT - 240, width: 40 },
+    price: { x: CONTENT_RIGHT - 180, width: 70 },
+    amount: { x: CONTENT_RIGHT - 95, width: 85 },
   };
 
   await ensureSpace(30);
@@ -140,9 +147,9 @@ export async function generateInvoicePdf(
 
   page.drawRectangle({ x: CONTENT_LEFT, y: y - 22, width: CONTENT_WIDTH, height: 22, color: COLORS.ink });
   drawText(page, "ITEM", { x: col.item + 10, y: y - 15, font: fontBold, size: 9, color: COLORS.white });
-  drawText(page, "QTY", { x: col.qty, y: y - 15, maxWidth: 50, align: "right", font: fontBold, size: 9, color: COLORS.white });
-  drawText(page, "PRICE", { x: col.price, y: y - 15, maxWidth: 60, align: "right", font: fontBold, size: 9, color: COLORS.white });
-  drawText(page, "AMOUNT", { x: col.amount, y: y - 15, maxWidth: 70, align: "right", font: fontBold, size: 9, color: COLORS.white });
+  drawText(page, "QTY", { x: col.qty.x, y: y - 15, maxWidth: col.qty.width, align: "right", font: fontBold, size: 9, color: COLORS.white });
+  drawText(page, "PRICE", { x: col.price.x, y: y - 15, maxWidth: col.price.width, align: "right", font: fontBold, size: 9, color: COLORS.white });
+  drawText(page, "AMOUNT", { x: col.amount.x, y: y - 15, maxWidth: col.amount.width, align: "right", font: fontBold, size: 9, color: COLORS.white });
   y -= 22;
 
   for (let i = 0; i < items.length; i++) {
@@ -158,16 +165,16 @@ export async function generateInvoicePdf(
     }
 
     drawText(page, item.product_name, {
-      x: col.item + 10, y: y - 14, font: fontRegular, size: 9.5, color: COLORS.ink, maxWidth: col.qty - col.item - 20,
+      x: col.item + 10, y: y - 14, font: fontRegular, size: 9.5, color: COLORS.ink, maxWidth: col.qty.x - col.item - 20,
     });
     if (item.variant_name) {
       drawText(page, item.variant_name, {
         x: col.item + 10, y: y - 27, font: fontRegular, size: 8, color: COLORS.inkMuted,
       });
     }
-    drawText(page, String(item.quantity), { x: col.qty, y: y - 14, maxWidth: 50, align: "right", font: fontRegular, size: 9.5, color: COLORS.ink });
-    drawText(page, formatRs(item.unit_price), { x: col.price, y: y - 14, maxWidth: 60, align: "right", font: fontRegular, size: 9.5, color: COLORS.ink });
-    drawText(page, formatRs(item.total_price), { x: col.amount, y: y - 14, maxWidth: 70, align: "right", font: fontRegular, size: 9.5, color: COLORS.ink });
+    drawText(page, String(item.quantity), { x: col.qty.x, y: y - 14, maxWidth: col.qty.width, align: "right", font: fontRegular, size: 9.5, color: COLORS.ink });
+    drawText(page, formatRs(item.unit_price), { x: col.price.x, y: y - 14, maxWidth: col.price.width, align: "right", font: fontRegular, size: 9.5, color: COLORS.ink });
+    drawText(page, formatRs(item.total_price), { x: col.amount.x, y: y - 14, maxWidth: col.amount.width, align: "right", font: fontRegular, size: 9.5, color: COLORS.ink });
 
     y -= rowHeightItem;
   }
@@ -177,22 +184,28 @@ export async function generateInvoicePdf(
 
   // ── Totals — visually the closing rows of the same box ─────────────
   await ensureSpace(120);
-  const totalsX = CONTENT_RIGHT - 200;
-  const totalsLabelWidth = 120;
+  // Right edge sits a few points inside CONTENT_RIGHT (the box border,
+  // which previously touched the value text directly — same edge as the
+  // item table's Amount column above), and the label column is wide
+  // enough that a coupon-code label never reaches the value.
+  const totalsValueWidth = 85;
+  const totalsLabelWidth = 130;
+  const totalsRightEdge = CONTENT_RIGHT - 10;
+  const totalsX = totalsRightEdge - totalsValueWidth - totalsLabelWidth;
 
   const totalRow = (label: string, value: string, opts?: { bold?: boolean; color?: typeof COLORS.ink }) => {
     const font = opts?.bold ? fontBold : fontRegular;
     const size = opts?.bold ? 12 : 10;
     drawText(page, label, { x: totalsX, y, font, size, color: opts?.color || COLORS.inkMuted });
     drawText(page, value, {
-      x: totalsX + totalsLabelWidth, y, maxWidth: 80, align: "right", font, size, color: opts?.color || COLORS.ink,
+      x: totalsX + totalsLabelWidth, y, maxWidth: totalsValueWidth, align: "right", font, size, color: opts?.color || COLORS.ink,
     });
     y -= opts?.bold ? 18 : 16;
   };
 
   totalRow("Subtotal", formatRs(order.subtotal));
   if (order.custom_name_charge) {
-    totalRow("Custom Name Personalization", formatRs(order.custom_name_charge));
+    totalRow("Personalization", formatRs(order.custom_name_charge));
   }
   if (order.discount_amount) {
     totalRow(

@@ -53,6 +53,12 @@ export function generateOrderNumber(): string {
   return `LB${dateStr}${random}`;
 }
 
+// Sequential invoice display number (LB001, LB002, ...), backed by the
+// invoice_number_seq Postgres sequence — see migration_invoice_number.sql.
+export function formatInvoiceNumber(n: number): string {
+  return `LB${String(n).padStart(3, "0")}`;
+}
+
 export const FREE_SHIPPING_THRESHOLD = 5999;
 
 export function calculateShipping(subtotal: number): number {

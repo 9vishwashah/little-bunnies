@@ -50,8 +50,11 @@ export default function HeroSection() {
               priority={currentSlide === 0}
               unoptimized
             />
-            {/* Gradient overlay to ensure text readability */}
-            <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-white/70 to-transparent sm:from-white/90 sm:via-white/50" />
+            {/* Gradient overlay to ensure text readability — a top-to-bottom
+                wash on mobile (the square crop puts text over more of the
+                photo, so a left-right gradient alone isn't reliably dark
+                enough behind it) and the original left-right wash on desktop. */}
+            <div className="absolute inset-0 bg-gradient-to-b from-white/95 via-white/85 to-white/50 sm:bg-gradient-to-r sm:from-white/90 sm:via-white/50 sm:to-transparent" />
           </motion.div>
         </AnimatePresence>
 
@@ -76,12 +79,7 @@ export default function HeroSection() {
               <span className="text-sage-dark">Your Freedom to Move.</span>
             </h1>
 
-            <p className="text-xs sm:text-sm md:text-base text-ink-light font-medium leading-snug sm:leading-relaxed mb-3 sm:mb-5 max-w-sm">
-              Premium strollers designed for effortless everyday parenting — from
-              neighbourhood walks to airport journeys.
-            </p>
-
-            <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex flex-col sm:flex-row gap-3 mt-3 sm:mt-5">
               <Link
                 href="/products?category=prams"
                 className="group inline-flex items-center gap-2 sm:gap-3 min-h-[34px] sm:min-h-[44px] bg-peach hover:bg-peach-dark text-white px-4 py-1.5 sm:px-8 sm:py-4 rounded-pill font-bold text-xs sm:text-lg transition-all shadow-soft hover:shadow-soft-lg hover:-translate-y-1 active:scale-[0.98] active:translate-y-0 w-fit self-start"

@@ -1,7 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/server";
 import Link from "next/link";
-import { formatPrice } from "@/lib/utils";
-import { Eye, Search } from "lucide-react";
+import { formatPrice, formatInvoiceNumber } from "@/lib/utils";
+import { Eye, Search, Plus } from "lucide-react";
 import DeleteOrderButton from "./DeleteOrderButton";
 
 async function getOrders(search?: string) {
@@ -34,9 +34,15 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
 
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="font-display text-2xl font-bold text-ink">Orders</h1>
-        <p className="text-ink-muted text-sm mt-0.5">{count} orders total</p>
+      <div className="mb-6 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="font-display text-2xl font-bold text-ink">Orders</h1>
+          <p className="text-ink-muted text-sm mt-0.5">{count} orders total</p>
+        </div>
+        <Link href="/admin/orders/new" className="btn-primary flex items-center gap-1.5 shrink-0">
+          <Plus size={16} />
+          New Walk-in Sale
+        </Link>
       </div>
 
       <form method="GET" className="mb-6">
@@ -76,9 +82,19 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
                   <td colSpan={8} className="text-center py-16 text-ink-muted">No orders found</td>
                 </tr>
               ) : (
-                orders.map((order: any) => (
+                orders.map((order: any) => {
+                  const displayOrderNumber =
+                    typeof order.invoice_number === "number" ? formatInvoiceNumber(order.invoice_number) : order.order_number;
+                  return (
                   <tr key={order.id} className="hover:bg-cream-dark/30 transition-colors">
-                    <td className="px-5 py-3.5 font-semibold text-ink text-sm">{order.order_number}</td>
+                    <td className="px-5 py-3.5 font-semibold text-ink text-sm">
+                      {displayOrderNumber}
+                      {order.is_walk_in && (
+                        <span className="block mt-1 w-fit text-[10px] font-bold px-1.5 py-0.5 rounded bg-lavender-brand/40 text-ink">
+                          WALK-IN
+                        </span>
+                      )}
+                    </td>
                     <td className="px-4 py-3.5 text-sm text-ink-muted">
                       {new Date(order.created_at).toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" })}
                     </td>
@@ -112,11 +128,12 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
                         <Link href={`/admin/orders/${order.id}`} className="btn-ghost text-xs p-2" title="View order">
                           <Eye size={16} />
                         </Link>
-                        <DeleteOrderButton orderId={order.id} orderNumber={order.order_number} />
+                        <DeleteOrderButton orderId={order.id} orderNumber={displayOrderNumber} />
                       </div>
                     </td>
                   </tr>
-                ))
+                  );
+                })
               )}
             </tbody>
           </table>

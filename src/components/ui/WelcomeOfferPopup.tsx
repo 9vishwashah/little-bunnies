@@ -139,9 +139,7 @@ export default function WelcomeOfferPopup() {
                 </div>
 
                 <h2 className="font-display font-black text-ink text-xl sm:text-3xl leading-tight mb-1.5 sm:mb-2">
-                  Celebrate Freedom.
-                  <br />
-                  Save Big!
+                  Launch Offer
                 </h2>
 
                 <p className="text-ink-muted font-medium text-xs sm:text-sm mb-4 sm:mb-6">

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Save, MapPin, Package, CreditCard, Clock, MessageCircle, FileText, Truck, Receipt, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
-import { formatPrice } from "@/lib/utils";
+import { formatPrice, formatInvoiceNumber } from "@/lib/utils";
 
 interface Props {
   order: any;
@@ -39,7 +39,9 @@ export default function OrderClient({ order }: Props) {
   };
 
   const address = order.shipping_address;
-  const whatsappMsg = `Hi ${address.full_name}, regarding your Little Bunnies order ${order.order_number}...`;
+  const displayOrderNumber =
+    typeof order.invoice_number === "number" ? formatInvoiceNumber(order.invoice_number) : order.order_number;
+  const whatsappMsg = `Hi ${address.full_name}, regarding your Little Bunnies order ${displayOrderNumber}...`;
   const whatsappUrl = `https://wa.me/91${address.phone}?text=${encodeURIComponent(whatsappMsg)}`;
 
   return (
@@ -49,7 +51,7 @@ export default function OrderClient({ order }: Props) {
           <ArrowLeft size={20} className="text-ink" />
         </Link>
         <div>
-          <h1 className="font-display text-2xl font-bold text-ink">Order #{order.order_number}</h1>
+          <h1 className="font-display text-2xl font-bold text-ink">Order #{displayOrderNumber}</h1>
           <p className="text-ink-muted text-sm mt-0.5 flex items-center gap-2">
             <Clock size={14} />
             {new Date(order.created_at).toLocaleString("en-IN")}

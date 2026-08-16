@@ -4,6 +4,7 @@ import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/server";
 import { sendOrderConfirmation, sendAdminOrderNotification } from "@/lib/email/sendOrderConfirmation";
 import { generateInvoicePdf } from "@/lib/invoice/generateInvoicePdf";
+import { formatInvoiceNumber } from "@/lib/utils";
 
 const bodySchema = z.object({
   orderId: z.string().min(1),
@@ -129,7 +130,11 @@ export async function POST(req: NextRequest) {
 
       let invoicePdf: Buffer | null = null;
       try {
-        invoicePdf = await generateInvoicePdf(invoiceOrder, orderItems || [], email);
+        const { data: invoiceNumberRaw } = await supabase.rpc("get_or_create_invoice_number", {
+          p_order_id: orderId,
+        });
+        const invoiceNumber = typeof invoiceNumberRaw === "number" ? formatInvoiceNumber(invoiceNumberRaw) : null;
+        invoicePdf = await generateInvoicePdf(invoiceOrder, orderItems || [], email, invoiceNumber);
       } catch (pdfErr) {
         console.error("Invoice PDF generation error:", pdfErr);
       }

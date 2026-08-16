@@ -532,8 +532,8 @@ export default function ProductDetailClient({
               </>
             )}
 
-            {/* Google Lens Visual Search Button (image slides) / Copy Video Link (video slides) */}
-            {currentSlide?.kind === "video" ? (
+            {/* Copy Video Link (video slides only) */}
+            {currentSlide?.kind === "video" && (
               <button
                 type="button"
                 onClick={() => handleCopyVideoLink(currentSlide.type)}
@@ -543,37 +543,6 @@ export default function ProductDetailClient({
                 <Copy size={14} />
                 <span>Copy Link</span>
               </button>
-            ) : (
-              <a
-                href={`https://lens.google.com/uploadbyurl?url=${encodeURIComponent(
-                  primaryImage?.url
-                    ? primaryImage.url.startsWith("http")
-                      ? primaryImage.url
-                      : `https://littlebunnies.co.in${primaryImage.url}`
-                    : "https://littlebunnies.co.in/images/LittleBunnies-Banner.png"
-                )}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                title="Circle & search this product with Google Lens"
-                className="absolute bottom-4 left-4 z-10 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/95 backdrop-blur-sm text-ink text-xs font-bold shadow-soft hover:shadow-soft-lg hover:bg-cream transition-all border border-ink/10 hover:scale-105 group/lens"
-              >
-                <svg
-                  className="w-4 h-4 text-blue-600 transition-transform group-hover/lens:scale-110"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M10 4H5C4.44772 4 4 4.44772 4 5V10M14 4H19C19.5523 4 20 4.44772 20 5V10M20 14V19C20 19.5523 19.5523 20 19 20H14M10 20H5C4.44772 20 4 19.5523 4 19V14"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2" />
-                </svg>
-                <span>Google Lens</span>
-              </a>
             )}
           </div>
 

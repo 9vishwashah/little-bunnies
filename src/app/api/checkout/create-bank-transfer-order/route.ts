@@ -3,7 +3,7 @@ import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/server";
 import { computeOrderPricing, PricingError } from "@/lib/orders/pricing";
 import { validateCoupon } from "@/lib/orders/validateCoupon";
-import { generateOrderNumber } from "@/lib/utils";
+import { generateOrderNumber, formatInvoiceNumber } from "@/lib/utils";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { sendOrderConfirmation, sendAdminOrderNotification } from "@/lib/email/sendOrderConfirmation";
 import { generateInvoicePdf } from "@/lib/invoice/generateInvoicePdf";
@@ -216,7 +216,11 @@ export async function POST(req: NextRequest) {
 
       let invoicePdf: Buffer | null = null;
       try {
-        invoicePdf = await generateInvoicePdf(invoiceOrder, orderItems, address.email);
+        const { data: invoiceNumberRaw } = await supabase.rpc("get_or_create_invoice_number", {
+          p_order_id: order.id,
+        });
+        const invoiceNumber = typeof invoiceNumberRaw === "number" ? formatInvoiceNumber(invoiceNumberRaw) : null;
+        invoicePdf = await generateInvoicePdf(invoiceOrder, orderItems, address.email, invoiceNumber);
       } catch (pdfErr) {
         console.error("Invoice PDF generation error:", pdfErr);
       }
