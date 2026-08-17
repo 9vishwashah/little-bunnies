@@ -27,12 +27,19 @@ function isSupabaseUrl(src: string): boolean {
  * transform endpoint also auto-negotiates WebP/AVIF via the browser's
  * Accept header, which on its own typically cuts payload size 20-40x.
  * Falls back to the original URL untouched for non-Supabase sources.
+ *
+ * `resize=contain` is required, not cosmetic: given only `width` (no
+ * `height`), Supabase's transform endpoint doesn't scale proportionally —
+ * it keeps the original height and crops the width down to fit, silently
+ * cutting off the sides of anything taller than it is wide. `contain`
+ * forces a proportional scale instead, matching what a plain `?width=`
+ * request should have done in the first place.
  */
 export function getOptimizedImageUrl(src: string, width: number, quality = 75): string {
   if (!isSupabaseUrl(src)) return src;
   const transformed = src.replace("/storage/v1/object/public/", "/storage/v1/render/image/public/");
   const separator = transformed.includes("?") ? "&" : "?";
-  return `${transformed}${separator}width=${Math.max(1, Math.round(width))}&quality=${quality}`;
+  return `${transformed}${separator}width=${Math.max(1, Math.round(width))}&quality=${quality}&resize=contain`;
 }
 
 type ProductImageProps = Omit<ImageProps, "src"> & {

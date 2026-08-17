@@ -146,8 +146,9 @@ export default function WalkInOrderForm({ products }: { products: WalkInProduct[
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to create order");
 
-      setResult({ orderId: data.orderId, orderNumber: data.orderNumber });
-      toast.success(`Order ${data.orderNumber} created`);
+      const displayNumber = data.invoiceNumber || data.orderNumber;
+      setResult({ orderId: data.orderId, orderNumber: displayNumber });
+      toast.success(`Order ${displayNumber} created`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to create order");
     } finally {

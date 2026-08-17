@@ -3,6 +3,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, Download } from "lucide-react";
 import ClearCartOnMount from "./ClearCartOnMount";
+import { createAdminClient } from "@/lib/supabase/server";
+import { formatInvoiceNumber } from "@/lib/utils";
 
 interface Props {
   searchParams: Promise<{ order?: string; id?: string }>;
@@ -16,8 +18,26 @@ const WhatsAppIcon = () => (
 
 export default async function OrderSuccessPage({ searchParams }: Props) {
   const params = await searchParams;
-  const orderNumber = params.order;
   const orderId = params.id;
+
+  // Same LB001-style number shown on the PDF and in the admin panel — the
+  // RPC is idempotent (returns the existing number if one's already
+  // assigned), so this both looks it up and self-heals any order that
+  // somehow reached this page before its number was assigned.
+  let orderNumber = params.order;
+  if (orderId) {
+    try {
+      const supabase = createAdminClient();
+      const { data: invoiceNumberRaw } = await supabase.rpc("get_or_create_invoice_number", {
+        p_order_id: orderId,
+      });
+      if (typeof invoiceNumberRaw === "number") {
+        orderNumber = formatInvoiceNumber(invoiceNumberRaw);
+      }
+    } catch (err) {
+      console.error("Order success invoice-number lookup error:", err);
+    }
+  }
 
   return (
     <div className="section-container py-12 md:py-20 flex flex-col items-center justify-center min-h-[80vh] bg-cream-gradient relative">

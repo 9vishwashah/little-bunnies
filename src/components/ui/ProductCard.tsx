@@ -56,7 +56,7 @@ export default function ProductCard({ product, className, priority }: ProductCar
             alt={primaryImage?.alt || product.name}
             fill
             sizes="(max-width: 480px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
-            className="object-cover transition-transform duration-500 group-hover:scale-105"
+            className="object-contain transition-transform duration-500 group-hover:scale-105"
             priority={priority}
           />
 

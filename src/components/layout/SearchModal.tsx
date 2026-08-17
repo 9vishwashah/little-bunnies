@@ -18,7 +18,7 @@ const FEATURED_SUGGESTIONS = [
   { label: "★ Comfy Rider Pro Stroller", href: "/product/little-bunnies-comfy-rider-pro-baby-stroller-360-rotating-reversible-seat-ultra-lightweight-aluminium-frame-upf-50-canopy-one-touch-fold-travel-friendly" },
   { label: "Prams & Strollers", href: "/prams-strollers" },
   { label: "Diaper Bags", href: "/products?category=bags" },
-  { label: "Baby Feeding Essentials", href: "/products?category=feeding" },
+  { label: "Utility Bags", href: "/products?category=utility-bags" },
 ];
 
 export default function SearchModal({ isOpen, onClose }: SearchModalProps) {

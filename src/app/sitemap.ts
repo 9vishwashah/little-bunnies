@@ -12,15 +12,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Fetch all active products
   const { data: products } = await supabase
     .from("products")
-    .select("slug, updated_at, product_images(url)")
+    .select("slug, updated_at, category_id, product_images(url)")
     .eq("is_active", true);
 
-  // Fetch all active categories (top-level only — avoid noisy subcategory combos)
+  // Fetch all active categories (top-level only — avoid noisy subcategory combos),
+  // plus each one's children — the /products page filter matches products
+  // tagged with the category itself OR any of its subcategories, so a
+  // top-level category counts as non-empty if either has products.
   const { data: categories } = await supabase
     .from("categories")
-    .select("slug, updated_at")
+    .select("id, slug, updated_at, children:categories!parent_id(id)")
     .eq("is_active", true)
     .is("parent_id", null); // Only top-level categories
+
+  // A category with no active products renders "No products found" — Google
+  // crawls it, finds nothing useful, and declines to index it. Only advertise
+  // categories that actually have something in them.
+  const categoryIdsWithProducts = new Set(
+    (products || []).map((p: { category_id: string | null }) => p.category_id).filter(Boolean)
+  );
 
   const now = new Date();
 
@@ -118,12 +128,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Use canonical ?category= query format (as used by the products page).
   // These are only top-level categories; filter combinations are disallowed
   // in robots.ts to avoid duplicate content.
-  const categoryUrls: MetadataRoute.Sitemap = (categories || []).map((cat) => ({
-    url: `${BASE_URL}/products?category=${cat.slug}`,
-    lastModified: cat.updated_at ? new Date(cat.updated_at) : now,
-    changeFrequency: "weekly",
-    priority: 0.8,
-  }));
+  const categoryUrls: MetadataRoute.Sitemap = (categories || [])
+    .filter((cat: { id: string; children?: { id: string }[] }) =>
+      [cat.id, ...(cat.children || []).map((c) => c.id)].some((id) =>
+        categoryIdsWithProducts.has(id)
+      )
+    )
+    .map((cat) => ({
+      url: `${BASE_URL}/products?category=${cat.slug}`,
+      lastModified: cat.updated_at ? new Date(cat.updated_at) : now,
+      changeFrequency: "weekly",
+      priority: 0.8,
+    }));
 
   // ── Product pages ─────────────────────────────────────────────────────────
   const productUrls: MetadataRoute.Sitemap = (products || []).map((product: any) => ({

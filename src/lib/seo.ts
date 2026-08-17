@@ -39,7 +39,7 @@ export function buildLocalBusinessSchema() {
     "@type": ["LocalBusiness", "Store"],
     name: SITE_NAME,
     description:
-      "Little Bunnies is India's premium baby essentials brand. Shop prams, strollers, diapers, feeding bottles, baby care, clothing, and nursery products crafted for newborns aged 0–6 months.",
+      "Little Bunnies is India's premium baby essentials brand. Shop prams, strollers, diaper bags, and utility bags crafted for newborns aged 0–6 months.",
     url: SITE_URL,
     logo: `${SITE_URL}/images/logo-full.png`,
     image: `${SITE_URL}/images/LittleBunnies-Banner.png`,
@@ -92,32 +92,8 @@ export function buildLocalBusinessSchema() {
           "@type": "Offer",
           itemOffered: {
             "@type": "Service",
-            name: "Baby Clothing",
-            url: `${SITE_URL}/products?category=clothing`,
-          },
-        },
-        {
-          "@type": "Offer",
-          itemOffered: {
-            "@type": "Service",
-            name: "Feeding Bottles & Accessories",
-            url: `${SITE_URL}/products?category=feeding`,
-          },
-        },
-        {
-          "@type": "Offer",
-          itemOffered: {
-            "@type": "Service",
-            name: "Baby Skincare",
-            url: `${SITE_URL}/products?category=skincare`,
-          },
-        },
-        {
-          "@type": "Offer",
-          itemOffered: {
-            "@type": "Service",
-            name: "Nursery Essentials",
-            url: `${SITE_URL}/products?category=nursery`,
+            name: "Utility Bags",
+            url: `${SITE_URL}/products?category=utility-bags`,
           },
         },
       ],
@@ -142,7 +118,7 @@ export function buildOrganizationSchema() {
     },
     image: `${SITE_URL}/images/LittleBunnies-Banner.png`,
     description:
-      "India's premium baby essentials brand — prams, diapers, feeding bottles, baby clothing & nursery products for newborns 0–6 months.",
+      "India's premium baby essentials brand — prams, strollers, diaper bags & utility bags for newborns 0–6 months.",
     telephone: SITE_PHONE,
     email: SITE_EMAIL,
     foundingDate: "2024",

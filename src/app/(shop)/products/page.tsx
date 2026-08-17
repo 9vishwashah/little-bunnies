@@ -190,12 +190,45 @@ async function getCategories(): Promise<Category[]> {
   }
 }
 
+/**
+ * Categories with at least one active product, directly or via a
+ * subcategory (matching the same category+children match used to filter
+ * products above). A category with nothing in it is a dead end for anyone
+ * who clicks it — this keeps the filter sidebar from offering one.
+ */
+async function getCategoriesWithProducts(categories: Category[]): Promise<Category[]> {
+  try {
+    const supabase = await createClient();
+    const [{ data: products }, { data: withChildren }] = await Promise.all([
+      supabase.from("products").select("category_id").eq("is_active", true),
+      supabase.from("categories").select("id, children:categories!parent_id(id)"),
+    ]);
+
+    const categoryIdsWithProducts = new Set(
+      (products || []).map((p) => p.category_id).filter(Boolean)
+    );
+    const childrenByParent = new Map(
+      (withChildren || []).map((c: { id: string; children?: { id: string }[] }) => [
+        c.id,
+        (c.children || []).map((ch) => ch.id),
+      ])
+    );
+
+    return categories.filter((cat) =>
+      [cat.id, ...(childrenByParent.get(cat.id) || [])].some((id) => categoryIdsWithProducts.has(id))
+    );
+  } catch {
+    return categories;
+  }
+}
+
 export default async function ProductsPage({ searchParams }: ProductsPageProps) {
   const params = await searchParams;
   const [{ products, count }, categories] = await Promise.all([
     getProducts(params),
     getCategories(),
   ]);
+  const sidebarCategories = await getCategoriesWithProducts(categories);
 
   const activeCategory = categories.find((c) => c.slug === params.category);
   const breadcrumbSchema = jsonLd(
@@ -224,7 +257,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
       <ProductsClient
         initialProducts={products}
         totalCount={count}
-        categories={categories}
+        categories={sidebarCategories}
         searchParams={params}
       />
     </>
