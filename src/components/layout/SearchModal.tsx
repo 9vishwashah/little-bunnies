@@ -158,7 +158,7 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                             item.product_images?.find((img: any) => img.is_primary) ||
                             item.product_images?.[0];
                           const imgUrl =
-                            primaryImg?.url || "/images/LittleBunnies-Banner.png";
+                            primaryImg?.url || "/images/banner2.png";
 
                           const shortName = item.name.includes(" | ") ? item.name.split(" | ")[0] : item.name;
                           const displayName =

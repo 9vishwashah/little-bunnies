@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     url: "https://littlebunnies.co.in/faq",
     images: [
       {
-        url: "https://littlebunnies.co.in/images/LittleBunnies-Banner.png",
+        url: "https://littlebunnies.co.in/images/banner2.png",
         width: 1200,
         height: 630,
         alt: "Little Bunnies FAQ",

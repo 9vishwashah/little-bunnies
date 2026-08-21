@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { createAdminClient } from "@/lib/supabase/server";
 import { generateDeliveryNotePdf } from "@/lib/invoice/generateDeliveryNotePdf";
+import { formatInvoiceNumber } from "@/lib/utils";
 
 export async function GET(
   req: NextRequest,
@@ -24,13 +25,18 @@ export async function GET(
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
-    const pdf = await generateDeliveryNotePdf(order);
+    const { data: invoiceNumberRaw } = await supabase.rpc("get_or_create_invoice_number", {
+      p_order_id: id,
+    });
+    const invoiceNumber = typeof invoiceNumberRaw === "number" ? formatInvoiceNumber(invoiceNumberRaw) : null;
+
+    const pdf = await generateDeliveryNotePdf(order, invoiceNumber);
 
     return new NextResponse(new Uint8Array(pdf), {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": `inline; filename="delivery-note-${order.order_number}.pdf"`,
+        "Content-Disposition": `inline; filename="delivery-note-${invoiceNumber || order.order_number}.pdf"`,
         "Cache-Control": "private, no-store",
       },
     });

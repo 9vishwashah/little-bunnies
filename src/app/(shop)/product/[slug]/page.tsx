@@ -72,7 +72,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!product) return { title: "Product Not Found" };
 
   const image = product.product_images?.find((img) => img.is_primary)?.url;
-  const fallbackImage = `${SITE_URL}/images/LittleBunnies-Banner.png`;
+  const fallbackImage = `${SITE_URL}/images/banner2.png`;
   const ogImage = image || fallbackImage;
   const canonical = `${SITE_URL}/product/${product.slug}`;
 
@@ -153,7 +153,7 @@ function buildProductJsonLd(product: Product) {
   const canonical = `${SITE_URL}/product/${product.slug}`;
   const images = product.product_images?.length
     ? product.product_images.map((img) => img.url)
-    : [`${SITE_URL}/images/LittleBunnies-Banner.png`];
+    : [`${SITE_URL}/images/banner2.png`];
 
   const description = stripHtml(
     product.description || product.short_description || product.name

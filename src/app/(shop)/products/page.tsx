@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import ProductsClient from "./ProductsClient";
 import { Product, Category } from "@/types";
@@ -10,10 +11,45 @@ interface ProductsPageProps {
   searchParams: Promise<Record<string, string>>;
 }
 
+/**
+ * True if `slug` is an active category (or has active children) with at
+ * least one active product. Checked here — not just in the page body below
+ * — because notFound() called only from the page component arrives too
+ * late: Next.js has already committed a 200 status once generateMetadata
+ * resolves successfully, so an empty/nonexistent category otherwise renders
+ * a 200 page with error content (a "soft 404", which Google flags as such).
+ */
+async function categoryHasProducts(slug: string): Promise<boolean> {
+  try {
+    const supabase = await createClient();
+    const { data: cat } = await supabase
+      .from("categories")
+      .select("id, children:categories!parent_id(id)")
+      .eq("slug", slug)
+      .eq("is_active", true)
+      .single();
+    if (!cat) return false;
+
+    const catIds = [cat.id, ...(cat.children || []).map((c: { id: string }) => c.id)];
+    const { count } = await supabase
+      .from("products")
+      .select("id", { count: "exact", head: true })
+      .eq("is_active", true)
+      .in("category_id", catIds);
+    return (count || 0) > 0;
+  } catch {
+    return false;
+  }
+}
+
 export async function generateMetadata({ searchParams }: ProductsPageProps): Promise<Metadata> {
   const params = await searchParams;
   const page = parseInt(params.page || "1");
   const category = params.category;
+
+  if (category && !(await categoryHasProducts(category))) {
+    notFound();
+  }
 
   let canonical = page > 1 ? `${baseUrl}/products?page=${page}` : `${baseUrl}/products`;
   let title = page > 1 ? `All Products — Page ${page} — Little Bunnies` : "All Products — Little Bunnies";
@@ -101,7 +137,7 @@ export async function generateMetadata({ searchParams }: ProductsPageProps): Pro
       siteName: "Little Bunnies",
       images: [
         {
-          url: `${baseUrl}/images/LittleBunnies-Banner.png`,
+          url: `${baseUrl}/images/banner2.png`,
           width: 1200,
           height: 630,
           alt: title,
@@ -229,6 +265,16 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
     getCategories(),
   ]);
   const sidebarCategories = await getCategoriesWithProducts(categories);
+
+  // A category slug that's missing or has nothing in it (e.g. a leftover
+  // category with zero products, or a stale/typo'd URL) rendered a normal
+  // 200 page with an empty grid — Google flagged that as a soft 404. A
+  // category filter combined with other filters (price, search, etc.)
+  // legitimately yielding zero results is a different, non-error case and
+  // is left alone.
+  if (params.category && !sidebarCategories.some((c) => c.slug === params.category)) {
+    notFound();
+  }
 
   const activeCategory = categories.find((c) => c.slug === params.category);
   const breadcrumbSchema = jsonLd(

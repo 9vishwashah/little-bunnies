@@ -33,13 +33,18 @@ const FROM_ADDRESS = {
 
 const CONTENT_WIDTH = CONTENT_RIGHT - CONTENT_LEFT;
 
-export async function generateDeliveryNotePdf(order: DeliveryNoteOrder): Promise<Buffer> {
+export async function generateDeliveryNotePdf(
+  order: DeliveryNoteOrder,
+  invoiceNumber?: string | null
+): Promise<Buffer> {
   const { pdfDoc, fontRegular, fontBold, addPage } = await createLetterheadDoc();
   const page = await addPage();
   let y = CONTENT_TOP;
 
-  drawText(page, "DELIVERY NOTE", { x: CONTENT_LEFT, y, font: fontBold, size: 20, color: COLORS.ink });
-  drawText(page, `Order #: ${order.order_number}`, {
+  drawText(page, "DELIVERY NOTE", {
+    x: CONTENT_LEFT, y, maxWidth: CONTENT_WIDTH, align: "center", font: fontBold, size: 20, color: COLORS.ink,
+  });
+  drawText(page, `Order #: ${invoiceNumber || order.order_number}`, {
     x: CONTENT_LEFT, y, maxWidth: CONTENT_WIDTH, align: "right", font: fontRegular, size: 10, color: COLORS.inkMuted,
   });
   y -= 15;

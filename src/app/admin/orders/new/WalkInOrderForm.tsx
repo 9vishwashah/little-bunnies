@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Trash2, ShoppingBag, Banknote, Smartphone, CheckCircle2, Download } from "lucide-react";
 import { toast } from "sonner";
-import { formatPrice, PROMO_COUPON_CODE, PROMO_COUPON_LABEL } from "@/lib/utils";
+import { formatPrice } from "@/lib/utils";
 import type { WalkInProduct } from "./page";
 
 interface LineItem {
@@ -413,7 +413,7 @@ export default function WalkInOrderForm({ products }: { products: WalkInProduct[
                 className="input-brand flex-1"
                 value={couponCode}
                 onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                placeholder={`e.g. ${PROMO_COUPON_CODE}`}
+                placeholder="Enter coupon code"
               />
               <button
                 type="button"
@@ -424,24 +424,13 @@ export default function WalkInOrderForm({ products }: { products: WalkInProduct[
                 {validatingCoupon ? "..." : "Apply"}
               </button>
             </div>
-            {appliedCoupon ? (
+            {appliedCoupon && (
               <div className="flex items-center justify-between mt-1.5">
                 <span className="text-xs text-sage-dark font-semibold">✓ {appliedCoupon.code} applied</span>
                 <button type="button" onClick={handleRemoveCoupon} className="text-xs text-ink-muted hover:text-blush-dark">
                   Remove
                 </button>
               </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => {
-                  setCouponCode(PROMO_COUPON_CODE);
-                  handleApplyCoupon(PROMO_COUPON_CODE);
-                }}
-                className="text-xs text-sage-dark font-semibold mt-1.5 hover:underline"
-              >
-                Apply site offer — {PROMO_COUPON_CODE} ({PROMO_COUPON_LABEL})
-              </button>
             )}
             {couponError && <p className="text-xs text-blush-dark mt-1.5">{couponError}</p>}
           </div>

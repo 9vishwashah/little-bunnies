@@ -42,7 +42,7 @@ export function buildLocalBusinessSchema() {
       "Little Bunnies is India's premium baby essentials brand. Shop prams, strollers, diaper bags, and utility bags crafted for newborns aged 0–6 months.",
     url: SITE_URL,
     logo: `${SITE_URL}/images/logo-full.png`,
-    image: `${SITE_URL}/images/LittleBunnies-Banner.png`,
+    image: `${SITE_URL}/images/banner2.png`,
     telephone: SITE_PHONE,
     email: SITE_EMAIL,
     priceRange: "₹₹",
@@ -116,7 +116,7 @@ export function buildOrganizationSchema() {
       width: 512,
       height: 512,
     },
-    image: `${SITE_URL}/images/LittleBunnies-Banner.png`,
+    image: `${SITE_URL}/images/banner2.png`,
     description:
       "India's premium baby essentials brand — prams, strollers, diaper bags & utility bags for newborns 0–6 months.",
     telephone: SITE_PHONE,

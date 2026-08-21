@@ -38,7 +38,7 @@ export const metadata: Metadata = {
     template: "%s | Little Bunnies",
   },
   description:
-    "Little Bunnies is India's premium baby essentials brand. Shop prams, strollers, diaper bags, feeding bottles, baby skincare, clothing & nursery products — crafted with love for newborns aged 0–6 months. Free shipping above ₹5999.",
+    "Little Bunnies is India's premium baby essentials brand. Shop prams, strollers, diaper bags & utility bags — crafted with love for newborns aged 0–6 months. Free shipping above ₹5999.",
   applicationName: "Little Bunnies",
   authors: [{ name: "Little Bunnies", url: "https://littlebunnies.co.in" }],
   generator: "Next.js",
@@ -103,10 +103,10 @@ export const metadata: Metadata = {
     siteName: SITE_NAME,
     title: "Little Bunnies — Premium Baby Products for 0–6 Months",
     description:
-      "India's premium baby essentials brand. Shop prams, strollers, diaper bags, feeding bottles & more — handpicked with love for your little one. Free shipping above ₹5999.",
+      "India's premium baby essentials brand. Shop prams, strollers, diaper bags & utility bags — handpicked with love for your little one. Free shipping above ₹5999.",
     images: [
       {
-        url: "https://littlebunnies.co.in/images/LittleBunnies-Banner.png",
+        url: "https://littlebunnies.co.in/images/banner2.png",
         width: 1200,
         height: 630,
         alt: "Little Bunnies — Premium Baby Products India",
@@ -118,10 +118,10 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Little Bunnies — Premium Baby Products for 0–6 Months",
     description:
-      "India's premium baby essentials brand. Shop prams, strollers, diaper bags, feeding bottles & more — handpicked with love for your little one.",
+      "India's premium baby essentials brand. Shop prams, strollers, diaper bags & utility bags — handpicked with love for your little one.",
     images: [
       {
-        url: "https://littlebunnies.co.in/images/LittleBunnies-Banner.png",
+        url: "https://littlebunnies.co.in/images/banner2.png",
         alt: "Little Bunnies — Premium Baby Products India",
       },
     ],
