@@ -27,7 +27,7 @@ const cartItemSchema = z.object({
 
 const addressSchema = z.object({
   fullName: z.string().min(2),
-  email: z.string().email(),
+  email: z.union([z.string().email(), z.literal("")]).optional(),
   phone: z.string().regex(/^[6-9]\d{9}$/),
   addressLine1: z.string().min(5),
   addressLine2: z.string().optional(),
@@ -139,7 +139,7 @@ export async function POST(req: NextRequest) {
         .insert({
           order_number: orderNumber,
           user_id: userId || null,
-          guest_email: userId ? null : address.email,
+          guest_email: userId ? null : address.email || null,
           status: "confirmed",
           payment_method: "bank_transfer",
           payment_status: "paid",

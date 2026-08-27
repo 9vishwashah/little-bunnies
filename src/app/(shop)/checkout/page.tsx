@@ -14,7 +14,7 @@ import { toast } from "sonner";
 
 const addressSchema = z.object({
   fullName: z.string().min(2, "Name is required"),
-  email: z.string().email("Enter a valid email address"),
+  email: z.union([z.string().email("Enter a valid email address"), z.literal("")]).optional(),
   phone: z.string().regex(/^[6-9]\d{9}$/, "Enter valid 10-digit Indian mobile number"),
   addressLine1: z.string().min(5, "Address is required"),
   addressLine2: z.string().optional(),
@@ -298,7 +298,7 @@ export default function CheckoutPage() {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-ink mb-1.5">Email *</label>
+                  <label className="block text-sm font-semibold text-ink mb-1.5">Email (optional)</label>
                   <input
                     {...register("email")}
                     className="input-brand"
@@ -306,7 +306,7 @@ export default function CheckoutPage() {
                     type="email"
                   />
                   {errors.email && <p className="text-xs text-blush mt-1">{errors.email.message}</p>}
-                  <p className="text-xs text-ink-muted mt-1">We&apos;ll send your payment receipt and order updates here.</p>
+                  <p className="text-xs text-ink-muted mt-1">If you'd like a payment receipt and order updates by email, add it here.</p>
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-ink mb-1.5">Address Line 1 *</label>
