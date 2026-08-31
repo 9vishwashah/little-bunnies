@@ -139,8 +139,6 @@ export default function Header() {
                       <span className="text-ink/40">✦</span>
                       <span className="text-blush-dark">Luxury Baby Gears</span>
                       <span className="text-ink/40">✦</span>
-                      <span className="text-lavender-brand-dark">20% Off — Rakhi Offer</span>
-                      <span className="text-ink/40">✦</span>
                     </div>
                   ))}
                 </div>
@@ -153,8 +151,6 @@ export default function Header() {
               <span className="text-ink">Free shipping on orders above ₹5999</span>
               <span className="text-ink/40">✦</span>
               <span className="text-blush-dark">Luxury Baby Gears</span>
-              <span className="text-ink/40">✦</span>
-              <span className="text-lavender-brand-dark">20% Off — Rakhi Offer</span>
             </div>
           )}
         </div>

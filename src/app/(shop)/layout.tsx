@@ -2,7 +2,6 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import WhatsAppFloat from "@/components/ui/WhatsAppFloat";
 import StoreHydration from "@/components/StoreHydration";
-import WelcomeOfferPopup from "@/components/ui/WelcomeOfferPopup";
 import WeAreLiveBadge from "@/components/ui/WeAreLiveBadge";
 
 export default function ShopLayout({
@@ -18,7 +17,6 @@ export default function ShopLayout({
       <Footer />
       <WhatsAppFloat />
       <WeAreLiveBadge />
-      <WelcomeOfferPopup />
     </>
   );
 }
