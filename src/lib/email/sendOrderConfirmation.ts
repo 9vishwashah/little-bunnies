@@ -138,7 +138,7 @@ function buildAdminNotificationHtml(
   <div style="font-family:Arial,sans-serif;background:#faf6f0;padding:24px 16px;">
     <div style="max-width:520px;margin:0 auto;background:#ffffff;border-radius:12px;padding:24px;border:1px solid #eee;">
       <h2 style="margin:0 0 4px;color:#24324A;">New order received 🎉</h2>
-      <p style="margin:0 0 20px;color:#666;font-size:13px;">Order <strong>${order.order_number}</strong> has been paid via ${order.payment_method_label || "Razorpay"}.</p>
+      <p style="margin:0 0 20px;color:#666;font-size:13px;">Order <strong>${order.order_number}</strong> has been paid via ${order.payment_method_label || "Online Payment"}.</p>
       <table style="width:100%;border-collapse:collapse;">
         ${itemRows}
       </table>

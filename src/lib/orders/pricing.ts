@@ -34,7 +34,7 @@ export class PricingError extends Error {}
 
 /**
  * Recomputes order totals from the database instead of trusting client-sent
- * prices, so a tampered cart request can't be used to under-pay via Razorpay.
+ * prices, so a tampered cart request can't be used to under-pay at checkout.
  */
 export async function computeOrderPricing(
   items: PricingCartItem[],

@@ -9,7 +9,7 @@ import { z } from "zod";
 import confetti from "canvas-confetti";
 import { useCartStore } from "@/store/cartStore";
 import { formatPrice, calculateShipping } from "@/lib/utils";
-import { Check, MapPin, Package, CreditCard, Tag, X, Upload } from "lucide-react";
+import { Check, MapPin, Package, CreditCard, Tag, X, Upload, ShieldCheck, QrCode } from "lucide-react";
 import { toast } from "sonner";
 
 const addressSchema = z.object({
@@ -57,6 +57,9 @@ export default function CheckoutPage() {
   const [couponDiscount, setCouponDiscount] = useState(0);
   const [couponLoading, setCouponLoading] = useState(false);
   const [couponError, setCouponError] = useState("");
+
+  const [paymentMethod, setPaymentMethod] = useState<"ablepay" | "bank_transfer">("ablepay");
+  const [ablepayLoading, setAblepayLoading] = useState(false);
 
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
   const [qrCodeLoading, setQrCodeLoading] = useState(true);
@@ -151,7 +154,7 @@ export default function CheckoutPage() {
     }
   };
 
-  const handlePlaceOrder = async () => {
+  const handleBankTransferOrder = async () => {
     if (!address) return;
     if (!proofUrl) {
       toast.error("Please upload a screenshot of your transaction.");
@@ -188,6 +191,56 @@ export default function CheckoutPage() {
       setOrderLoading(false);
     }
   };
+
+  // AblePay: creates a pending order, then does a full-page redirect to the
+  // hosted checkout URL AblePay returns. The customer comes back via
+  // /api/checkout/ablepay-return, which finalizes the order and redirects
+  // on to /checkout/success (or back here with an ?error= on failure).
+  const handleAblePayOrder = async () => {
+    if (!address) return;
+    setAblepayLoading(true);
+    try {
+      const res = await fetch("/api/checkout/create-ablepay-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items,
+          address,
+          customName: null,
+          couponCode,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success || !data.paymentUrl) {
+        throw new Error(data.error || "Could not start payment");
+      }
+
+      orderPlacedRef.current = true;
+      window.location.href = data.paymentUrl;
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to start payment. Please try again.");
+      setAblepayLoading(false);
+    }
+  };
+
+  // Surface a payment failure/cancellation the customer bounced back to
+  // this page with (from ablepay-return's ?error= redirect).
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const error = params.get("error");
+    if (!error) return;
+    const messages: Record<string, string> = {
+      payment_failed: params.get("reason")
+        ? `Payment failed: ${params.get("reason")}`
+        : "Payment failed. Please try again.",
+      payment_verification_failed: "We couldn't verify that payment. Please try again or contact us.",
+      order_not_found: "We couldn't find that order. Please try again.",
+      internal_error: "Something went wrong. Please try again.",
+    };
+    toast.error(messages[error] || "Payment was not completed. Please try again.");
+    window.history.replaceState(null, "", window.location.pathname);
+  }, []);
 
   const [isHydrated, setIsHydrated] = useState(false);
   useEffect(() => {
@@ -306,7 +359,7 @@ export default function CheckoutPage() {
                     type="email"
                   />
                   {errors.email && <p className="text-xs text-blush mt-1">{errors.email.message}</p>}
-                  <p className="text-xs text-ink-muted mt-1">If you'd like a payment receipt and order updates by email, add it here.</p>
+                  <p className="text-xs text-ink-muted mt-1">If you&apos;d like a payment receipt and order updates by email, add it here.</p>
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-ink mb-1.5">Address Line 1 *</label>
@@ -477,6 +530,52 @@ export default function CheckoutPage() {
                   Payment Method
                 </h3>
 
+                {/* Method selector */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod("ablepay")}
+                    className={`text-left rounded-xl border-2 p-4 transition-colors ${
+                      paymentMethod === "ablepay" ? "border-ink bg-cream-light/30" : "border-ink/10 hover:border-ink/25"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 font-semibold text-ink text-sm">
+                      <ShieldCheck size={16} className="text-sage-dark" />
+                      Pay Online
+                    </div>
+                    <p className="text-xs text-ink-muted mt-1">
+                      Cards, UPI or Netbanking — instant confirmation
+                    </p>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod("bank_transfer")}
+                    className={`text-left rounded-xl border-2 p-4 transition-colors ${
+                      paymentMethod === "bank_transfer" ? "border-ink bg-cream-light/30" : "border-ink/10 hover:border-ink/25"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 font-semibold text-ink text-sm">
+                      <QrCode size={16} className="text-sage-dark" />
+                      Bank Transfer via QR
+                    </div>
+                    <p className="text-xs text-ink-muted mt-1">
+                      Scan, pay, then upload a screenshot
+                    </p>
+                  </button>
+                </div>
+
+                {paymentMethod === "ablepay" ? (
+                  <div className="rounded-xl border-2 border-ink p-5 bg-cream-light/30 text-center">
+                    <ShieldCheck size={28} className="text-sage-dark mx-auto mb-2" />
+                    <p className="text-sm font-semibold text-ink">
+                      You&apos;ll be redirected to a secure payment page
+                    </p>
+                    <p className="text-xs text-ink-muted mt-1">
+                      Complete your payment of {formatPrice(total)} via card, UPI or netbanking,
+                      then you&apos;ll be brought straight back here.
+                    </p>
+                  </div>
+                ) : (
                 <div className="rounded-xl border-2 border-ink p-4 bg-cream-light/30 space-y-5">
                   <div>
                     <p className="font-semibold text-ink text-sm">Bank Transfer via QR Code</p>
@@ -558,19 +657,34 @@ export default function CheckoutPage() {
                     </span>
                   </label>
                 </div>
+                )}
               </div>
 
-              <button
-                onClick={handlePlaceOrder}
-                disabled={orderLoading || !proofUrl || !declarationAccepted}
-                className="btn-primary w-full py-4 text-base disabled:opacity-50"
-              >
-                {orderLoading ? (
-                  <span className="inline-block w-5 h-5 border-2 border-cream/30 border-t-cream rounded-full animate-spin" />
-                ) : (
-                  "Place Order"
-                )}
-              </button>
+              {paymentMethod === "ablepay" ? (
+                <button
+                  onClick={handleAblePayOrder}
+                  disabled={ablepayLoading}
+                  className="btn-primary w-full py-4 text-base disabled:opacity-50"
+                >
+                  {ablepayLoading ? (
+                    <span className="inline-block w-5 h-5 border-2 border-cream/30 border-t-cream rounded-full animate-spin" />
+                  ) : (
+                    `Pay ${formatPrice(total)} Securely`
+                  )}
+                </button>
+              ) : (
+                <button
+                  onClick={handleBankTransferOrder}
+                  disabled={orderLoading || !proofUrl || !declarationAccepted}
+                  className="btn-primary w-full py-4 text-base disabled:opacity-50"
+                >
+                  {orderLoading ? (
+                    <span className="inline-block w-5 h-5 border-2 border-cream/30 border-t-cream rounded-full animate-spin" />
+                  ) : (
+                    "Place Order"
+                  )}
+                </button>
+              )}
             </motion.div>
           )}
         </div>

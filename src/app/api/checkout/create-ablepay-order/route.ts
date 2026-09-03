@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/server";
-import { getRazorpayInstance } from "@/lib/razorpay";
 import { computeOrderPricing, PricingError } from "@/lib/orders/pricing";
 import { validateCoupon } from "@/lib/orders/validateCoupon";
 import { generateOrderNumber } from "@/lib/utils";
 import { auth, currentUser } from "@clerk/nextjs/server";
+import { getPaymentRequestUrl } from "@/lib/ablepay/client";
 
 const cartItemSchema = z.object({
   id: z.string().min(1),
@@ -39,6 +39,13 @@ const bodySchema = z.object({
   couponCode: z.string().trim().min(1).nullable().optional(),
 });
 
+/**
+ * AblePay checkout: creates a pending order (mirrors create-bank-transfer-order
+ * / the old create-order), then asks AblePay for a hosted-checkout URL via
+ * the "Get Payment Request URL" API and hands that URL back to the client to
+ * redirect to. AblePay POSTs the result to /api/checkout/ablepay-return,
+ * which finalizes the order.
+ */
 export async function POST(req: NextRequest) {
   try {
     const { userId } = await auth();
@@ -52,7 +59,6 @@ export async function POST(req: NextRequest) {
     }
     const { items, address, customName, couponCode } = parsed.data;
 
-    // ── Server-side pricing — never trust client-sent totals ───────────────
     let pricing;
     try {
       pricing = await computeOrderPricing(items, Boolean(customName));
@@ -63,9 +69,6 @@ export async function POST(req: NextRequest) {
       throw err;
     }
 
-    // ── Coupon — re-validated here rather than trusting the client's last
-    // known discount, since usage limits/expiry can change between the
-    // checkout page's live check and this submit. ─────────────────────────
     let discountAmount = 0;
     let couponId: string | null = null;
     if (couponCode) {
@@ -84,9 +87,6 @@ export async function POST(req: NextRequest) {
 
     const supabase = createAdminClient();
 
-    // ── Sync Clerk user into Supabase users table ──────────────────────────
-    // Satisfies the orders.user_id FK; required because the Clerk webhook
-    // may not have fired for this user yet.
     if (userId) {
       try {
         const clerkUser = await currentUser();
@@ -121,7 +121,6 @@ export async function POST(req: NextRequest) {
       country: "India",
     };
 
-    // ── Create order (status: pending until payment is verified) ───────────
     let order: { id: string; order_number: string } | null = null;
     let lastError: unknown = null;
 
@@ -134,7 +133,7 @@ export async function POST(req: NextRequest) {
           user_id: userId || null,
           guest_email: userId ? null : address.email || null,
           status: "pending",
-          payment_method: "razorpay",
+          payment_method: "ablepay",
           payment_status: "pending",
           subtotal: pricing.subtotal,
           discount_amount: discountAmount,
@@ -152,17 +151,15 @@ export async function POST(req: NextRequest) {
         order = data;
       } else {
         lastError = error;
-        // order_number collision — retry with a freshly generated number
         if (error?.code !== "23505") break;
       }
     }
 
     if (!order) {
-      console.error("Create order error:", lastError);
+      console.error("Create AblePay order error:", lastError);
       return NextResponse.json({ error: "Failed to create order" }, { status: 500 });
     }
 
-    // ── Order items ──────────────────────────────────────────────────────
     const orderItems = pricing.resolvedItems.map((item) => ({
       order_id: order!.id,
       ...item,
@@ -173,38 +170,46 @@ export async function POST(req: NextRequest) {
       console.error("Order items error:", itemsError);
     }
 
-    // ── Razorpay order ───────────────────────────────────────────────────
-    let razorpayOrder;
+    // ── AblePay payment request URL ──────────────────────────────────────
+    const siteUrl = process.env.NEXT_PUBLIC_APP_URL || new URL(req.url).origin;
+    const returnUrl = `${siteUrl}/api/checkout/ablepay-return`;
+
+    let paymentUrl: string;
     try {
-      const razorpay = getRazorpayInstance();
-      razorpayOrder = await razorpay.orders.create({
-        amount: Math.round(total * 100),
-        currency: "INR",
-        receipt: order.order_number,
-        notes: { order_id: order.id, order_number: order.order_number },
+      const result = await getPaymentRequestUrl({
+        orderId: order.order_number,
+        amount: total,
+        description: `Order ${order.order_number} — Little Bunnies`,
+        name: address.fullName,
+        // AblePay's API requires a well-formed email, but our checkout form
+        // makes it optional — fall back to a synthetic, non-deliverable
+        // address rather than failing the payment. This is only used to
+        // satisfy AblePay's validation; the order's stored guest_email stays
+        // whatever the customer actually entered (or null), so confirmation
+        // emails still correctly skip sending when there's no real address.
+        email: address.email || `${address.phone}@guest.littlebunnies.co.in`,
+        phone: address.phone,
+        addressLine1: address.addressLine1,
+        city: address.city,
+        state: address.state,
+        zipCode: address.pincode,
+        returnUrl,
       });
+      paymentUrl = result.url;
     } catch (err) {
-      console.error("Razorpay order creation error:", err);
+      console.error("AblePay getpaymentrequesturl error:", err);
       await supabase.from("orders").update({ payment_status: "failed" }).eq("id", order.id);
       return NextResponse.json({ error: "Failed to initialize payment" }, { status: 502 });
     }
-
-    await supabase
-      .from("orders")
-      .update({ razorpay_order_id: razorpayOrder.id })
-      .eq("id", order.id);
 
     return NextResponse.json({
       success: true,
       orderId: order.id,
       orderNumber: order.order_number,
-      razorpayOrderId: razorpayOrder.id,
-      amount: razorpayOrder.amount,
-      currency: razorpayOrder.currency,
-      discountAmount,
+      paymentUrl,
     });
   } catch (err) {
-    console.error("Create checkout order error:", err);
+    console.error("Create AblePay order error:", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

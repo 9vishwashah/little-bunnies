@@ -140,6 +140,7 @@ export interface Order {
   razorpay_order_id?: string;
   razorpay_payment_id?: string;
   razorpay_signature?: string;
+  ablepay_transaction_id?: string;
   payment_proof_url?: string;
   payment_proof_declared?: boolean;
   subtotal: number;
@@ -177,7 +178,7 @@ export type OrderStatus =
   | "cancelled"
   | "refunded";
 
-export type PaymentMethod = "cod" | "razorpay" | "upi" | "bank_transfer";
+export type PaymentMethod = "cod" | "ablepay" | "razorpay" | "upi" | "bank_transfer";
 export type PaymentStatus = "pending" | "paid" | "failed" | "refunded";
 
 export interface Coupon {

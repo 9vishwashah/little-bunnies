@@ -21,6 +21,7 @@ interface InvoiceOrder {
   shipping_amount: number;
   total: number;
   razorpay_payment_id?: string | null;
+  ablepay_transaction_id?: string | null;
   payment_method_label?: string;
   shipping_address: {
     full_name: string;
@@ -87,9 +88,13 @@ export async function generateInvoicePdf(
   // ── Box 1: Order & Customer Details ─────────────────────────────────
   const address = order.shipping_address;
   const rows: [string, string][] = [
-    ["Payment Method", order.payment_method_label || "Razorpay"],
+    ["Payment Method", order.payment_method_label || "Online Payment"],
     ["Payment Status", "PAID"],
-    ...(order.razorpay_payment_id ? ([["Payment ID", order.razorpay_payment_id]] as [string, string][]) : []),
+    ...(order.ablepay_transaction_id
+      ? ([["Payment ID", order.ablepay_transaction_id]] as [string, string][])
+      : order.razorpay_payment_id
+      ? ([["Payment ID", order.razorpay_payment_id]] as [string, string][])
+      : []),
     ["Name", address.full_name],
     ["Address", `${address.address_line1}${address.address_line2 ? ", " + address.address_line2 : ""}`],
     ["", `${address.city}, ${address.state} - ${address.pincode}, ${address.country}`],

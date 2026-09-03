@@ -15,7 +15,7 @@ export async function GET(
     const { data: order, error } = await supabase
       .from("orders")
       .select(
-        "order_number, created_at, subtotal, discount_amount, custom_name_charge, coupon_id, shipping_amount, total, razorpay_payment_id, payment_method, payment_status, user_id, guest_email, shipping_address"
+        "order_number, created_at, subtotal, discount_amount, custom_name_charge, coupon_id, shipping_amount, total, razorpay_payment_id, ablepay_transaction_id, payment_method, payment_status, user_id, guest_email, shipping_address"
       )
       .eq("id", id)
       .single();
