@@ -1,5 +1,3 @@
-import fs from "fs";
-import path from "path";
 import {
   PDFDocument,
   PDFPage,
@@ -8,8 +6,7 @@ import {
   rgb,
   RGB,
 } from "pdf-lib";
-
-const LETTERHEAD_PATH = path.join(process.cwd(), "public", "pdf-templates", "letterhead.pdf");
+import { LETTERHEAD_PDF_BASE64 } from "./letterheadData";
 
 // Measured from the letterhead artwork (A4, 595.28 x 841.89 pt): the header
 // graphic + tagline occupy the top ~250pt, and a divider line + footer
@@ -32,7 +29,7 @@ export const COLORS = {
 let letterheadBytesCache: Buffer | null = null;
 function getLetterheadBytes(): Buffer {
   if (!letterheadBytesCache) {
-    letterheadBytesCache = fs.readFileSync(LETTERHEAD_PATH);
+    letterheadBytesCache = Buffer.from(LETTERHEAD_PDF_BASE64, "base64");
   }
   return letterheadBytesCache;
 }

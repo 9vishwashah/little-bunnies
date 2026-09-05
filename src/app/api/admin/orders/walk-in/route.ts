@@ -162,38 +162,45 @@ export async function POST(req: NextRequest) {
       console.error("Stock decrement error:", stockErr);
     }
 
+    const invoiceOrder = {
+      order_number: order.order_number,
+      created_at: new Date().toISOString(),
+      total,
+      subtotal: pricing.subtotal,
+      discount_amount: discountAmount,
+      custom_name_charge: 0,
+      coupon_code: appliedCouponCode,
+      shipping_amount: shipping,
+      shipping_address: shippingAddress,
+      payment_method_label: getPaymentMethodLabel(paymentMethod),
+    };
+
+    // Isolated from the email sends below — a PDF/invoice-numbering failure
+    // should degrade to "email without an attachment", never silently skip
+    // the emails entirely.
     let invoiceNumber: string | null = null;
     let invoicePdf: Buffer | null = null;
     try {
-      const invoiceOrder = {
-        order_number: order.order_number,
-        created_at: new Date().toISOString(),
-        total,
-        subtotal: pricing.subtotal,
-        discount_amount: discountAmount,
-        custom_name_charge: 0,
-        coupon_code: appliedCouponCode,
-        shipping_amount: shipping,
-        shipping_address: shippingAddress,
-        payment_method_label: getPaymentMethodLabel(paymentMethod),
-      };
-
       const { data: invoiceNumberRaw } = await supabase.rpc("get_or_create_invoice_number", {
         p_order_id: order.id,
       });
       invoiceNumber = typeof invoiceNumberRaw === "number" ? formatInvoiceNumber(invoiceNumberRaw) : null;
       invoicePdf = await generateInvoicePdf(invoiceOrder, orderItems, email || null, invoiceNumber);
+    } catch (pdfErr) {
+      console.error("Invoice PDF generation error:", pdfErr);
+    }
 
-      // Admin notification doesn't depend on the customer having an email —
-      // it always goes to the fixed business inbox. Only the customer
-      // receipt needs one, and sendOrderConfirmation already no-ops safely
-      // when there isn't one.
+    // Admin notification doesn't depend on the customer having an email —
+    // it always goes to the fixed business inbox. Only the customer
+    // receipt needs one, and sendOrderConfirmation already no-ops safely
+    // when there isn't one.
+    try {
       await Promise.all([
         sendOrderConfirmation(invoiceOrder, orderItems, email || null, invoicePdf),
         sendAdminOrderNotification(invoiceOrder, orderItems, email || null, invoicePdf),
       ]);
-    } catch (pdfErr) {
-      console.error("Walk-in invoice/email error:", pdfErr);
+    } catch (emailErr) {
+      console.error("Walk-in confirmation email error:", emailErr);
     }
 
     return NextResponse.json({
