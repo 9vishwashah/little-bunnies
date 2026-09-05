@@ -184,12 +184,14 @@ export async function POST(req: NextRequest) {
       invoiceNumber = typeof invoiceNumberRaw === "number" ? formatInvoiceNumber(invoiceNumberRaw) : null;
       invoicePdf = await generateInvoicePdf(invoiceOrder, orderItems, email || null, invoiceNumber);
 
-      if (email) {
-        await Promise.all([
-          sendOrderConfirmation(invoiceOrder, orderItems, email, invoicePdf),
-          sendAdminOrderNotification(invoiceOrder, orderItems, email, invoicePdf),
-        ]);
-      }
+      // Admin notification doesn't depend on the customer having an email —
+      // it always goes to the fixed business inbox. Only the customer
+      // receipt needs one, and sendOrderConfirmation already no-ops safely
+      // when there isn't one.
+      await Promise.all([
+        sendOrderConfirmation(invoiceOrder, orderItems, email || null, invoicePdf),
+        sendAdminOrderNotification(invoiceOrder, orderItems, email || null, invoicePdf),
+      ]);
     } catch (pdfErr) {
       console.error("Walk-in invoice/email error:", pdfErr);
     }

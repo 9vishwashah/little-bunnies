@@ -27,7 +27,7 @@ const cartItemSchema = z.object({
 
 const addressSchema = z.object({
   fullName: z.string().min(2),
-  email: z.union([z.string().email(), z.literal("")]).optional(),
+  email: z.string().min(1).email(),
   phone: z.string().regex(/^[6-9]\d{9}$/),
   addressLine1: z.string().min(5),
   addressLine2: z.string().optional(),
