@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Trash2, ShoppingBag, Banknote, Smartphone, CheckCircle2, Download } from "lucide-react";
 import { toast } from "sonner";
-import { formatPrice } from "@/lib/utils";
+import { formatPrice, calculateShipping } from "@/lib/utils";
 import type { WalkInProduct } from "./page";
 
 interface LineItem {
@@ -33,6 +33,7 @@ export default function WalkInOrderForm({ products }: { products: WalkInProduct[
   const [pincode, setPincode] = useState("");
   const [note, setNote] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "upi">("cash");
+  const [includeDelivery, setIncludeDelivery] = useState(false);
   const [couponCode, setCouponCode] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discountAmount: number } | null>(null);
   const [couponError, setCouponError] = useState<string | null>(null);
@@ -45,6 +46,11 @@ export default function WalkInOrderForm({ products }: { products: WalkInProduct[
   const subtotal = useMemo(
     () => items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0),
     [items]
+  );
+
+  const shipping = useMemo(
+    () => (includeDelivery ? calculateShipping(subtotal) : 0),
+    [includeDelivery, subtotal]
   );
 
   const handleAddItem = () => {
@@ -141,6 +147,7 @@ export default function WalkInOrderForm({ products }: { products: WalkInProduct[
           note: note || undefined,
           paymentMethod,
           couponCode: appliedCoupon?.code,
+          includeDelivery,
         }),
       });
       const data = await res.json();
@@ -167,6 +174,7 @@ export default function WalkInOrderForm({ products }: { products: WalkInProduct[
     setPincode("");
     setNote("");
     setPaymentMethod("cash");
+    setIncludeDelivery(false);
     setCouponCode("");
     setAppliedCoupon(null);
     setCouponError(null);
@@ -376,6 +384,17 @@ export default function WalkInOrderForm({ products }: { products: WalkInProduct[
             />
           </div>
 
+          <label className="flex items-center gap-2.5 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={includeDelivery}
+              onChange={(e) => setIncludeDelivery(e.target.checked)}
+              className="w-4 h-4 rounded border-ink/25 accent-ink"
+            />
+            <span className="text-sm font-semibold text-ink">Add delivery charge</span>
+            <span className="text-xs text-ink-muted">(this sale needs to be shipped out)</span>
+          </label>
+
           <div>
             <label className="block text-sm font-semibold text-ink mb-1.5">Payment Method</label>
             <div className="grid grid-cols-2 gap-2">
@@ -448,11 +467,13 @@ export default function WalkInOrderForm({ products }: { products: WalkInProduct[
             )}
             <div className="flex justify-between text-sm text-ink-muted">
               <span>Delivery</span>
-              <span className="text-sage-dark font-semibold">FREE</span>
+              <span className={shipping === 0 ? "text-sage-dark font-semibold" : "text-ink"}>
+                {shipping === 0 ? "FREE" : formatPrice(shipping)}
+              </span>
             </div>
             <div className="flex justify-between text-base font-bold text-ink pt-1">
               <span>Total</span>
-              <span>{formatPrice(Math.max(0, subtotal - (appliedCoupon?.discountAmount || 0)))}</span>
+              <span>{formatPrice(Math.max(0, subtotal + shipping - (appliedCoupon?.discountAmount || 0)))}</span>
             </div>
           </div>
 

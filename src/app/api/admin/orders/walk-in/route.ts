@@ -35,12 +35,15 @@ const bodySchema = z.object({
   note: z.string().trim().optional(),
   paymentMethod: z.enum(["cash", "upi"]),
   couponCode: z.string().trim().min(1).optional(),
+  includeDelivery: z.boolean().optional().default(false),
 });
 
 /**
  * Records an in-person sale placed by the store owner from the admin panel
- * (a customer visiting to buy directly) — always paid + free shipping, since
- * there's no delivery involved. Mirrors create-bank-transfer-order's
+ * (a customer visiting to buy directly) — paid immediately, and shipping-free
+ * by default since most walk-ins are carried out in person. The owner can opt
+ * into the standard delivery charge (includeDelivery) for the walk-in sales
+ * that do need shipping out. Mirrors create-bank-transfer-order's
  * create-and-finalize-in-one-step pattern: the owner has already collected
  * payment by the time this is submitted.
  */
@@ -56,7 +59,7 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
-    const { items, customerName, phone, email, addressLine1, city, state, pincode, note, paymentMethod, couponCode } = parsed.data;
+    const { items, customerName, phone, email, addressLine1, city, state, pincode, note, paymentMethod, couponCode, includeDelivery } = parsed.data;
 
     let pricing;
     try {
@@ -81,8 +84,10 @@ export async function POST(req: NextRequest) {
       appliedCouponCode = couponResult.code || couponCode;
     }
 
-    // Walk-in sales never carry a delivery charge, regardless of subtotal.
-    const shipping = 0;
+    // Free by default (most walk-ins are carried out in person); the owner
+    // can opt in to the site's standard delivery charge when this particular
+    // sale actually needs to be shipped out.
+    const shipping = includeDelivery ? pricing.shipping : 0;
     const total = Math.max(0, Math.round((pricing.subtotal + shipping - discountAmount) * 100) / 100);
 
     const supabase = createAdminClient();
