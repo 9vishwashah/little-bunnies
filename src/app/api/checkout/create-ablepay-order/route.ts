@@ -40,11 +40,11 @@ const bodySchema = z.object({
 });
 
 /**
- * AblePay checkout: creates a pending order (mirrors create-bank-transfer-order
- * / the old create-order), then asks AblePay for a hosted-checkout URL via
- * the "Get Payment Request URL" API and hands that URL back to the client to
- * redirect to. AblePay POSTs the result to /api/checkout/ablepay-return,
- * which finalizes the order.
+ * AblePay checkout — the site's only payment method: creates a pending
+ * order, then asks AblePay for a hosted-checkout URL via the "Get Payment
+ * Request URL" API and hands that URL back to the client to redirect to.
+ * AblePay POSTs the result to /api/checkout/ablepay-return, which finalizes
+ * the order.
  */
 export async function POST(req: NextRequest) {
   try {

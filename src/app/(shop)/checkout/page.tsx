@@ -9,7 +9,7 @@ import { z } from "zod";
 import confetti from "canvas-confetti";
 import { useCartStore } from "@/store/cartStore";
 import { formatPrice, calculateShipping } from "@/lib/utils";
-import { Check, MapPin, Package, CreditCard, Tag, X, Upload, ShieldCheck, QrCode } from "lucide-react";
+import { Check, MapPin, Package, CreditCard, Tag, X, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 
 const addressSchema = z.object({
@@ -44,12 +44,10 @@ export default function CheckoutPage() {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [address, setAddress] = useState<AddressFormData | null>(null);
-  const [orderLoading, setOrderLoading] = useState(false);
   // useRef is synchronous — immune to React batching — so the guard
   // useEffect always sees the correct value even when Zustand fires
   // its subscription synchronously on clearCart().
   const orderPlacedRef = useRef(false);
-  const [orderPlaced, setOrderPlaced] = useState(false);
   const { items, getTotalPrice, clearCart } = useCartStore();
 
   const [couponInput, setCouponInput] = useState("");
@@ -58,41 +56,7 @@ export default function CheckoutPage() {
   const [couponLoading, setCouponLoading] = useState(false);
   const [couponError, setCouponError] = useState("");
 
-  const [paymentMethod, setPaymentMethod] = useState<"ablepay" | "bank_transfer">("ablepay");
   const [ablepayLoading, setAblepayLoading] = useState(false);
-
-  const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
-  const [qrCodeLoading, setQrCodeLoading] = useState(true);
-  const [proofUrl, setProofUrl] = useState<string | null>(null);
-  const [proofUploading, setProofUploading] = useState(false);
-  const [declarationAccepted, setDeclarationAccepted] = useState(false);
-
-  useEffect(() => {
-    fetch("/api/settings/bank-qr")
-      .then((r) => r.json())
-      .then((data) => setQrCodeUrl(data.url || null))
-      .catch(() => {})
-      .finally(() => setQrCodeLoading(false));
-  }, []);
-
-  const handleProofUpload = async (file: File) => {
-    setProofUploading(true);
-    const formData = new FormData();
-    formData.append("file", file);
-    try {
-      const res = await fetch("/api/checkout/upload-proof", { method: "POST", body: formData });
-      const data = await res.json();
-      if (data.url) {
-        setProofUrl(data.url);
-      } else {
-        toast.error(data.error || "Failed to upload screenshot");
-      }
-    } catch {
-      toast.error("Failed to upload screenshot");
-    } finally {
-      setProofUploading(false);
-    }
-  };
 
   const subtotal = getTotalPrice();
   const shipping = calculateShipping(subtotal);
@@ -151,44 +115,6 @@ export default function CheckoutPage() {
     setStep(2);
     if (typeof window !== "undefined") {
       window.scrollTo({ top: 0, behavior: "smooth" });
-    }
-  };
-
-  const handleBankTransferOrder = async () => {
-    if (!address) return;
-    if (!proofUrl) {
-      toast.error("Please upload a screenshot of your transaction.");
-      return;
-    }
-    if (!declarationAccepted) {
-      toast.error("Please confirm the declaration before placing your order.");
-      return;
-    }
-    setOrderLoading(true);
-    try {
-      const res = await fetch("/api/checkout/create-bank-transfer-order", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          items,
-          address,
-          customName: null,
-          couponCode,
-          paymentProofUrl: proofUrl,
-          declarationAccepted: true,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || "Order creation failed");
-      }
-
-      orderPlacedRef.current = true;
-      setOrderPlaced(true);
-      window.location.href = `/checkout/success?order=${data.orderNumber}&id=${data.orderId}`;
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to place order. Please try again.");
-      setOrderLoading(false);
     }
   };
 
@@ -527,164 +453,32 @@ export default function CheckoutPage() {
               <div className="bg-white rounded-brand shadow-card p-5">
                 <h3 className="font-display font-semibold text-ink mb-4 flex items-center gap-2">
                   <CreditCard size={16} className="text-ink-muted" />
-                  Payment Method
+                  Payment
                 </h3>
 
-                {/* Method selector */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
-                  <button
-                    type="button"
-                    onClick={() => setPaymentMethod("ablepay")}
-                    className={`text-left rounded-xl border-2 p-4 transition-colors ${
-                      paymentMethod === "ablepay" ? "border-ink bg-cream-light/30" : "border-ink/10 hover:border-ink/25"
-                    }`}
-                  >
-                    <div className="flex items-center gap-2 font-semibold text-ink text-sm">
-                      <ShieldCheck size={16} className="text-sage-dark" />
-                      Pay Online
-                    </div>
-                    <p className="text-xs text-ink-muted mt-1">
-                      Cards, UPI or Netbanking — instant confirmation
-                    </p>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPaymentMethod("bank_transfer")}
-                    className={`text-left rounded-xl border-2 p-4 transition-colors ${
-                      paymentMethod === "bank_transfer" ? "border-ink bg-cream-light/30" : "border-ink/10 hover:border-ink/25"
-                    }`}
-                  >
-                    <div className="flex items-center gap-2 font-semibold text-ink text-sm">
-                      <QrCode size={16} className="text-sage-dark" />
-                      Bank Transfer via QR
-                    </div>
-                    <p className="text-xs text-ink-muted mt-1">
-                      Scan, pay, then upload a screenshot
-                    </p>
-                  </button>
+                <div className="rounded-xl border-2 border-ink p-5 bg-cream-light/30 text-center">
+                  <ShieldCheck size={28} className="text-sage-dark mx-auto mb-2" />
+                  <p className="text-sm font-semibold text-ink">
+                    You&apos;ll be redirected to a secure payment page
+                  </p>
+                  <p className="text-xs text-ink-muted mt-1">
+                    Complete your payment of {formatPrice(total)} via card, UPI or netbanking,
+                    then you&apos;ll be brought straight back here.
+                  </p>
                 </div>
-
-                {paymentMethod === "ablepay" ? (
-                  <div className="rounded-xl border-2 border-ink p-5 bg-cream-light/30 text-center">
-                    <ShieldCheck size={28} className="text-sage-dark mx-auto mb-2" />
-                    <p className="text-sm font-semibold text-ink">
-                      You&apos;ll be redirected to a secure payment page
-                    </p>
-                    <p className="text-xs text-ink-muted mt-1">
-                      Complete your payment of {formatPrice(total)} via card, UPI or netbanking,
-                      then you&apos;ll be brought straight back here.
-                    </p>
-                  </div>
-                ) : (
-                <div className="rounded-xl border-2 border-ink p-4 bg-cream-light/30 space-y-5">
-                  <div>
-                    <p className="font-semibold text-ink text-sm">Bank Transfer via QR Code</p>
-                    <p className="text-xs text-ink-muted mt-0.5">
-                      Scan the QR code below, pay the total amount, then upload a screenshot of
-                      the transaction.
-                    </p>
-                  </div>
-
-                  {/* QR Code */}
-                  <div className="flex flex-col items-center py-1">
-                    {qrCodeLoading ? (
-                      <div className="w-full max-w-sm aspect-square rounded-xl bg-cream-dark/40 animate-pulse" />
-                    ) : qrCodeUrl ? (
-                      <div className="w-full max-w-sm aspect-square rounded-xl overflow-hidden border border-ink/10 bg-white">
-                        <img src={qrCodeUrl} alt="Bank QR code" className="w-full h-full object-contain" />
-                      </div>
-                    ) : (
-                      <div className="w-full max-w-sm aspect-square rounded-xl border-2 border-dashed border-ink/15 flex items-center justify-center text-center px-4">
-                        <p className="text-xs text-ink-muted">
-                          QR code not available yet. Please contact us before paying.
-                        </p>
-                      </div>
-                    )}
-                    <p className="text-sm font-bold text-ink mt-3">Amount to pay: {formatPrice(total)}</p>
-                  </div>
-
-                  {/* Screenshot upload */}
-                  <div>
-                    <label className="block text-sm font-semibold text-ink mb-2">
-                      Upload Transaction Screenshot *
-                    </label>
-                    <input
-                      type="file"
-                      id="proof-upload"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => e.target.files?.[0] && handleProofUpload(e.target.files[0])}
-                    />
-                    {proofUrl ? (
-                      <div className="relative w-28 h-28 rounded-xl overflow-hidden border-2 border-sage-dark/40">
-                        <img src={proofUrl} alt="Transaction screenshot" className="w-full h-full object-cover" />
-                        <button
-                          type="button"
-                          onClick={() => setProofUrl(null)}
-                          className="absolute top-1 right-1 w-6 h-6 rounded-full bg-blush text-white flex items-center justify-center shadow"
-                        >
-                          <X size={12} />
-                        </button>
-                      </div>
-                    ) : (
-                      <label
-                        htmlFor="proof-upload"
-                        className="flex flex-col items-center justify-center gap-1.5 w-full py-6 rounded-xl border-2 border-dashed border-ink/20 cursor-pointer hover:border-ink/40 hover:bg-cream transition-colors text-ink-muted"
-                      >
-                        {proofUploading ? (
-                          <div className="w-6 h-6 border-2 border-ink/20 border-t-ink rounded-full animate-spin" />
-                        ) : (
-                          <>
-                            <Upload size={20} />
-                            <span className="text-xs font-semibold">Attach screenshot</span>
-                          </>
-                        )}
-                      </label>
-                    )}
-                  </div>
-
-                  {/* Declaration */}
-                  <label className="flex items-start gap-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={declarationAccepted}
-                      onChange={(e) => setDeclarationAccepted(e.target.checked)}
-                      className="mt-0.5 accent-ink w-4 h-4 flex-shrink-0"
-                    />
-                    <span className="text-xs text-ink-muted leading-relaxed">
-                      I declare that I have completed the payment and uploaded the correct
-                      transaction screenshot for this order.
-                    </span>
-                  </label>
-                </div>
-                )}
               </div>
 
-              {paymentMethod === "ablepay" ? (
-                <button
-                  onClick={handleAblePayOrder}
-                  disabled={ablepayLoading}
-                  className="btn-primary w-full py-4 text-base disabled:opacity-50"
-                >
-                  {ablepayLoading ? (
-                    <span className="inline-block w-5 h-5 border-2 border-cream/30 border-t-cream rounded-full animate-spin" />
-                  ) : (
-                    `Pay ${formatPrice(total)} Securely`
-                  )}
-                </button>
-              ) : (
-                <button
-                  onClick={handleBankTransferOrder}
-                  disabled={orderLoading || !proofUrl || !declarationAccepted}
-                  className="btn-primary w-full py-4 text-base disabled:opacity-50"
-                >
-                  {orderLoading ? (
-                    <span className="inline-block w-5 h-5 border-2 border-cream/30 border-t-cream rounded-full animate-spin" />
-                  ) : (
-                    "Place Order"
-                  )}
-                </button>
-              )}
+              <button
+                onClick={handleAblePayOrder}
+                disabled={ablepayLoading}
+                className="btn-primary w-full py-4 text-base disabled:opacity-50"
+              >
+                {ablepayLoading ? (
+                  <span className="inline-block w-5 h-5 border-2 border-cream/30 border-t-cream rounded-full animate-spin" />
+                ) : (
+                  `Pay ${formatPrice(total)} Securely`
+                )}
+              </button>
             </motion.div>
           )}
         </div>

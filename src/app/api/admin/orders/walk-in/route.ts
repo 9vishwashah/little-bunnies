@@ -43,9 +43,9 @@ const bodySchema = z.object({
  * (a customer visiting to buy directly) — paid immediately, and shipping-free
  * by default since most walk-ins are carried out in person. The owner can opt
  * into the standard delivery charge (includeDelivery) for the walk-in sales
- * that do need shipping out. Mirrors create-bank-transfer-order's
- * create-and-finalize-in-one-step pattern: the owner has already collected
- * payment by the time this is submitted.
+ * that do need shipping out. Create-and-finalize in one step, like
+ * create-ablepay-order's non-payment side effects: the owner has already
+ * collected payment by the time this is submitted.
  */
 export async function POST(req: NextRequest) {
   try {
