@@ -16,12 +16,14 @@ import {
   ChevronRight,
   Minus,
   Plus,
+  Share2,
   Copy,
   Info,
   Heart,
   BookOpen,
   Play,
   Film,
+  Tag,
 } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
 import { useRecentlyViewedStore } from "@/store/recentlyViewedStore";
@@ -32,6 +34,8 @@ import {
   calculateDiscount,
   getWhatsAppUrl,
   cn,
+  PROMO_COUPON_CODE,
+  PROMO_COUPON_LABEL,
 } from "@/lib/utils";
 import ProductSection from "@/components/home/ProductSection";
 import { toast } from "sonner";
@@ -285,6 +289,25 @@ export default function ProductDetailClient({
   const finalPrice = currentPrice;
 
   const whatsappUrl = getWhatsAppUrl(product.name, pageUrl);
+
+  const handleCopyCoupon = () => {
+    navigator.clipboard.writeText(PROMO_COUPON_CODE);
+    toast.success(`Coupon code ${PROMO_COUPON_CODE} copied!`);
+  };
+
+  const handleShareCoupon = async () => {
+    const shareText = `Use code ${PROMO_COUPON_CODE} for ${PROMO_COUPON_LABEL} at Little Bunnies! 🐰`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: "Little Bunnies Coupon", text: shareText, url: pageUrl });
+      } catch {
+        // user cancelled the share sheet — no error needed
+      }
+    } else {
+      navigator.clipboard.writeText(`${shareText} ${pageUrl}`);
+      toast.success("Coupon link copied to clipboard!");
+    }
+  };
 
   const handleCopyVideoLink = (type: ProductVideoType) => {
     if (typeof window === "undefined") return;
@@ -680,6 +703,39 @@ export default function ProductDetailClient({
                 {formatPrice(product.compare_price)}
               </span>
             )}
+          </div>
+
+          {/* Coupon card */}
+          <div className="mb-5 relative overflow-hidden rounded-xl border-2 border-dashed border-sage-dark/40 bg-sage-light/20 px-4 py-3">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <Tag size={18} className="text-sage-dark flex-shrink-0" />
+                <div>
+                  <p className="font-mono font-bold text-ink text-sm tracking-wider">
+                    {PROMO_COUPON_CODE}
+                  </p>
+                  <p className="text-xs text-ink-muted font-medium">
+                    {PROMO_COUPON_LABEL} — apply at checkout
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5 flex-shrink-0">
+                <button
+                  onClick={handleCopyCoupon}
+                  title="Copy code"
+                  className="p-2 rounded-lg bg-white/70 hover:bg-white text-ink transition-colors"
+                >
+                  <Copy size={15} />
+                </button>
+                <button
+                  onClick={handleShareCoupon}
+                  title="Share coupon"
+                  className="p-2 rounded-lg bg-white/70 hover:bg-white text-ink transition-colors"
+                >
+                  <Share2 size={15} />
+                </button>
+              </div>
+            </div>
           </div>
 
           {/* Action buttons — Add to Cart / Buy Now */}
