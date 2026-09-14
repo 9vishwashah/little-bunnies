@@ -139,7 +139,7 @@ export default function Header() {
                       <span className="text-ink/40">✦</span>
                       <span className="text-blush-dark">Luxury Baby Gears</span>
                       <span className="text-ink/40">✦</span>
-                      <span className="text-lavender-brand-dark">Use Code LITTLE10 for 10% Off</span>
+                      <span className="text-peach-dark">🪔 Use Code GANPATI20 for 20% Off</span>
                       <span className="text-ink/40">✦</span>
                     </div>
                   ))}
@@ -154,7 +154,7 @@ export default function Header() {
               <span className="text-ink/40">✦</span>
               <span className="text-blush-dark">Luxury Baby Gears</span>
               <span className="text-ink/40">✦</span>
-              <span className="text-lavender-brand-dark">Use Code LITTLE10 for 10% Off</span>
+              <span className="text-peach-dark">🪔 Use Code GANPATI20 for 20% Off</span>
             </div>
           )}
         </div>

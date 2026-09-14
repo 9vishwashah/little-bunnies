@@ -14,13 +14,29 @@ export async function PATCH(
     const body = await req.json();
     const supabase = createAdminClient();
 
+    const update: Record<string, unknown> = {
+      status: body.status,
+      payment_status: body.payment_status,
+      updated_at: new Date().toISOString(),
+    };
+
+    // Stamp delivered_at the first time status becomes "delivered" — this is
+    // the actual clock the exchange window (15 days) runs from, so it must
+    // only ever be set once, never bumped by a later unrelated save.
+    if (body.status === "delivered") {
+      const { data: existing } = await supabase
+        .from("orders")
+        .select("delivered_at")
+        .eq("id", id)
+        .single();
+      if (!existing?.delivered_at) {
+        update.delivered_at = new Date().toISOString();
+      }
+    }
+
     const { error } = await supabase
       .from("orders")
-      .update({
-        status: body.status,
-        payment_status: body.payment_status,
-        updated_at: new Date().toISOString()
-      })
+      .update(update)
       .eq("id", id);
 
     if (error) throw error;

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { RefreshCcw } from "lucide-react";
+import Link from "next/link";
+import { RefreshCcw, ArrowRight } from "lucide-react";
 
 export const metadata: Metadata = {
   // `absolute` bypasses the root layout's title template (see about/page.tsx).
@@ -61,6 +62,13 @@ export default function Page() {
               <li>{`Reverse pickups are available at an additional cost of ₹200, charged by our logistics partner. This is a mandatory logistics fee and must be paid by the customer to initiate the exchange process.`}</li>
               <li>{`The pickup may take up to 3-4 working days to complete.`}</li>
             </ul>
+          </div>
+
+          <div className="mt-8 pt-6 border-t border-ink/8 text-center">
+            <Link href="/exchange-request" className="btn-primary inline-flex items-center gap-2">
+              Start an Exchange Request
+              <ArrowRight size={16} />
+            </Link>
           </div>
         </div>
       </section>

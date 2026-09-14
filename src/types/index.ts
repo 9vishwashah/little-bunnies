@@ -62,6 +62,7 @@ export interface Product {
   is_featured: boolean;
   is_new_arrival: boolean;
   is_best_seller: boolean;
+  is_clearance_sale?: boolean;
   is_active: boolean;
   in_stock: boolean;
   weight?: number;

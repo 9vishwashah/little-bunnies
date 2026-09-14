@@ -37,6 +37,7 @@ const productSchema = z.object({
   isFeatured: z.boolean().default(false),
   isNewArrival: z.boolean().default(false),
   isBestSeller: z.boolean().default(false),
+  isClearanceSale: z.boolean().default(false),
   isActive: z.boolean().default(true),
   inStock: z.boolean().default(true),
   showVideoPlaceholders: z.boolean().default(true),
@@ -129,6 +130,7 @@ export default function ProductForm({ categories, initialData, initialImages, in
       isFeatured: false,
       isNewArrival: false,
       isBestSeller: false,
+      isClearanceSale: false,
       ageGroup: "0-6 months",
       stockQuantity: 0,
       ...initialData,
@@ -299,6 +301,7 @@ export default function ProductForm({ categories, initialData, initialImages, in
         is_featured: data.isFeatured,
         is_new_arrival: data.isNewArrival,
         is_best_seller: data.isBestSeller,
+        is_clearance_sale: data.isClearanceSale,
         is_active: data.isActive,
         in_stock: data.inStock,
         show_video_placeholders: data.showVideoPlaceholders,
@@ -922,6 +925,7 @@ export default function ProductForm({ categories, initialData, initialImages, in
                 { key: "isFeatured", label: "Featured on Homepage" },
                 { key: "isNewArrival", label: "Mark as New Arrival" },
                 { key: "isBestSeller", label: "Mark as Best Seller" },
+                { key: "isClearanceSale", label: "Flash Sale / Clearance (not eligible for exchange)" },
               ].map(({ key, label }) => (
                 <label key={key} className="flex items-center gap-3 cursor-pointer">
                   <input

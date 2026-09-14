@@ -4,6 +4,7 @@ import {
   formatRs,
   formatDate,
   drawText,
+  wrapText,
   COLORS,
   CONTENT_TOP,
   CONTENT_BOTTOM,
@@ -105,7 +106,18 @@ export async function generateInvoicePdf(
   const rowHeight = 16;
   const headerHeight = 22;
   const boxPadding = 10;
-  const box1Height = headerHeight + rows.length * rowHeight + boxPadding;
+  const valueMaxWidth = CONTENT_WIDTH - LABEL_COL_WIDTH - 14;
+
+  // Wrap each row's value up front (long addresses in particular can run
+  // well past the box — drawText only aligns within maxWidth, it doesn't
+  // wrap) so the box height and every row position below account for
+  // however many lines a value actually needs.
+  const wrappedRows = rows.map(([label, value]) => ({
+    label,
+    lines: wrapText(value, fontRegular, 9.5, valueMaxWidth),
+  }));
+  const totalRowLines = wrappedRows.reduce((sum, r) => sum + Math.max(1, r.lines.length), 0);
+  const box1Height = headerHeight + totalRowLines * rowHeight + boxPadding;
 
   await ensureSpace(box1Height + 20);
 
@@ -116,15 +128,17 @@ export async function generateInvoicePdf(
   });
 
   let rowY = box1Top - headerHeight - boxPadding / 2 - 11;
-  for (const [label, value] of rows) {
+  for (const { label, lines } of wrappedRows) {
     if (label) {
       drawText(page, label, { x: CONTENT_LEFT + 14, y: rowY, font: fontBold, size: 9.5, color: COLORS.inkMuted });
     }
-    drawText(page, value, {
-      x: CONTENT_LEFT + LABEL_COL_WIDTH, y: rowY, font: fontRegular, size: 9.5, color: COLORS.ink,
-      maxWidth: CONTENT_WIDTH - LABEL_COL_WIDTH - 14,
-    });
-    rowY -= rowHeight;
+    for (const line of lines) {
+      drawText(page, line, {
+        x: CONTENT_LEFT + LABEL_COL_WIDTH, y: rowY, font: fontRegular, size: 9.5, color: COLORS.ink,
+        maxWidth: valueMaxWidth,
+      });
+      rowY -= rowHeight;
+    }
   }
 
   const box1Bottom = box1Top - box1Height;

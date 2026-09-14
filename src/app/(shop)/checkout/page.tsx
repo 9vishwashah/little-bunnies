@@ -8,7 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import confetti from "canvas-confetti";
 import { useCartStore } from "@/store/cartStore";
-import { formatPrice, calculateShipping } from "@/lib/utils";
+import { formatPrice, calculateShipping, PROMO_COUPON_CODE } from "@/lib/utils";
 import { Check, MapPin, Package, CreditCard, Tag, X, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 
@@ -62,8 +62,8 @@ export default function CheckoutPage() {
   const shipping = calculateShipping(subtotal);
   const total = Math.max(0, subtotal + shipping - couponDiscount);
 
-  const applyCoupon = async () => {
-    const code = couponInput.trim();
+  const applyCoupon = async (codeOverride?: string) => {
+    const code = (codeOverride || couponInput).trim();
     if (!code) return;
     setCouponLoading(true);
     setCouponError("");
@@ -417,6 +417,24 @@ export default function CheckoutPage() {
                   </div>
                 ) : (
                   <div>
+                    <button
+                      onClick={() => applyCoupon(PROMO_COUPON_CODE)}
+                      disabled={couponLoading}
+                      className="w-full flex items-center justify-between gap-3 rounded-xl border-2 border-dashed border-[#E8871E]/60 px-4 py-3 mb-3 transition-transform hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50"
+                      style={{ background: "linear-gradient(135deg, rgba(232,135,30,0.08), rgba(142,36,57,0.08))" }}
+                    >
+                      <span className="text-left">
+                        <span className="block text-xs font-bold uppercase tracking-wide" style={{ color: "#8E2439" }}>
+                          🪔 Ganpati Special — {PROMO_COUPON_CODE}
+                        </span>
+                        <span className="block text-xs text-ink-muted font-medium mt-0.5">
+                          Get 20% off your order
+                        </span>
+                      </span>
+                      <span className="btn-secondary text-xs px-3 py-1.5 shrink-0">
+                        {couponLoading ? "..." : "Apply"}
+                      </span>
+                    </button>
                     <div className="flex gap-2">
                       <input
                         type="text"
@@ -435,7 +453,7 @@ export default function CheckoutPage() {
                         }}
                       />
                       <button
-                        onClick={applyCoupon}
+                        onClick={() => applyCoupon()}
                         disabled={couponLoading || !couponInput.trim()}
                         className="btn-secondary px-5 disabled:opacity-50"
                       >
