@@ -70,4 +70,4 @@ export function calculateShipping(subtotal: number): number {
 // re-validated server-side at checkout (see validateCoupon / coupons table —
 // this constant only drives display copy, it has no effect on discounting).
 export const PROMO_COUPON_CODE = "GANPATI20";
-export const PROMO_COUPON_LABEL = "20% off your order";
+export const PROMO_COUPON_LABEL = "10% off your order";

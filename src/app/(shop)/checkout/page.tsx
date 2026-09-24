@@ -428,7 +428,7 @@ export default function CheckoutPage() {
                           🪔 Ganpati Special — {PROMO_COUPON_CODE}
                         </span>
                         <span className="block text-xs text-ink-muted font-medium mt-0.5">
-                          Get 20% off your order
+                          Get 10% off your order
                         </span>
                       </span>
                       <span className="btn-secondary text-xs px-3 py-1.5 shrink-0">
