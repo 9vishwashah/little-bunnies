@@ -8,7 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import confetti from "canvas-confetti";
 import { useCartStore } from "@/store/cartStore";
-import { formatPrice, calculateShipping, PROMO_COUPON_CODE } from "@/lib/utils";
+import { formatPrice, calculateShipping, PROMO_COUPON_CODE, PROMO_COUPON_LABEL } from "@/lib/utils";
 import { Check, MapPin, Package, CreditCard, Tag, X, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 
@@ -420,15 +420,14 @@ export default function CheckoutPage() {
                     <button
                       onClick={() => applyCoupon(PROMO_COUPON_CODE)}
                       disabled={couponLoading}
-                      className="w-full flex items-center justify-between gap-3 rounded-xl border-2 border-dashed border-[#E8871E]/60 px-4 py-3 mb-3 transition-transform hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50"
-                      style={{ background: "linear-gradient(135deg, rgba(232,135,30,0.08), rgba(142,36,57,0.08))" }}
+                      className="w-full flex items-center justify-between gap-3 rounded-xl border-2 border-dashed border-sage-dark/40 bg-sage-light/20 px-4 py-3 mb-3 transition-transform hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50"
                     >
                       <span className="text-left">
-                        <span className="block text-xs font-bold uppercase tracking-wide" style={{ color: "#8E2439" }}>
-                          🪔 Ganpati Special — {PROMO_COUPON_CODE}
+                        <span className="block text-xs font-bold text-sage-dark uppercase tracking-wide">
+                          ✨ Special Offer — {PROMO_COUPON_CODE}
                         </span>
                         <span className="block text-xs text-ink-muted font-medium mt-0.5">
-                          Get 10% off your order
+                          {PROMO_COUPON_LABEL}
                         </span>
                       </span>
                       <span className="btn-secondary text-xs px-3 py-1.5 shrink-0">
