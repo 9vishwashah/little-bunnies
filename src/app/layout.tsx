@@ -1,8 +1,11 @@
 import type { Metadata, Viewport } from "next";
+import { Suspense } from "react";
 import { Quicksand, Fredoka } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Toaster } from "sonner";
 import ScrollToTop from "@/components/ScrollToTop";
+import MetaPixel from "@/components/analytics/MetaPixel";
+import MetaPixelRouteTracker from "@/components/analytics/MetaPixelRouteTracker";
 import {
   SITE_URL,
   SITE_NAME,
@@ -194,6 +197,10 @@ export default function RootLayout({
           />
         </head>
         <body className="font-sans bg-cream text-ink antialiased overflow-x-hidden">
+          <MetaPixel />
+          <Suspense fallback={null}>
+            <MetaPixelRouteTracker />
+          </Suspense>
           <ScrollToTop />
           {children}
           <Toaster

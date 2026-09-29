@@ -9,6 +9,7 @@ import { z } from "zod";
 import confetti from "canvas-confetti";
 import { useCartStore } from "@/store/cartStore";
 import { formatPrice, calculateShipping, PROMO_COUPON_CODE, PROMO_COUPON_LABEL } from "@/lib/utils";
+import { trackInitiateCheckout } from "@/lib/meta-pixel";
 import { Check, MapPin, Package, CreditCard, Tag, X, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 
@@ -116,6 +117,15 @@ export default function CheckoutPage() {
     if (typeof window !== "undefined") {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
+
+    // Meta Pixel — this is the actual "begins checkout" moment: address is
+    // in, cart contents/total below are the same trusted values the rest
+    // of this page (and the order it creates) uses.
+    trackInitiateCheckout({
+      contentIds: items.map((item) => item.id),
+      numItems: items.reduce((sum, item) => sum + item.quantity, 0),
+      value: total,
+    });
   };
 
   // AblePay: creates a pending order, then does a full-page redirect to the

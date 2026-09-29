@@ -3,6 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, Download } from "lucide-react";
 import ClearCartOnMount from "./ClearCartOnMount";
+import PurchaseTracker from "./PurchaseTracker";
 import { createAdminClient } from "@/lib/supabase/server";
 import { formatInvoiceNumber } from "@/lib/utils";
 
@@ -25,6 +26,15 @@ export default async function OrderSuccessPage({ searchParams }: Props) {
   // assigned), so this both looks it up and self-heals any order that
   // somehow reached this page before its number was assigned.
   let orderNumber = params.order;
+
+  // Meta Pixel Purchase data — deliberately re-fetched from the order
+  // itself rather than trusted from the URL, and only used when the order
+  // is genuinely marked paid. This page is only ever reached (via
+  // ablepay-return) after finalizeAblepayCallback has already confirmed
+  // payment, but this is a real ecommerce conversion event, so it's worth
+  // the extra guard rather than assuming.
+  let purchaseData: { contentIds: string[]; numItems: number; value: number } | null = null;
+
   if (orderId) {
     try {
       const supabase = createAdminClient();
@@ -34,6 +44,25 @@ export default async function OrderSuccessPage({ searchParams }: Props) {
       if (typeof invoiceNumberRaw === "number") {
         orderNumber = formatInvoiceNumber(invoiceNumberRaw);
       }
+
+      const { data: order } = await supabase
+        .from("orders")
+        .select("total, payment_status")
+        .eq("id", orderId)
+        .single();
+
+      if (order?.payment_status === "paid") {
+        const { data: orderItems } = await supabase
+          .from("order_items")
+          .select("product_id, quantity")
+          .eq("order_id", orderId);
+
+        purchaseData = {
+          contentIds: (orderItems || []).map((item) => item.product_id),
+          numItems: (orderItems || []).reduce((sum, item) => sum + item.quantity, 0),
+          value: order.total,
+        };
+      }
     } catch (err) {
       console.error("Order success invoice-number lookup error:", err);
     }
@@ -42,6 +71,14 @@ export default async function OrderSuccessPage({ searchParams }: Props) {
   return (
     <div className="section-container py-12 md:py-20 flex flex-col items-center justify-center min-h-[80vh] bg-cream-gradient relative">
       <ClearCartOnMount />
+      {orderId && purchaseData && (
+        <PurchaseTracker
+          orderId={orderId}
+          contentIds={purchaseData.contentIds}
+          numItems={purchaseData.numItems}
+          value={purchaseData.value}
+        />
+      )}
       {/* Decorative background elements */}
       <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-sage-light/30 rounded-full blur-3xl" />
       <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-lavender-brand-light/20 rounded-full blur-3xl" />

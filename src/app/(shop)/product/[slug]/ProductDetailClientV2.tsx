@@ -39,6 +39,7 @@ import {
 } from "@/lib/utils";
 import ProductSection from "@/components/home/ProductSection";
 import { toast } from "sonner";
+import { trackViewContent, trackAddToCart } from "@/lib/meta-pixel";
 
 interface ProductDetailClientProps {
   product: Product;
@@ -331,6 +332,15 @@ export default function ProductDetailClient({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product.id]);
 
+  // Meta Pixel — one ViewContent per product page view.
+  useEffect(() => {
+    trackViewContent({
+      contentId: product.id,
+      contentName: product.brand || product.name,
+      value: product.price,
+    });
+  }, [product.id, product.brand, product.name, product.price]);
+
   // Auto slide removed — images change only on manual swipe/click
 
   const handleAddToCart = () => {
@@ -357,6 +367,16 @@ export default function ProductDetailClient({
         : undefined,
     });
     toast.success("Added to cart!");
+
+    // Meta Pixel — fires only after the cart write above has actually
+    // happened (Zustand's set() is synchronous, so this always reflects a
+    // real, successful add — never a bare button click).
+    trackAddToCart({
+      contentId: product.id,
+      contentName: product.brand || product.name,
+      value: product.price + (activeVariant?.price_modifier || 0),
+      quantity,
+    });
   };
 
   const handleBuyNow = () => {

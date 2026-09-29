@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Search, X, ArrowRight, Sparkles } from "lucide-react";
 import { Product } from "@/types";
 import { formatPrice } from "@/lib/utils";
+import { trackSearch } from "@/lib/meta-pixel";
 
 interface SearchModalProps {
   isOpen: boolean;
@@ -81,6 +82,7 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (!query.trim()) return;
+    trackSearch(query);
     router.push(`/products?search=${encodeURIComponent(query.trim())}`);
     onClose();
   };
