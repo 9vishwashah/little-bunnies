@@ -430,11 +430,11 @@ export default function CheckoutPage() {
                     <button
                       onClick={() => applyCoupon(PROMO_COUPON_CODE)}
                       disabled={couponLoading}
-                      className="w-full flex items-center justify-between gap-3 rounded-xl border-2 border-dashed border-sage-dark/40 bg-sage-light/20 px-4 py-3 mb-3 transition-transform hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50"
+                      className="w-full flex items-center justify-between gap-3 rounded-xl border-2 border-dashed border-[#F08A1C]/60 bg-[#F5C451]/15 px-4 py-3 mb-3 transition-transform hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50"
                     >
                       <span className="text-left">
-                        <span className="block text-xs font-bold text-sage-dark uppercase tracking-wide">
-                          ✨ Special Offer — {PROMO_COUPON_CODE}
+                        <span className="block text-xs font-bold text-[#8E2439] uppercase tracking-wide">
+                          🪔 Diwali Offer — {PROMO_COUPON_CODE}
                         </span>
                         <span className="block text-xs text-ink-muted font-medium mt-0.5">
                           {PROMO_COUPON_LABEL}

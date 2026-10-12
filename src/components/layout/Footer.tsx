@@ -7,11 +7,12 @@ import { FaLinkedinIn } from "react-icons/fa6";
 
 const FOOTER_LINKS = {
   Shop: [
-    { label: "Prams", href: "/products?category=prams" },
-    { label: "Diaper Bags", href: "/products?category=bags" },
+    { label: "Prams", href: "/prams-strollers" },
+    { label: "Diaper Bags", href: "/diaper-bags" },
     { label: "Utility Bags", href: "/products?category=utility-bags" },
   ],
   "Quick Links": [
+    { label: "FAQs", href: "/faq" },
     { label: "Shipping Policy", href: "/shipping-policy" },
     { label: "Exchange & Credit Note Policy", href: "/exchange-policy" },
     { label: "Cancellation and Return Policy", href: "/returns" },

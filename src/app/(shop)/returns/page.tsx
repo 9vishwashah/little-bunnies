@@ -3,9 +3,9 @@ import { RefreshCw } from "lucide-react";
 
 export const metadata: Metadata = {
   // `absolute` bypasses the root layout's title template (see about/page.tsx).
-  title: { absolute: "Return & Refund Policy — 15 Day Returns | Little Bunnies" },
+  title: { absolute: "Cancellation, Return & Refund Policy | Little Bunnies" },
   description:
-    "Little Bunnies return & refund policy: 15-day return window on eligible products. Refunds processed within 5–7 business days. Read our complete return guidelines for baby products.",
+    "Little Bunnies policy: orders can't be cancelled once placed and no cash refunds are issued. Eligible orders can be exchanged within 15 days of delivery.",
   alternates: {
     canonical: "https://littlebunnies.co.in/returns",
   },
@@ -25,7 +25,7 @@ export default function Page() {
             Return & Refund Policy
           </h1>
           <p className="text-ink-muted text-lg md:text-xl max-w-2xl mx-auto font-medium">
-            Read Little Bunnies' Return & Refund Policy — our rules regarding cancellations and returns.
+            Read Little Bunnies&apos; Return & Refund Policy — our rules regarding cancellations and returns.
           </p>
         </div>
       </section>

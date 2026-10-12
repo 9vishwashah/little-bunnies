@@ -4,8 +4,8 @@ import { Quicksand, Fredoka } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Toaster } from "sonner";
 import ScrollToTop from "@/components/ScrollToTop";
-import MetaPixel from "@/components/analytics/MetaPixel";
 import MetaPixelRouteTracker from "@/components/analytics/MetaPixelRouteTracker";
+import { META_PIXEL_ID } from "@/lib/meta-pixel";
 import {
   SITE_URL,
   SITE_NAME,
@@ -41,55 +41,30 @@ export const metadata: Metadata = {
     template: "%s | Little Bunnies",
   },
   description:
-    "Little Bunnies is India's premium baby essentials brand. Shop prams, strollers, diaper bags & utility bags — crafted with love for newborns aged 0–6 months. Free shipping above ₹5999.",
+    "Little Bunnies makes baby strollers, prams, diaper bags & utility bags. Shop 360° reversible, travel and twin strollers online in India. Free shipping above ₹5,999.",
   applicationName: "Little Bunnies",
   authors: [{ name: "Little Bunnies", url: "https://littlebunnies.co.in" }],
   generator: "Next.js",
   creator: "Little Bunnies",
   publisher: "Little Bunnies",
   keywords: [
-    // Brand
     "Little Bunnies",
     "littlebunnies",
     "little bunnies india",
     "littlebunnies.co.in",
-    // Products
-    "baby products india",
-    "newborn essentials india",
+    "baby stroller india",
     "baby prams india",
-    "baby strollers india",
-    "baby pram online",
-    "stroller for newborn",
-    "infant pram",
-    "baby carrier",
+    "new born stroller",
+    "comfy rider stroller",
+    "travel stroller for baby",
+    "twin stroller india",
     "diaper bag india",
-    "multipurpose diaper bag",
-    "baby feeding bottles",
-    "baby skincare products",
-    "baby clothing 0-6 months",
-    "nursery essentials",
-    "baby toys 0-6 months",
-    "baby gifts india",
-    // Intent
-    "buy baby products online india",
-    "premium baby brand india",
-    "baby shop online india",
-    "newborn shopping india",
-    "0 to 6 months baby products",
-    "infant care products",
-    "best baby products india 2024",
-    // City/Local
-    "baby products mumbai",
-    "baby shop mumbai",
-    "baby products online delivery india",
+    "baby diaper backpack",
   ],
   formatDetection: {
     email: false,
     address: false,
     telephone: false,
-  },
-  alternates: {
-    canonical: "https://littlebunnies.co.in",
   },
   icons: {
     icon: [
@@ -195,9 +170,39 @@ export default function RootLayout({
             type="application/ld+json"
             dangerouslySetInnerHTML={{ __html: jsonLd(buildWebSiteSchema()) }}
           />
+
+          {/* ── Meta Pixel Code ──────────────────────────────────────────
+              Meta's official base code, inline in <head> per their setup
+              docs. It fires the first PageView itself;
+              MetaPixelRouteTracker handles later client-side navigations.
+              All other events go through src/lib/meta-pixel.ts. */}
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '${META_PIXEL_ID}');
+fbq('track', 'PageView');`,
+            }}
+          />
+          <noscript>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              height="1"
+              width="1"
+              style={{ display: "none" }}
+              src={`https://www.facebook.com/tr?id=${META_PIXEL_ID}&ev=PageView&noscript=1`}
+              alt=""
+            />
+          </noscript>
+          {/* ── End Meta Pixel Code ── */}
         </head>
         <body className="font-sans bg-cream text-ink antialiased overflow-x-hidden">
-          <MetaPixel />
           <Suspense fallback={null}>
             <MetaPixelRouteTracker />
           </Suspense>

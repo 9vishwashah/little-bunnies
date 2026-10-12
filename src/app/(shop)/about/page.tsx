@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   // context) would render duplicated as "...India | Little Bunnies".
   title: { absolute: "About Little Bunnies — Our Story & Mission | Baby Products India" },
   description:
-    "Learn about Little Bunnies — India's premium baby essentials brand founded with love. Our story, mission, and promise to parents of newborns aged 0–6 months.",
+    "Learn about Little Bunnies — India's premium baby essentials brand founded with love. Our story, mission and promise to parents of newborns.",
   alternates: {
     canonical: "https://littlebunnies.co.in/about",
   },

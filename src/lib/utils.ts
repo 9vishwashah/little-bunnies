@@ -69,5 +69,15 @@ export function calculateShipping(subtotal: number): number {
 // product pages; actual redemption and discount amount are always
 // re-validated server-side at checkout (see validateCoupon / coupons table —
 // this constant only drives display copy, it has no effect on discounting).
-export const PROMO_COUPON_CODE = "LITTLE10";
-export const PROMO_COUPON_LABEL = "10% off your order";
+export const PROMO_COUPON_CODE = "DIWALI25";
+export const PROMO_COUPON_LABEL = "25% off your order";
+
+// Where a category's links should point. Prams and Diaper Bags have dedicated
+// landing pages (the ones built to rank for "baby stroller" / "diaper bag"
+// searches), so internal links go straight to them instead of through a
+// `?category=` query URL — one clear, canonical page per topic.
+export function categoryHref(slug: string): string {
+  if (slug === "prams") return "/prams-strollers";
+  if (slug === "bags") return "/diaper-bags";
+  return `/products?category=${slug}`;
+}

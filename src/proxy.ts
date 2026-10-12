@@ -33,6 +33,21 @@ const isPublicRoute = createRouteMatcher([
 const isAdminRoute = createRouteMatcher(["/admin(.*)"]);
 
 export default clerkMiddleware(async (auth, req) => {
+  // Old category URLs → the landing pages built to rank for those searches.
+  // Done here rather than in next.config.ts redirects because next.config
+  // redirects forward the query string (/prams-strollers?category=prams),
+  // while this produces the clean URL.
+  if (req.nextUrl.pathname === "/products") {
+    const category = req.nextUrl.searchParams.get("category");
+    const target =
+      category === "prams" || category === "strollers"
+        ? "/prams-strollers"
+        : category === "bags"
+        ? "/diaper-bags"
+        : null;
+    if (target) return NextResponse.redirect(new URL(target, req.url), 308);
+  }
+
   // Admin routes: must be signed in
   if (isAdminRoute(req)) {
     const { userId } = await auth();

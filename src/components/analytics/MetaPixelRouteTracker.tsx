@@ -6,24 +6,27 @@ import { trackPageView } from "@/lib/meta-pixel";
 
 /**
  * Fires a PageView on every client-side route change (App Router
- * navigations don't reload the page, so the base Pixel script's one-time
- * init PageView only ever covers the very first page a visitor lands on).
+ * navigations don't reload the page, so the base snippet in <head> —
+ * which fires the first PageView itself — only ever covers the page a
+ * visitor lands on).
  *
- * The first run of this effect corresponds to that same initial page —
- * already covered by MetaPixel's init snippet — so it's deliberately
- * skipped here to avoid a duplicate PageView, and only fires from the
- * second render (an actual navigation) onward.
+ * Compares against the last URL seen instead of using a "first run" flag,
+ * so the initial page is never re-reported even if React re-runs this
+ * effect (dev StrictMode double-invokes effects).
  */
 export default function MetaPixelRouteTracker() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const isFirstRun = useRef(true);
+  const lastUrl = useRef<string | null>(null);
 
   useEffect(() => {
-    if (isFirstRun.current) {
-      isFirstRun.current = false;
+    const url = `${pathname}?${searchParams.toString()}`;
+    if (lastUrl.current === null) {
+      lastUrl.current = url; // initial page — already tracked by the <head> snippet
       return;
     }
+    if (lastUrl.current === url) return;
+    lastUrl.current = url;
     trackPageView();
   }, [pathname, searchParams]);
 

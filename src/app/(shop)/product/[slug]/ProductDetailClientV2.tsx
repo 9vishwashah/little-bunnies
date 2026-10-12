@@ -26,6 +26,7 @@ import {
   Tag,
 } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
+import { productDisplayName } from "@/lib/seo";
 import { useRecentlyViewedStore } from "@/store/recentlyViewedStore";
 import { useWishlistStore } from "@/store/wishlistStore";
 import { Product, ProductVariant, ProductVideo, ProductVideoType } from "@/types";
@@ -45,6 +46,8 @@ interface ProductDetailClientProps {
   product: Product;
   relatedProducts: Product[];
   initialVideo?: string;
+  /** Amazon.in listing for this product, when one exists (see lib/amazon.ts). */
+  amazonUrl?: string;
 }
 
 /** A gallery slide showing a poster + play button until clicked, so the
@@ -122,7 +125,16 @@ export default function ProductDetailClient({
   product,
   relatedProducts,
   initialVideo,
+  amazonUrl,
 }: ProductDetailClientProps) {
+  // Clean, searchable heading ("Little Bunnies Eco Pro Baby Stroller") rather
+  // than just the short model name — the page's H1 should carry the product type.
+  const displayName = productDisplayName({
+    name: product.name,
+    slug: product.slug,
+    brand: product.brand,
+    categorySlug: product.categories?.slug,
+  });
   const touchStartX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null);
 
@@ -430,7 +442,7 @@ export default function ProductDetailClient({
           long feature-list `name` is descriptive body copy, not a title. */}
       <div className="md:hidden mb-4">
         <h1 className="text-base sm:text-lg font-bold text-ink uppercase tracking-widest mb-1.5">
-          {product.brand || product.name}
+          {displayName}
         </h1>
         {product.brand && (
           <p className="font-sans font-light text-xs sm:text-sm text-ink-muted leading-relaxed">
@@ -678,7 +690,7 @@ export default function ProductDetailClient({
               the real page heading; the long feature-list `name` below is
               descriptive body copy, not a title. */}
           <h1 className="hidden md:block text-lg md:text-xl font-bold text-ink uppercase tracking-widest mb-2">
-            {product.brand || product.name}
+            {displayName}
           </h1>
 
           {/* Name — desktop only (mobile title shown above gallery) */}
@@ -783,6 +795,20 @@ export default function ProductDetailClient({
           {!product.in_stock && (
             <p className="text-xs text-red-500 font-semibold mb-4 -mt-2">
               Currently out of stock.
+            </p>
+          )}
+
+          {amazonUrl && (
+            <p className="text-xs text-ink-muted font-medium mb-4 -mt-1">
+              Also available on{" "}
+              <a
+                href={amazonUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-bold text-ink underline underline-offset-2 hover:text-peach-dark"
+              >
+                Amazon.in
+              </a>
             </p>
           )}
 

@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   // `absolute` bypasses the root layout's title template (see about/page.tsx).
   title: { absolute: "Shipping Policy — Delivery Times & Free Shipping | Little Bunnies" },
   description:
-    "Little Bunnies shipping policy: free delivery above ₹5999, standard delivery in 7–15 business days across India. Read our complete shipping & delivery guidelines.",
+    "Little Bunnies shipping policy: free delivery above ₹5,999, standard delivery in 7–15 business days across India. Read our shipping & delivery guidelines.",
   alternates: {
     canonical: "https://littlebunnies.co.in/shipping-policy",
   },

@@ -9,65 +9,35 @@ import WhyChooseUs from "@/components/layout/home/WhyChooseUs";
 import ImageMaskText from "@/components/layout/home/ImageMaskText";
 import { Product } from "@/types";
 import { SITE_URL, jsonLd, buildFAQSchema, buildBreadcrumbSchema } from "@/lib/seo";
+import { HOME_FAQS } from "@/lib/seoContent";
+import FaqSection from "@/components/seo/FaqSection";
+import HomeSeoContent from "@/components/seo/HomeSeoContent";
 
 export const metadata: Metadata = {
-  // No "| Little Bunnies" suffix here — the root layout's title.template
-  // ("%s | Little Bunnies") appends it automatically; adding it here too
-  // would render a duplicated "| Little Bunnies | Little Bunnies" title.
-  title: "Premium Baby Strollers, Diaper Bags & Baby Essentials",
+  // Brand first, on purpose: this is the page people land on when they search
+  // "little bunnies", and `absolute` bypasses the root layout's "%s | Little
+  // Bunnies" template (the brand is already in the string).
+  title: { absolute: "Little Bunnies | Baby Strollers, Prams & Diaper Bags Online India" },
   description:
-    "Shop premium baby strollers, diaper bags & everyday baby essentials online in India. Designed for effortless, everyday parenting. Free shipping above ₹5999.",
+    "Little Bunnies baby strollers, prams & diaper bags online in India — 360° reversible, travel & twin strollers. Free shipping above ₹5,999.",
   alternates: {
-    canonical: "https://littlebunnies.co.in",
+    canonical: SITE_URL,
   },
   openGraph: {
-    title: "Premium Baby Strollers, Diaper Bags & Baby Essentials | Little Bunnies",
+    title: "Little Bunnies | Baby Strollers, Prams & Diaper Bags Online India",
     description:
-      "India's favourite baby essentials brand. Shop premium strollers, diaper bags & more — designed for effortless everyday parenting. Free shipping above ₹5999.",
-    url: "https://littlebunnies.co.in",
+      "Shop Little Bunnies baby strollers, prams & diaper bags — 360° reversible, travel & twin strollers. Free shipping above ₹5,999.",
+    url: SITE_URL,
     images: [
       {
-        url: "https://littlebunnies.co.in/images/banner2.png",
+        url: `${SITE_URL}/images/banner2.png`,
         width: 1200,
         height: 630,
-        alt: "Little Bunnies — Premium Baby Strollers & Essentials India",
+        alt: "Little Bunnies — Baby Strollers, Prams & Diaper Bags India",
       },
     ],
   },
 };
-
-const homeFAQs = [
-  {
-    question: "What age group are Little Bunnies products designed for?",
-    answer:
-      "Little Bunnies products are specially curated for newborns and babies aged 0–6 months, ensuring maximum safety and comfort.",
-  },
-  {
-    question: "Does Little Bunnies offer free shipping?",
-    answer:
-      "Yes! We offer free shipping on all orders above ₹5999 across India. Orders below ₹5999 attract a flat shipping fee of ₹79.",
-  },
-  {
-    question: "How long does delivery take?",
-    answer:
-      "Standard delivery takes 7–15 business days. Most orders arrive within 7–10 business days after dispatch.",
-  },
-  {
-    question: "What baby products does Little Bunnies sell?",
-    answer:
-      "We sell a wide range of baby essentials including prams, strollers, diaper bags, feeding bottles, baby skincare, clothing, nursery products, and more — all crafted for 0–6 month old babies.",
-  },
-  {
-    question: "Are Little Bunnies products safe for newborns?",
-    answer:
-      "Absolutely. All our products comply with applicable Indian safety standards and are tested for newborn safety. We carefully curate every product with safety as the top priority.",
-  },
-  {
-    question: "Can I return a product?",
-    answer:
-      "Yes! You have 15 days from the date of delivery to initiate a return for eligible products. Contact us via WhatsApp at +91 89760 77070.",
-  },
-];
 
 async function getFeaturedProducts(): Promise<Product[]> {
   try {
@@ -91,9 +61,7 @@ async function getFeaturedProducts(): Promise<Product[]> {
 export default async function HomePage() {
   const featured = await getFeaturedProducts();
 
-  const faqSchema = jsonLd(buildFAQSchema(
-    homeFAQs.map((f) => ({ question: f.question, answer: f.answer }))
-  ));
+  const faqSchema = jsonLd(buildFAQSchema(HOME_FAQS));
   const breadcrumbSchema = jsonLd(buildBreadcrumbSchema([
     { name: "Home", url: SITE_URL },
   ]));
@@ -114,13 +82,19 @@ export default async function HomePage() {
           subtitle="Handpicked products for your little one"
           badge="Editor's Choice"
           products={featured}
-          viewAllHref="/products?category=prams"
+          viewAllHref="/prams-strollers"
           scrollable
         />
       )}
 
       <TrustBadges />
       <Testimonials />
+      <HomeSeoContent />
+      <FaqSection
+        title="Frequently Asked Questions"
+        subtitle="Shipping, payments, exchanges and what we make."
+        faqs={HOME_FAQS}
+      />
       <ImageMaskText />
     </>
   );

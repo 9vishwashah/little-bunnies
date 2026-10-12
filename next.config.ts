@@ -65,6 +65,20 @@ const nextConfig: NextConfig = {
 
   async redirects() {
     return [
+      // ── Duplicate / legacy URLs → the one canonical page per topic ──────────
+      // /prams was a byte-for-byte copy of /prams-strollers (Google reported it
+      // as an "alternate page with canonical").
+      { source: "/prams", destination: "/prams-strollers", permanent: true },
+      // /products?category=prams|strollers|bags → landing pages: see src/proxy.ts
+
+      // ── Product slug clean-ups (junk / mixed-case slugs → readable lowercase).
+      // New slugs deliberately differ by more than case: Next matches redirect
+      // sources case-insensitively, so a case-only rename would redirect to itself.
+      { source: "/product/color", destination: "/product/color-blocked-diaper-bag", permanent: true },
+      { source: "/product/Multipurpose-Quilted-Diaper-Bag", destination: "/product/quilted-multipurpose-diaper-bag", permanent: true },
+      { source: "/product/Flap-check-bag", destination: "/product/flap-check-diaper-bag", permanent: true },
+      { source: "/product/Comfy-Rider-Lite", destination: "/product/comfy-rider-lite-stroller", permanent: true },
+
       {
         source: "/strollers",
         destination: "/prams-strollers",

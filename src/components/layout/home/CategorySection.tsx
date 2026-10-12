@@ -13,7 +13,7 @@ import {
   BedDouble, 
   Package 
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, categoryHref } from "@/lib/utils";
 
 const CATEGORIES = [
   { name: "Stroller", slug: "prams", color: "bg-sage-light/50", icon: Car, image: "/images/pram.png?v=2" },
@@ -36,7 +36,7 @@ export default function CategorySection() {
                 viewport={{ once: true }}
                 transition={{ duration: 0.4, delay: index * 0.05 }}
               >
-                <Link href={`/products?category=${cat.slug}`} className="group flex flex-col items-center text-center">
+                <Link href={categoryHref(cat.slug)} className="group flex flex-col items-center text-center">
                   <div className={cn(
                     "w-full aspect-[4/3] sm:aspect-square rounded-[1.5rem] flex items-center justify-center mb-3 transition-all duration-300 relative overflow-hidden",
                     "group-hover:shadow-soft group-hover:-translate-y-1",

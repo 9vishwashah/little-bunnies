@@ -4,7 +4,7 @@ export const metadata: Metadata = {
   // `absolute` bypasses the root layout's title template (see about/page.tsx).
   title: { absolute: "Careers & Jobs at Little Bunnies — Work With Us | Baby Brand India" },
   description:
-    "Join the Little Bunnies team! We're hiring passionate individuals to help build India's premier baby products brand. Explore career opportunities and apply online.",
+    "Join the Little Bunnies team! We're hiring passionate people to help build India's premier baby products brand. Explore careers and apply online.",
   alternates: {
     canonical: "https://littlebunnies.co.in/work-for-us",
   },

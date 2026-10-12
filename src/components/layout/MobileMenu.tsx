@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ChevronRight, ChevronDown } from "lucide-react";
+import { categoryHref } from "@/lib/utils";
 
 interface NavCategory {
   id: string;
@@ -142,7 +143,7 @@ export default function MobileMenu({ isOpen, onClose, categories }: MobileMenuPr
                                     {cat.children.map((sub) => (
                                       <Link
                                         key={sub.slug}
-                                        href={`/products?category=${sub.slug}`}
+                                        href={categoryHref(sub.slug)}
                                         onClick={onClose}
                                         className="flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-cream-dark text-sm text-ink-light hover:text-ink transition-colors"
                                       >
@@ -151,7 +152,7 @@ export default function MobileMenu({ isOpen, onClose, categories }: MobileMenuPr
                                       </Link>
                                     ))}
                                     <Link
-                                      href={`/products?category=${cat.slug}`}
+                                      href={categoryHref(cat.slug)}
                                       onClick={onClose}
                                       className="flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-cream-dark text-sm font-semibold text-ink transition-colors"
                                     >
@@ -166,7 +167,7 @@ export default function MobileMenu({ isOpen, onClose, categories }: MobileMenuPr
                         ) : (
                           /* Direct link for categories without children */
                           <Link
-                            href={`/products?category=${cat.slug}`}
+                            href={categoryHref(cat.slug)}
                             onClick={onClose}
                             className="flex items-center justify-between px-3 py-3 rounded-xl hover:bg-cream-dark font-medium text-ink transition-colors"
                           >

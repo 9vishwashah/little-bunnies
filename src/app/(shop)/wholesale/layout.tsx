@@ -4,7 +4,7 @@ export const metadata: Metadata = {
   // `absolute` bypasses the root layout's title template (see about/page.tsx).
   title: { absolute: "Wholesale Baby Products — Bulk Orders India | Little Bunnies" },
   description:
-    "Partner with Little Bunnies for wholesale & bulk orders of premium baby products in India. Competitive pricing for retailers, distributors & resellers. Contact us for B2B enquiries.",
+    "Partner with Little Bunnies for wholesale & bulk orders of premium baby products in India. Competitive pricing for retailers, distributors & resellers.",
   alternates: {
     canonical: "https://littlebunnies.co.in/wholesale",
   },

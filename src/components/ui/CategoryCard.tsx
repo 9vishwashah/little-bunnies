@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { cn } from "@/lib/utils";
+import { cn, categoryHref } from "@/lib/utils";
 
 interface CategoryCardProps {
   name: string;
@@ -42,7 +42,7 @@ export default function CategoryCard({
       transition={{ type: "spring", stiffness: 300, damping: 25 }}
       className={cn("category-card group", className)}
     >
-      <Link href={`/products?category=${slug}`} className="block">
+      <Link href={categoryHref(slug)} className="block">
         {/* Image */}
         <div className={cn("relative aspect-square overflow-hidden rounded-brand", accent)}>
           {image ? (

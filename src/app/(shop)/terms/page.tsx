@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   // `absolute` bypasses the root layout's title template (see about/page.tsx).
   title: { absolute: "Terms & Conditions | Little Bunnies — Baby Products India" },
   description:
-    "Read the Little Bunnies terms & conditions — the rules governing use of our website, orders, payments, pricing, and your rights and responsibilities as a customer.",
+    "Little Bunnies terms & conditions: the rules for using our website, placing orders, payments and pricing, plus your rights and responsibilities as a customer.",
   alternates: {
     canonical: "https://littlebunnies.co.in/terms",
   },

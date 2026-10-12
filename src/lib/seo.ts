@@ -1,5 +1,10 @@
-export const SITE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://littlebunnies.co.in";
+// Hardcoded on purpose. This was `process.env.NEXT_PUBLIC_APP_URL`, and the value
+// configured on the host had an `http://` scheme — so every canonical, og:url and
+// JSON-LD URL on the live site said http://, contradicting the https site Google
+// actually crawls. SEO URLs must never depend on a deploy-time env var.
+export const SITE_URL = "https://littlebunnies.co.in";
 export const SITE_NAME = "Little Bunnies";
+export const SITE_LEGAL_NAME = "Little Bunnies Creations LLP";
 export const SITE_TAGLINE = "Premium Baby Products for 0–6 Months";
 export const SITE_PHONE = "+91 89760 77070";
 export const SITE_EMAIL = "support@littlebunnies.co.in";
@@ -54,11 +59,6 @@ export function buildLocalBusinessSchema() {
       addressRegion: "Maharashtra",
       addressLocality: "Mumbai",
     },
-    geo: {
-      "@type": "GeoCoordinates",
-      latitude: "19.0760",
-      longitude: "72.8777",
-    },
     openingHoursSpecification: [
       {
         "@type": "OpeningHoursSpecification",
@@ -85,7 +85,7 @@ export function buildLocalBusinessSchema() {
           itemOffered: {
             "@type": "Service",
             name: "Diaper Bags",
-            url: `${SITE_URL}/products?category=bags`,
+            url: `${SITE_URL}/diaper-bags`,
           },
         },
         {
@@ -109,6 +109,8 @@ export function buildOrganizationSchema() {
     "@context": "https://schema.org",
     "@type": "Organization",
     name: SITE_NAME,
+    legalName: SITE_LEGAL_NAME,
+    alternateName: ["LittleBunnies", "Little Bunnies India", "littlebunnies.co.in"],
     url: SITE_URL,
     logo: {
       "@type": "ImageObject",
@@ -205,4 +207,62 @@ export function buildItemListSchema(
       image: item.image,
     })),
   };
+}
+
+const KEEP_UPPER = new Set(["USB", "LED", "UV", "UPF"]);
+
+/** "COCOON PLUS " → "Cocoon Plus", "Two WAY HANDLE" → "Two Way Handle" (acronyms like USB kept). */
+function tidyCase(text: string): string {
+  return text
+    .trim()
+    .split(/\s+/)
+    .map((w) =>
+      w.length >= 3 && w === w.toUpperCase() && !KEEP_UPPER.has(w)
+        ? w.charAt(0) + w.slice(1).toLowerCase()
+        : w
+    )
+    .join(" ");
+}
+
+export type ProductKind = "stroller" | "bag" | "other";
+
+/** Every bag lives in one of these two categories; every other category here is a stroller range. */
+const BAG_CATEGORIES = new Set(["bags", "utility-bags"]);
+
+/**
+ * Classifies a product as a stroller/pram or a bag. The category is
+ * authoritative. Only when it doesn't settle the question do we fall back to
+ * wording — and then the slug and brand outrank the long marketing title,
+ * because a stroller's title can mention a feature like a "Dust Proof Bag"
+ * (the Cabin Stroller does) without the product being a bag.
+ */
+export function productKind(p: { name: string; slug: string; brand?: string | null; categorySlug?: string | null }): ProductKind {
+  const cat = (p.categorySlug || "").toLowerCase();
+  if (BAG_CATEGORIES.has(cat)) return "bag";
+  if (/stroller|pram|travel-pro|premium|magic|egg|reversible/.test(cat)) return "stroller";
+
+  const head = `${p.slug} ${p.brand || ""}`.toLowerCase();
+  const title = p.name.toLowerCase();
+  if (/stroller|pram/.test(head)) return "stroller";
+  if (/diaper|backpack|duffle|\bbags?\b/.test(head)) return "bag";
+  if (/stroller|pram/.test(title)) return "stroller";
+  if (/diaper|backpack|duffle|\bbags?\b/.test(title)) return "bag";
+  return "other";
+}
+
+/**
+ * Clean, searchable product name for titles, structured data and image alt text.
+ * `name` in this catalog is a pipe-separated feature list and `brand` is a short
+ * model name ("Eco Pro"), so neither works as-is: this yields e.g.
+ * "Little Bunnies Eco Pro Baby Stroller" / "Little Bunnies Duffle Bag".
+ */
+export function productDisplayName(p: { name: string; slug: string; brand?: string | null; categorySlug?: string | null }): string {
+  if (!p.brand || !p.brand.trim()) return p.name;
+  const model = tidyCase(p.brand);
+  const base = `Little Bunnies ${model}`;
+  if (/stroller|pram|bag|backpack/i.test(model)) return base;
+  const kind = productKind(p);
+  if (kind === "stroller") return `${base} Baby Stroller`;
+  if (kind === "bag") return `${base} Diaper Bag`;
+  return base;
 }

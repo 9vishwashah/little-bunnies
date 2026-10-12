@@ -2,33 +2,31 @@ import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import PramsLandingClient from "./PramsLandingClient";
 import { Product } from "@/types";
-import { SITE_URL, jsonLd, buildFAQSchema, buildBreadcrumbSchema } from "@/lib/seo";
+import {
+  SITE_URL,
+  jsonLd,
+  buildFAQSchema,
+  buildBreadcrumbSchema,
+  productKind,
+  productDisplayName,
+} from "@/lib/seo";
+import { PRAMS_FAQS } from "@/lib/seoContent";
+import FaqSection from "@/components/seo/FaqSection";
+
+const PAGE_TITLE = "Baby Prams & Strollers for Newborns Online India | Little Bunnies";
+const PAGE_DESCRIPTION =
+  "Little Bunnies baby prams & strollers — 360° rotating reversible seats, newborn recline, travel & twin strollers. Free shipping above ₹5,999.";
 
 export const metadata: Metadata = {
   // `absolute` bypasses the root layout's title template (see about/page.tsx).
-  title: { absolute: "Little Bunnies Prams & Strollers — 360° Reversible & Ultra Lightweight | India" },
-  description:
-    "Shop India's favourite baby prams and strollers including the Little Bunnies Comfy Rider Pro with 360° rotating reversible seat, ultra lightweight aluminium frame, UPF 50++ canopy, and one-touch fold. Free shipping above ₹5999.",
-  keywords: [
-    "Little Bunnies Pram",
-    "Little Bunnies Prams",
-    "Little Bunnies Comfy Rider Pro",
-    "Comfy Rider Pro Stroller",
-    "Comfy Rider Pro pram",
-    "360 rotating reversible seat stroller",
-    "ultra lightweight baby stroller",
-    "baby stroller india",
-    "newborn pram online",
-    "travel friendly baby stroller india",
-    "best baby stroller india",
-  ],
+  title: { absolute: PAGE_TITLE },
+  description: PAGE_DESCRIPTION,
   alternates: {
     canonical: `${SITE_URL}/prams-strollers`,
   },
   openGraph: {
-    title: "Little Bunnies Prams & Strollers — 360° Reversible & Ultra Lightweight",
-    description:
-      "Shop India's favourite baby prams and strollers including the Comfy Rider Pro. Ultra lightweight aluminium frame, UPF 50++ canopy, and 360° rotating reversible seat.",
+    title: PAGE_TITLE,
+    description: PAGE_DESCRIPTION,
     url: `${SITE_URL}/prams-strollers`,
     siteName: "Little Bunnies",
     images: [
@@ -36,51 +34,17 @@ export const metadata: Metadata = {
         url: `${SITE_URL}/images/pram.png?v=2`,
         width: 1200,
         height: 630,
-        alt: "Little Bunnies Prams & Strollers",
+        alt: "Little Bunnies baby prams & strollers",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Little Bunnies Prams & Strollers — 360° Reversible & Ultra Lightweight",
-    description:
-      "Shop India's favourite baby prams and strollers including the Comfy Rider Pro.",
+    title: PAGE_TITLE,
+    description: PAGE_DESCRIPTION,
     images: [`${SITE_URL}/images/pram.png?v=2`],
   },
 };
-
-const PRAM_FAQS = [
-  {
-    question: "Why is Little Bunnies Comfy Rider Pro the best baby stroller in India?",
-    answer:
-      "The Little Bunnies Comfy Rider Pro combines a 360° swivel seat, an ultra-lightweight aircraft-grade aluminium frame, all-terrain shock absorption, and a UPF 50++ canopy. It is designed to grow with your baby from 0–6 months and beyond while making travel effortless for parents.",
-  },
-  {
-    question: "Can the seat rotate 360 degrees on Little Bunnies prams?",
-    answer:
-      "Yes! Our flagship Comfy Rider Pro features a 360-degree rotating reversible seat that lets your baby face you for bonding or face forward to explore the world, all with simple one-touch rotation.",
-  },
-  {
-    question: "Are Little Bunnies prams and strollers travel-friendly?",
-    answer:
-      "Absolutely. Our prams are designed with a one-touch compact fold that collapses instantly. They are ultra-lightweight and compact enough to fit in car boots and are ideal for airport travel.",
-  },
-  {
-    question: "What safety standards do Little Bunnies strollers meet?",
-    answer:
-      "Every Little Bunnies pram is equipped with a 5-point safety harness, reliable rear-wheel foot brakes, and anti-shock wheels tested for Indian road conditions to ensure complete newborn protection.",
-  },
-  {
-    question: "Is there warranty and free shipping on Little Bunnies prams?",
-    answer:
-      "Yes! We provide free insured shipping across India on all orders above ₹5999, along with dedicated WhatsApp customer support (+91 89760 77070) and 15-day return eligibility.",
-  },
-  {
-    question: "Which age group can use Little Bunnies prams?",
-    answer:
-      "Our prams and strollers are crafted with ergonomic full-recline support specifically tested for newborns aged 0–6 months, while offering durable construction suitable for toddlers.",
-  },
-];
 
 async function getPramsProducts(): Promise<{ prams: Product[]; comfyRiderPro: Product | null }> {
   try {
@@ -94,24 +58,18 @@ async function getPramsProducts(): Promise<{ prams: Product[]; comfyRiderPro: Pr
       .order("created_at", { ascending: false });
 
     const allProducts = (data as unknown as Product[]) || [];
-    const prams = allProducts.filter((p) => {
-      const slug = p.categories?.slug?.toLowerCase() || "";
-      const name = p.name.toLowerCase();
-      const isBag =
-        slug === "bags" ||
-        slug === "utility-bags" ||
-        name.includes("diaper") ||
-        name.includes("bag") ||
-        name.includes("backpack");
-      if (isBag) return false;
-      return (
-        slug === "prams" ||
-        slug === "strollers" ||
-        name.includes("pram") ||
-        name.includes("stroller") ||
-        name.includes("comfy rider")
-      );
-    });
+    // Everything that isn't a bag. Classified by category first (see
+    // productKind) — matching words in the long product titles dropped Thanos,
+    // Comfy Rider Pro and the Cabin Stroller (its title mentions a "Dust Proof Bag").
+    const prams = allProducts.filter(
+      (p) =>
+        productKind({
+          name: p.name,
+          slug: p.slug,
+          brand: p.brand,
+          categorySlug: p.categories?.slug,
+        }) !== "bag"
+    );
 
     const comfyRiderPro =
       prams.find((p) =>
@@ -131,7 +89,7 @@ async function getPramsProducts(): Promise<{ prams: Product[]; comfyRiderPro: Pr
 export default async function PramsStrollersPage() {
   const { prams, comfyRiderPro } = await getPramsProducts();
 
-  const faqSchema = jsonLd(buildFAQSchema(PRAM_FAQS));
+  const faqSchema = jsonLd(buildFAQSchema(PRAMS_FAQS));
   const breadcrumbSchema = jsonLd(
     buildBreadcrumbSchema([
       { name: "Home", url: SITE_URL },
@@ -146,7 +104,7 @@ export default async function PramsStrollersPage() {
     name: "Little Bunnies Baby Prams & Strollers Collection",
     url: `${SITE_URL}/prams-strollers`,
     description:
-      "Explore India's most trusted baby prams and strollers including the Little Bunnies Comfy Rider Pro with 360° rotating reversible seat, ultra-lightweight aluminium frame, UPF 50++ canopy, and one-touch fold.",
+      "Little Bunnies baby prams and strollers: 360° rotating reversible-seat strollers, lightweight travel strollers, a twin stroller and a newborn stroller with reversible handle.",
   });
 
   const itemListSchema = jsonLd({
@@ -161,7 +119,12 @@ export default async function PramsStrollersPage() {
         "@type": "ListItem",
         position: idx + 1,
         url: `${SITE_URL}/product/${product.slug}`,
-        name: product.name,
+        name: productDisplayName({
+          name: product.name,
+          slug: product.slug,
+          brand: product.brand,
+          categorySlug: product.categories?.slug,
+        }),
         image: img,
       };
     }),
@@ -174,6 +137,11 @@ export default async function PramsStrollersPage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: collectionSchema }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: itemListSchema }} />
       <PramsLandingClient products={prams} comfyRiderPro={comfyRiderPro} />
+      <FaqSection
+        title="Baby Pram & Stroller FAQs"
+        subtitle="Choosing, travelling with and buying a Little Bunnies stroller."
+        faqs={PRAMS_FAQS}
+      />
     </>
   );
 }

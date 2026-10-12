@@ -12,100 +12,28 @@ import {
   MessageCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { FaqCategory } from "@/lib/seoContent";
 
-const faqs = [
-  {
-    category: "Orders & Shipping",
-    icon: Truck,
-    color: "text-peach-dark",
-    items: [
-      {
-        q: "How long does delivery take?",
-        a: "Standard delivery takes 7–15 business days. Most orders arrive within 7–10 days. We process orders placed before 12 PM IST on the same business day.",
-      },
-      {
-        q: "Is there free shipping?",
-        a: "Yes! We offer free shipping on all orders above ₹5999. Orders below ₹5999 have a flat shipping fee of ₹79.",
-      },
-      {
-        q: "How do I track my order?",
-        a: "You will receive a tracking number via email and WhatsApp within 24 hours of your order being dispatched. Use the link to track your shipment in real time.",
-      },
-      {
-        q: "Can I change my delivery address after placing an order?",
-        a: "Address changes can only be made within 2 hours of placing the order. Contact us immediately via WhatsApp at +91 97252 52421.",
-      },
-    ],
-  },
-  {
-    category: "Returns & Refunds",
-    icon: RefreshCw,
-    color: "text-blush-dark",
-    items: [
-      {
-        q: "What is the return window?",
-        a: "You have 15 days from the date of delivery to initiate a return for eligible products.",
-      },
-      {
-        q: "How do I initiate a return?",
-        a: "Contact us via WhatsApp (+91 97252 52421) or email with your order number, reason for return, and photos of the product within 15 days of delivery.",
-      },
-      {
-        q: "When will I receive my refund?",
-        a: "Refunds are processed within 5–7 business days after successful quality check at our warehouse. UPI/Net Banking refunds take 3–5 days; card refunds take 5–7 days.",
-      },
-      {
-        q: "Are hygiene products returnable?",
-        a: "No. Hygiene products like diapers and wipes that have been opened cannot be returned for health and safety reasons.",
-      },
-    ],
-  },
-  {
-    category: "Products",
-    icon: Baby,
-    color: "text-sage-dark",
-    items: [
-      {
-        q: "Are your products safe for newborns?",
-        a: "Absolutely! All Little Bunnies products are curated specifically for babies aged 0–6 months and comply with applicable Indian safety standards.",
-      },
-      {
-        q: "Are the product images accurate?",
-        a: "We strive to show the most accurate product images. Slight color variations may occur due to screen calibration differences.",
-      },
-      {
-        q: "Do you offer gift wrapping?",
-        a: "Gift wrapping is available for select products. You can add a gift message at checkout. A small gift-wrap fee applies.",
-      },
-      {
-        q: "Are your prams easy to assemble?",
-        a: "Yes! All our prams come with detailed assembly guides and video tutorial links. Most can be assembled in under 10 minutes.",
-      },
-    ],
-  },
-  {
-    category: "Payments",
-    icon: CreditCard,
-    color: "text-lavender-brand-dark",
-    items: [
-      {
-        q: "What payment methods do you accept?",
-        a: "We accept UPI, credit/debit cards (Visa, Mastercard, RuPay), net banking, and wallets (Paytm, PhonePe, Google Pay).",
-      },
-      {
-        q: "Is my payment information secure?",
-        a: "Yes. All transactions are encrypted using industry-standard SSL technology. We do not store your card details.",
-      },
-      {
-        q: "Can I use multiple discount codes?",
-        a: "Only one discount code can be applied per order. Codes cannot be combined unless explicitly stated in the offer.",
-      },
-      {
-        q: "My payment failed but money was deducted — what do I do?",
-        a: "If your payment failed but the amount was debited, it will be automatically refunded to your account within 5–7 business days. Contact us if it doesn't appear.",
-      },
-    ],
-  },
+// The questions and answers themselves live in src/lib/seoContent.ts so this
+// accordion and the page's FAQPage JSON-LD are generated from the same data.
+// Only the presentation (icon + colour per category) is defined here.
+const CATEGORY_STYLE: Record<
+  FaqCategory["id"],
+  { icon: typeof Truck; color: string }
+> = {
+  shipping: { icon: Truck, color: "text-peach-dark" },
+  exchanges: { icon: RefreshCw, color: "text-blush-dark" },
+  products: { icon: Baby, color: "text-sage-dark" },
+  payments: { icon: CreditCard, color: "text-lavender-brand-dark" },
+};
+
+const HELPFUL_LINKS = [
+  { href: "/shipping-policy", label: "Shipping Policy" },
+  { href: "/exchange-policy", label: "Exchange & Credit Note Policy" },
+  { href: "/exchange-request", label: "Request an Exchange" },
+  { href: "/returns", label: "Cancellation & Return Policy" },
+  { href: "/prams-strollers", label: "Baby Prams & Strollers" },
+  { href: "/diaper-bags", label: "Diaper Bags" },
 ];
 
 function FAQItem({ q, a }: { q: string; a: string }) {
@@ -134,7 +62,8 @@ function FAQItem({ q, a }: { q: string; a: string }) {
       <div
         className={cn(
           "overflow-hidden transition-all duration-300",
-          open ? "max-h-60" : "max-h-0"
+          // Generous ceiling: the longest answers wrap to ~10 lines on a phone.
+          open ? "max-h-[32rem]" : "max-h-0"
         )}
       >
         <div className="px-5 pb-4 pt-1 text-sm text-ink-muted leading-relaxed bg-white border-t border-cream-dark">
@@ -145,7 +74,7 @@ function FAQItem({ q, a }: { q: string; a: string }) {
   );
 }
 
-export default function FAQClient() {
+export default function FAQClient({ categories }: { categories: FaqCategory[] }) {
   return (
     <main className="min-h-screen bg-cream">
       {/* Hero */}
@@ -161,7 +90,8 @@ export default function FAQClient() {
             Frequently Asked Questions
           </h1>
           <p className="text-ink-muted text-lg md:text-xl max-w-2xl mx-auto font-medium">
-            Everything you need to know about shopping at Little Bunnies.
+            Everything you need to know about shopping for baby strollers, prams
+            and diaper bags at Little Bunnies.
           </p>
         </div>
       </section>
@@ -169,23 +99,44 @@ export default function FAQClient() {
       {/* FAQ Sections */}
       <section className="section-container py-12 md:py-20">
         <div className="max-w-3xl mx-auto space-y-12">
-          {faqs.map(({ category, icon: Icon, color, items }) => (
-            <div key={category}>
-              <div className="flex items-center gap-3 mb-6">
-                <div className="p-2.5 rounded-xl bg-white shadow-soft-sm">
-                  <Icon size={20} className={color} />
+          {categories.map(({ id, title, items }) => {
+            const { icon: Icon, color } = CATEGORY_STYLE[id];
+            return (
+              <div key={id}>
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="p-2.5 rounded-xl bg-white shadow-soft-sm">
+                    <Icon size={20} className={color} />
+                  </div>
+                  <h2 className="text-xl md:text-2xl font-display font-bold text-ink">
+                    {title}
+                  </h2>
                 </div>
-                <h2 className="text-xl md:text-2xl font-display font-bold text-ink">
-                  {category}
-                </h2>
+                <div className="space-y-3">
+                  {items.map(({ question, answer }) => (
+                    <FAQItem key={question} q={question} a={answer} />
+                  ))}
+                </div>
               </div>
-              <div className="space-y-3">
-                {items.map(({ q, a }) => (
-                  <FAQItem key={q} q={q} a={a} />
-                ))}
-              </div>
+            );
+          })}
+
+          {/* Policies & shop links — also gives the FAQ answers a path to the full policies */}
+          <div>
+            <h2 className="text-xl md:text-2xl font-display font-bold text-ink mb-4">
+              Policies &amp; Helpful Links
+            </h2>
+            <div className="flex flex-wrap gap-3">
+              {HELPFUL_LINKS.map(({ href, label }) => (
+                <Link
+                  key={href}
+                  href={href}
+                  className="px-4 py-2 rounded-pill bg-white shadow-soft-sm text-sm font-semibold text-ink hover:text-peach-dark transition-colors"
+                >
+                  {label}
+                </Link>
+              ))}
             </div>
-          ))}
+          </div>
         </div>
       </section>
 

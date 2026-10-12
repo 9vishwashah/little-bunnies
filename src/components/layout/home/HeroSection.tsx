@@ -81,7 +81,7 @@ export default function HeroSection() {
 
             <div className="flex flex-col sm:flex-row gap-3 mt-3 sm:mt-5">
               <Link
-                href="/products?category=prams"
+                href="/prams-strollers"
                 className="group inline-flex items-center gap-2 sm:gap-3 min-h-[34px] sm:min-h-[44px] bg-peach hover:bg-peach-dark text-white px-4 py-1.5 sm:px-8 sm:py-4 rounded-pill font-bold text-xs sm:text-lg transition-all shadow-soft hover:shadow-soft-lg hover:-translate-y-1 active:scale-[0.98] active:translate-y-0 w-fit self-start"
               >
                 <span>Explore Strollers</span>

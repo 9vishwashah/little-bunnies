@@ -15,7 +15,7 @@ import {
 import { useCartStore } from "@/store/cartStore";
 import { useWishlistStore } from "@/store/wishlistStore";
 
-import { cn } from "@/lib/utils";
+import { cn, categoryHref } from "@/lib/utils";
 import MobileMenu from "./MobileMenu";
 import SearchModal from "./SearchModal";
 import CartDrawer from "@/components/cart/CartDrawer";
@@ -139,7 +139,7 @@ export default function Header() {
                       <span className="text-ink/40">✦</span>
                       <span className="text-blush-dark">Luxury Baby Gears</span>
                       <span className="text-ink/40">✦</span>
-                      <span className="text-lavender-brand-dark">Use Code LITTLE10 for 10% Off</span>
+                      <span className="text-[#8E2439]">🪔 Diwali Offer — Use Code DIWALI25 for 25% Off</span>
                       <span className="text-ink/40">✦</span>
                     </div>
                   ))}
@@ -154,7 +154,7 @@ export default function Header() {
               <span className="text-ink/40">✦</span>
               <span className="text-blush-dark">Luxury Baby Gears</span>
               <span className="text-ink/40">✦</span>
-              <span className="text-lavender-brand-dark">Use Code LITTLE10 for 10% Off</span>
+              <span className="text-[#8E2439]">🪔 Diwali Offer — Use Code DIWALI25 for 25% Off</span>
             </div>
           )}
         </div>
@@ -196,7 +196,7 @@ export default function Header() {
                     return (
                       <Link
                         key={nav.slug}
-                        href={`/products?category=${nav.slug}`}
+                        href={categoryHref(nav.slug)}
                         className="flex items-center gap-1 px-3 py-2 rounded-xl text-sm font-semibold transition-colors hover:bg-cream-dark hover:text-ink"
                       >
                         {nav.label}
@@ -214,7 +214,7 @@ export default function Header() {
                     >
                       {/* Top-level label */}
                       <Link
-                        href={`/products?category=${nav.slug}`}
+                        href={categoryHref(nav.slug)}
                         className={cn(
                           "flex items-center gap-1 px-3 py-2 rounded-xl text-sm font-semibold transition-colors",
                           "hover:bg-cream-dark hover:text-ink",
@@ -256,7 +256,7 @@ export default function Header() {
                                 {subs.map((sub) => (
                                   <Link
                                     key={sub.slug}
-                                    href={`/products?category=${sub.slug}`}
+                                    href={categoryHref(sub.slug)}
                                     className="block px-4 py-2 text-sm text-ink-light hover:text-ink hover:bg-cream transition-colors"
                                   >
                                     {sub.name}
@@ -264,7 +264,7 @@ export default function Header() {
                                 ))}
                                 <div className="border-t border-ink/5 mt-2 pt-2">
                                   <Link
-                                    href={`/products?category=${nav.slug}`}
+                                    href={categoryHref(nav.slug)}
                                     className="block px-4 py-2 text-sm font-semibold text-ink hover:bg-cream transition-colors"
                                   >
                                     View All {nav.label} →
@@ -273,7 +273,7 @@ export default function Header() {
                               </>
                             ) : (
                               <Link
-                                href={`/products?category=${nav.slug}`}
+                                href={categoryHref(nav.slug)}
                                 className="block px-4 py-2 text-sm font-semibold text-ink hover:bg-cream transition-colors"
                               >
                                 View All {nav.label} →

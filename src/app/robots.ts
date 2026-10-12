@@ -1,69 +1,38 @@
 import { MetadataRoute } from "next";
+import { SITE_URL } from "@/lib/seo";
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = "https://littlebunnies.co.in";
-
   return {
     rules: [
       {
         userAgent: "*",
-        allow: [
-          "/",
-          "/prams-strollers",
-          "/prams",
-          "/baby-prams-strollers",
-          "/products",
-          "/products/",
-          "/product/",
-          "/about",
-          "/contact",
-          "/faq",
-          "/wholesale",
-          "/work-for-us",
-          "/shipping-policy",
-          "/returns",
-          "/exchange-policy",
-          "/privacy-policy",
-          "/terms",
-        ],
+        allow: "/",
         disallow: [
-          // Private user routes
+          // Private / transactional routes — no search value
           "/admin",
-          "/admin/",
           "/account",
-          "/account/",
           "/checkout",
-          "/checkout/",
           "/cart",
           "/wishlist",
           "/api/",
           "/sign-in",
           "/sign-up",
-          // Noise: filter/sort/pagination variations that create duplicate content.
-          // Google's ecommerce guidance says to consolidate these to the canonical
-          // listing page via the canonical tag, and disallow them in robots.txt.
+          // Filter/sort/pagination variations create duplicate content; Google's
+          // ecommerce guidance is to consolidate to the canonical listing page.
           "/*?*sort=",
           "/*?*minPrice=",
           "/*?*maxPrice=",
           "/*?*inStock=",
           "/*?*brand=",
           "/*?*page=",
-          // Noise: /product/color and similar invalid slug pages seen in GSC
-          "/product/color",
+          "/*?*search=",
         ],
       },
-      // Disallow crawling of Next.js internal chunks, but explicitly allow next/image for Google Lens & image SEO
-      {
-        userAgent: "*",
-        allow: ["/_next/image*", "/images/"],
-        disallow: ["/_next/static/", "/_next/data/"],
-      },
-      {
-        userAgent: "Googlebot-Image",
-        allow: ["/", "/_next/image*", "/images/"],
-      },
+      // NOTE: /_next/static/ (CSS + JS) and /_next/image are deliberately NOT
+      // blocked. An earlier version disallowed /_next/static/, which stops
+      // Googlebot from loading the stylesheets and scripts it needs to render
+      // pages — Google's guidelines explicitly say not to block those.
     ],
-    sitemap: `${baseUrl}/sitemap.xml`,
-    host: baseUrl,
+    sitemap: `${SITE_URL}/sitemap.xml`,
   };
 }

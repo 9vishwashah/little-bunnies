@@ -5,7 +5,7 @@ import ProductsClient from "./ProductsClient";
 import { Product, Category } from "@/types";
 import { SITE_URL, jsonLd, buildBreadcrumbSchema, buildItemListSchema } from "@/lib/seo";
 
-const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://littlebunnies.co.in";
+const baseUrl = SITE_URL; // never env-derived — see lib/seo.ts
 
 interface ProductsPageProps {
   searchParams: Promise<Record<string, string>>;
@@ -52,9 +52,9 @@ export async function generateMetadata({ searchParams }: ProductsPageProps): Pro
   }
 
   let canonical = page > 1 ? `${baseUrl}/products?page=${page}` : `${baseUrl}/products`;
-  let title = page > 1 ? `All Products — Page ${page} — Little Bunnies` : "All Products — Little Bunnies";
+  let title = page > 1 ? `Baby Strollers, Prams & Diaper Bags — Page ${page} | Little Bunnies` : "All Baby Strollers, Prams & Diaper Bags | Little Bunnies";
   let description =
-    "Browse our full collection of premium baby products — prams, diapers, feeding, skincare, clothing, toys and more.";
+    "Browse the full Little Bunnies range — baby strollers, prams, diaper bags and utility bags. Free shipping above ₹5,999.";
   let keywords = [
     "baby products india",
     "little bunnies products",

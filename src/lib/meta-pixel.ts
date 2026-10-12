@@ -11,7 +11,12 @@
  * reason. Ecommerce functionality must never depend on tracking succeeding.
  */
 
-export const META_PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID || "";
+// The Pixel ID is public by design (it's in every page's HTML source), so it
+// lives here as a constant rather than an env var — a NEXT_PUBLIC_ var is
+// baked in at build time, so a missing/stale value on the host silently
+// shipped a site with no pixel at all. The base snippet itself is inlined
+// in <head> in src/app/layout.tsx, exactly as Meta's setup docs specify.
+export const META_PIXEL_ID = "2165380821078785";
 
 declare global {
   interface Window {

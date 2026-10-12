@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   // `absolute` bypasses the root layout's title template (see about/page.tsx).
   title: { absolute: "Contact Little Bunnies — Customer Support & WhatsApp | Baby Products India" },
   description:
-    "Contact Little Bunnies for support, order queries, returns & wholesale enquiries. Reach us via WhatsApp at +91 89760 77070, email, or our contact form. Available Mon–Sat 10 AM–6 PM IST.",
+    "Contact Little Bunnies for support, order queries, exchanges & wholesale enquiries. WhatsApp +91 89760 77070, email or our form. Mon–Sat, 10 AM–6 PM IST.",
   alternates: {
     canonical: "https://littlebunnies.co.in/contact",
   },
