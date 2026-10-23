@@ -92,7 +92,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
       images: product.product_images?.length
         ? product.product_images.map((img) => img.url)
-        : [`${SITE_URL}/images/banner2.png`],
+        : [`${SITE_URL}/images/og/og-default.jpg`],
     })
   );
 

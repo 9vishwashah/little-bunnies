@@ -31,7 +31,7 @@ export const metadata: Metadata = {
     siteName: "Little Bunnies",
     images: [
       {
-        url: `${SITE_URL}/images/pram.png?v=2`,
+        url: `${SITE_URL}/images/og/og-prams.jpg`,
         width: 1200,
         height: 630,
         alt: "Little Bunnies baby prams & strollers",
@@ -42,7 +42,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: PAGE_TITLE,
     description: PAGE_DESCRIPTION,
-    images: [`${SITE_URL}/images/pram.png?v=2`],
+    images: [`${SITE_URL}/images/og/og-prams.jpg`],
   },
 };
 
@@ -114,7 +114,7 @@ export default async function PramsStrollersPage() {
     url: `${SITE_URL}/prams-strollers`,
     numberOfItems: prams.length,
     itemListElement: prams.map((product, idx) => {
-      const img = product.product_images?.find((i) => i.is_primary)?.url || product.product_images?.[0]?.url || `${SITE_URL}/images/pram.png?v=2`;
+      const img = product.product_images?.find((i) => i.is_primary)?.url || product.product_images?.[0]?.url || `${SITE_URL}/images/og/og-prams.jpg`;
       return {
         "@type": "ListItem",
         position: idx + 1,

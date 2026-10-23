@@ -133,11 +133,7 @@ export default function Header() {
                 <div key={i} className="flex items-center w-max">
                   {[...Array(6)].map((_, j) => (
                     <div key={j} className="flex items-center gap-5 px-3 text-[11px] sm:text-xs font-black tracking-widest uppercase">
-                      <span className="text-sage-dark">🎉 We Are Live!</span>
-                      <span className="text-ink/40">✦</span>
                       <span className="text-ink">Free shipping on orders above ₹5999</span>
-                      <span className="text-ink/40">✦</span>
-                      <span className="text-blush-dark">Luxury Baby Gears</span>
                       <span className="text-ink/40">✦</span>
                       <span className="text-[#8E2439]">🪔 Diwali Offer — Use Code DIWALI25 for 25% Off</span>
                       <span className="text-ink/40">✦</span>
@@ -148,11 +144,7 @@ export default function Header() {
             </motion.div>
           ) : (
             <div className="flex items-center justify-center gap-5 px-3 text-[11px] sm:text-xs font-black tracking-widest uppercase">
-              <span className="text-sage-dark">🎉 We Are Live!</span>
-              <span className="text-ink/40">✦</span>
               <span className="text-ink">Free shipping on orders above ₹5999</span>
-              <span className="text-ink/40">✦</span>
-              <span className="text-blush-dark">Luxury Baby Gears</span>
               <span className="text-ink/40">✦</span>
               <span className="text-[#8E2439]">🪔 Diwali Offer — Use Code DIWALI25 for 25% Off</span>
             </div>

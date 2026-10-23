@@ -14,11 +14,12 @@ import {
   Package 
 } from "lucide-react";
 import { cn, categoryHref } from "@/lib/utils";
+import { siteImage } from "@/lib/cloudinary";
 
 const CATEGORIES = [
-  { name: "Stroller", slug: "prams", color: "bg-sage-light/50", icon: Car, image: "/images/pram.png?v=2" },
-  { name: "Diaper Bags", slug: "bags", color: "bg-lavender-brand-light/50", icon: Package, image: "/images/diapers.png?v=2" },
-  { name: "Utility Bags", slug: "utility-bags", color: "bg-sage-light/30", icon: HeartPulse, image: "/images/bags.png?v=2" },
+  { name: "Stroller", slug: "prams", color: "bg-sage-light/50", icon: Car, image: "/images/opt/pram.webp" },
+  { name: "Diaper Bags", slug: "bags", color: "bg-lavender-brand-light/50", icon: Package, image: "/images/opt/diapers.webp" },
+  { name: "Utility Bags", slug: "utility-bags", color: "bg-sage-light/30", icon: HeartPulse, image: "/images/opt/bags.webp" },
 ];
 
 export default function CategorySection() {
@@ -44,7 +45,7 @@ export default function CategorySection() {
                   )}>
                     {cat.image ? (
                       <Image 
-                        src={cat.image} 
+                        src={siteImage(cat.image, 600)}
                         alt={cat.name} 
                         fill 
                         unoptimized

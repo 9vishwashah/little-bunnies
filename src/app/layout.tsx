@@ -6,6 +6,7 @@ import { Toaster } from "sonner";
 import ScrollToTop from "@/components/ScrollToTop";
 import MetaPixelRouteTracker from "@/components/analytics/MetaPixelRouteTracker";
 import { META_PIXEL_ID } from "@/lib/meta-pixel";
+import { CLOUDINARY_ORIGIN } from "@/lib/cloudinary";
 import {
   SITE_URL,
   SITE_NAME,
@@ -37,7 +38,7 @@ const fredoka = Fredoka({
 export const metadata: Metadata = {
   metadataBase: new URL("https://littlebunnies.co.in"),
   title: {
-    default: "Little Bunnies — Premium Baby Products for 0–6 Months | India",
+    default: "Little Bunnies | Premium Baby Strollers, Diaper Bags & Baby Essentials",
     template: "%s | Little Bunnies",
   },
   description:
@@ -79,12 +80,12 @@ export const metadata: Metadata = {
     locale: "en_IN",
     url: "https://littlebunnies.co.in",
     siteName: SITE_NAME,
-    title: "Little Bunnies — Premium Baby Products for 0–6 Months",
+    title: "Little Bunnies | Premium Baby Strollers, Diaper Bags & Baby Essentials",
     description:
       "India's premium baby essentials brand. Shop prams, strollers, diaper bags & utility bags — handpicked with love for your little one. Free shipping above ₹5999.",
     images: [
       {
-        url: "https://littlebunnies.co.in/images/banner2.png",
+        url: "https://littlebunnies.co.in/images/og/og-default.jpg",
         width: 1200,
         height: 630,
         alt: "Little Bunnies — Premium Baby Products India",
@@ -94,12 +95,12 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Little Bunnies — Premium Baby Products for 0–6 Months",
+    title: "Little Bunnies | Premium Baby Strollers, Diaper Bags & Baby Essentials",
     description:
       "India's premium baby essentials brand. Shop prams, strollers, diaper bags & utility bags — handpicked with love for your little one.",
     images: [
       {
-        url: "https://littlebunnies.co.in/images/banner2.png",
+        url: "https://littlebunnies.co.in/images/og/og-default.jpg",
         alt: "Little Bunnies — Premium Baby Products India",
       },
     ],
@@ -147,6 +148,12 @@ export default function RootLayout({
       <html lang="en-IN" className={`${quicksand.variable} ${fredoka.variable}`}>
         <head>
           {/* DNS prefetch for performance */}
+          {CLOUDINARY_ORIGIN && (
+            <>
+              <link rel="preconnect" href={CLOUDINARY_ORIGIN} crossOrigin="anonymous" />
+              <link rel="dns-prefetch" href={CLOUDINARY_ORIGIN} />
+            </>
+          )}
           {supabaseOrigin && (
             <>
               <link rel="preconnect" href={supabaseOrigin} crossOrigin="anonymous" />

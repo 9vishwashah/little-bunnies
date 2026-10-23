@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image, { ImageProps } from "next/image";
+import { CLOUDINARY_ENABLED, cloudinaryFetchUrl } from "@/lib/cloudinary";
 
 const SUPABASE_URL = "https://jspszcrdxenulgcoziir.supabase.co";
 
@@ -37,6 +38,9 @@ function isSupabaseUrl(src: string): boolean {
  */
 export function getOptimizedImageUrl(src: string, width: number, quality = 75): string {
   if (!isSupabaseUrl(src)) return src;
+  // Cloudinary (when configured) serves the same Supabase originals from its
+  // own CDN, resized and as AVIF/WebP; otherwise use Supabase's transform below.
+  if (CLOUDINARY_ENABLED) return cloudinaryFetchUrl(src, { width });
   const transformed = src.replace("/storage/v1/object/public/", "/storage/v1/render/image/public/");
   const separator = transformed.includes("?") ? "&" : "?";
   return `${transformed}${separator}width=${Math.max(1, Math.round(width))}&quality=${quality}&resize=contain`;

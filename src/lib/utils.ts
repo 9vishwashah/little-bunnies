@@ -71,6 +71,13 @@ export function calculateShipping(subtotal: number): number {
 // this constant only drives display copy, it has no effect on discounting).
 export const PROMO_COUPON_CODE = "DIWALI25";
 export const PROMO_COUPON_LABEL = "25% off your order";
+// Keep in step with the DIWALI25 coupon's percentage in the database.
+export const PROMO_PERCENT = 25;
+
+/** Saving the promo code gives on `price` — rounded exactly like validateCoupon does at checkout. */
+export function promoSaving(price: number): number {
+  return Math.round((price * PROMO_PERCENT) / 100);
+}
 
 // Where a category's links should point. Prams and Diaper Bags have dedicated
 // landing pages (the ones built to rank for "baby stroller" / "diaper bag"

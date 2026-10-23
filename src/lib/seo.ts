@@ -5,7 +5,7 @@
 export const SITE_URL = "https://littlebunnies.co.in";
 export const SITE_NAME = "Little Bunnies";
 export const SITE_LEGAL_NAME = "Little Bunnies Creations LLP";
-export const SITE_TAGLINE = "Premium Baby Products for 0–6 Months";
+export const SITE_TAGLINE = "Premium Baby Strollers, Diaper Bags & Baby Essentials";
 export const SITE_PHONE = "+91 89760 77070";
 export const SITE_EMAIL = "support@littlebunnies.co.in";
 export const SITE_WHATSAPP = "918976077070";
@@ -44,10 +44,10 @@ export function buildLocalBusinessSchema() {
     "@type": ["LocalBusiness", "Store"],
     name: SITE_NAME,
     description:
-      "Little Bunnies is India's premium baby essentials brand. Shop prams, strollers, diaper bags, and utility bags crafted for newborns aged 0–6 months.",
+      "Little Bunnies is India's premium baby essentials brand. Shop prams, strollers, diaper bags, and utility bags crafted for newborns and growing babies.",
     url: SITE_URL,
     logo: `${SITE_URL}/images/logo-full.png`,
-    image: `${SITE_URL}/images/banner2.png`,
+    image: `${SITE_URL}/images/og/og-default.jpg`,
     telephone: SITE_PHONE,
     email: SITE_EMAIL,
     priceRange: "₹₹",
@@ -118,9 +118,9 @@ export function buildOrganizationSchema() {
       width: 512,
       height: 512,
     },
-    image: `${SITE_URL}/images/banner2.png`,
+    image: `${SITE_URL}/images/og/og-default.jpg`,
     description:
-      "India's premium baby essentials brand — prams, strollers, diaper bags & utility bags for newborns 0–6 months.",
+      "India's premium baby essentials brand — prams, strollers, diaper bags & utility bags for newborns and growing babies.",
     telephone: SITE_PHONE,
     email: SITE_EMAIL,
     foundingDate: "2024",

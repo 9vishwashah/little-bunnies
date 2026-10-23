@@ -1,4 +1,5 @@
-import { ChevronDown } from "lucide-react";
+import Link from "next/link";
+import { ChevronDown, ArrowRight } from "lucide-react";
 import type { Faq } from "@/lib/seoContent";
 
 interface FaqSectionProps {
@@ -6,6 +7,8 @@ interface FaqSectionProps {
   subtitle?: string;
   faqs: Faq[];
   id?: string;
+  /** Optional call-to-action button shown under the questions. */
+  cta?: { label: string; href: string };
 }
 
 /**
@@ -15,7 +18,7 @@ interface FaqSectionProps {
  * FAQPage JSON-LD emitted alongside it, as Google's structured-data
  * guidelines require.
  */
-export default function FaqSection({ title, subtitle, faqs, id = "faq" }: FaqSectionProps) {
+export default function FaqSection({ title, subtitle, faqs, id = "faq", cta }: FaqSectionProps) {
   return (
     <section id={id} className="py-12 md:py-20 bg-cream">
       <div className="section-container max-w-3xl mx-auto">
@@ -43,6 +46,18 @@ export default function FaqSection({ title, subtitle, faqs, id = "faq" }: FaqSec
             </details>
           ))}
         </div>
+
+        {cta && (
+          <div className="mt-8 md:mt-10 text-center">
+            <Link
+              href={cta.href}
+              className="btn-primary inline-flex items-center gap-2 px-8 py-4 rounded-full font-bold shadow-soft-lg hover:shadow-soft-xl transition-all"
+            >
+              <span>{cta.label}</span>
+              <ArrowRight size={18} />
+            </Link>
+          </div>
+        )}
       </div>
     </section>
   );

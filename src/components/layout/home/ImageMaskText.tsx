@@ -9,7 +9,7 @@ export default function ImageMaskText() {
           className="font-sans font-black text-center leading-[0.88] tracking-tighter uppercase"
           style={{
             fontSize: 'clamp(3rem, 18vw, 14rem)',
-            backgroundImage: "url('/images/banner2.png')",
+            backgroundImage: "url('/images/opt/banner2.webp')",
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             backgroundAttachment: 'fixed',

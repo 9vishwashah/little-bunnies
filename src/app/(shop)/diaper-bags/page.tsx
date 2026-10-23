@@ -34,7 +34,7 @@ export const metadata: Metadata = {
     siteName: "Little Bunnies",
     images: [
       {
-        url: `${SITE_URL}/images/bags.png`,
+        url: `${SITE_URL}/images/og/og-bags.jpg`,
         width: 1200,
         height: 630,
         alt: "Little Bunnies diaper bags & backpacks",
@@ -45,7 +45,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: PAGE_TITLE,
     description: PAGE_DESCRIPTION,
-    images: [`${SITE_URL}/images/bags.png`],
+    images: [`${SITE_URL}/images/og/og-bags.jpg`],
   },
 };
 
@@ -136,7 +136,7 @@ export default async function DiaperBagsPage() {
       image:
         product.product_images?.find((i) => i.is_primary)?.url ||
         product.product_images?.[0]?.url ||
-        `${SITE_URL}/images/bags.png`,
+        `${SITE_URL}/images/og/og-bags.jpg`,
     })),
   });
 

@@ -6,12 +6,13 @@ import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronRight, Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { siteImage } from "@/lib/cloudinary";
 
 // Add more image paths here as you get them!
 const SLIDES = [
-  "/images/littlebunnies-banner1.png",
-  "/images/banner2.png",
-  "/images/banner3.png",
+  "/images/opt/littlebunnies-banner1.webp",
+  "/images/opt/banner2.webp",
+  "/images/opt/banner3.webp",
 ];
 
 export default function HeroSection() {
@@ -42,7 +43,7 @@ export default function HeroSection() {
             className="absolute inset-0"
           >
             <Image
-              src={SLIDES[currentSlide]}
+              src={siteImage(SLIDES[currentSlide], 1400)}
               alt={`Banner Slide ${currentSlide + 1}`}
               fill
               sizes="100vw"
@@ -78,6 +79,10 @@ export default function HeroSection() {
               Your Baby&apos;s Comfort.<br />
               <span className="text-sage-dark">Your Freedom to Move.</span>
             </h1>
+
+            <p className="text-[11px] sm:text-base md:text-lg font-semibold text-ink-light leading-snug max-w-sm sm:max-w-md">
+              Thoughtfully designed strollers and diaper bags for every journey with your little one.
+            </p>
 
             <div className="flex flex-col sm:flex-row gap-3 mt-3 sm:mt-5">
               <Link

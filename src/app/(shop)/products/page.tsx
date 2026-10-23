@@ -113,7 +113,7 @@ export async function generateMetadata({ searchParams }: ProductsPageProps): Pro
           ? `${baseUrl}/products?category=${category}&page=${page}`
           : `${baseUrl}/products?category=${category}`;
       title = `${categoryName} — Premium Baby Products | Little Bunnies`;
-      description = `Shop premium ${categoryName} online from Little Bunnies. Crafted with safety and care for newborns aged 0–6 months.`;
+      description = `Shop premium ${categoryName} online from Little Bunnies. Crafted with safety and care for newborns and growing babies.`;
       keywords = [
         `Little Bunnies ${categoryName}`,
         `buy ${categoryName} india`,
@@ -137,7 +137,7 @@ export async function generateMetadata({ searchParams }: ProductsPageProps): Pro
       siteName: "Little Bunnies",
       images: [
         {
-          url: `${baseUrl}/images/banner2.png`,
+          url: `${baseUrl}/images/og/og-default.jpg`,
           width: 1200,
           height: 630,
           alt: title,

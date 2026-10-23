@@ -109,7 +109,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!product) return { title: "Product Not Found", robots: { index: false, follow: true } };
 
   const image = product.product_images?.find((img) => img.is_primary)?.url;
-  const fallbackImage = `${SITE_URL}/images/banner2.png`;
+  const fallbackImage = `${SITE_URL}/images/og/og-default.jpg`;
   const ogImage = image || fallbackImage;
   const canonical = productCanonical(product);
   const displayName = productName(product);
@@ -164,7 +164,7 @@ function buildProductJsonLd(product: Product) {
   const canonical = productCanonical(product);
   const images = product.product_images?.length
     ? product.product_images.map((img) => img.url)
-    : [`${SITE_URL}/images/banner2.png`];
+    : [`${SITE_URL}/images/og/og-default.jpg`];
 
   const description = stripHtml(
     product.description || product.short_description || product.name

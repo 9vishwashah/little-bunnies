@@ -37,7 +37,10 @@ import {
   cn,
   PROMO_COUPON_CODE,
   PROMO_COUPON_LABEL,
+  promoSaving,
 } from "@/lib/utils";
+import FeatureHighlights, { NameHighlights } from "@/components/product/FeatureHighlights";
+import TrustBadges from "@/components/product/TrustBadges";
 import ProductSection from "@/components/home/ProductSection";
 import { toast } from "sonner";
 import { trackViewContent, trackAddToCart } from "@/lib/meta-pixel";
@@ -160,6 +163,16 @@ export default function ProductDetailClient({
   useEffect(() => {
     router.prefetch("/checkout");
   // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Coming back to this page with Back (browser restores it from memory) must
+  // not leave Buy Now stuck on its spinner.
+  useEffect(() => {
+    const onShow = (e: PageTransitionEvent) => {
+      if (e.persisted) setBuyNowLoading(false);
+    };
+    window.addEventListener("pageshow", onShow);
+    return () => window.removeEventListener("pageshow", onShow);
   }, []);
 
   let images = product.product_images
@@ -300,6 +313,13 @@ export default function ProductDetailClient({
   const discount = calculateDiscount(product.price, product.compare_price || 0);
   const currentPrice = product.price + (selectedVariant?.price_modifier || 0);
   const finalPrice = currentPrice;
+  // Offer price shown to shoppers = price after the promo code (same rounding as checkout).
+  const listPrice =
+    product.compare_price && product.compare_price > finalPrice ? product.compare_price : finalPrice;
+  const promoAmount = promoSaving(finalPrice);
+  const offerPrice = finalPrice - promoAmount;
+  const offerSaving = listPrice - offerPrice;
+  const offerPercent = listPrice > 0 ? Math.round((offerSaving / listPrice) * 100) : 0;
 
   const whatsappUrl = getWhatsAppUrl(product.name, pageUrl);
 
@@ -399,6 +419,12 @@ export default function ProductDetailClient({
     setBuyNowLoading(true);
     handleAddToCart();
     router.push("/checkout");
+    // The cart is already saved, so if the in-app transition stalls (slow or
+    // dropped network request) fall back to a normal page load rather than
+    // leaving the shopper on a spinner that never goes anywhere.
+    window.setTimeout(() => {
+      if (window.location.pathname !== "/checkout") window.location.assign("/checkout");
+    }, 4000);
   };
 
   const handleShare = async () => {
@@ -444,11 +470,7 @@ export default function ProductDetailClient({
         <h1 className="text-base sm:text-lg font-bold text-ink uppercase tracking-widest mb-1.5">
           {displayName}
         </h1>
-        {product.brand && (
-          <p className="font-sans font-light text-xs sm:text-sm text-ink-muted leading-relaxed">
-            {product.name}
-          </p>
-        )}
+        {product.brand && <NameHighlights name={product.name} />}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 xl:gap-16">
@@ -694,11 +716,7 @@ export default function ProductDetailClient({
           </h1>
 
           {/* Name — desktop only (mobile title shown above gallery) */}
-          {product.brand && (
-            <p className="hidden md:block font-sans font-light text-sm md:text-base text-ink-muted leading-relaxed mb-4">
-              {product.name}
-            </p>
-          )}
+          {product.brand && <NameHighlights name={product.name} className="hidden md:block mb-4" />}
 
           {/* Rating */}
           {product.review_count && product.review_count > 0 ? (
@@ -725,16 +743,25 @@ export default function ProductDetailClient({
             </div>
           ) : null}
 
-          {/* Price */}
-          <div className="flex items-baseline gap-3 mb-1">
-            <span className="font-bold text-ink text-2xl">
-              {formatPrice(finalPrice)}
-            </span>
-            {product.compare_price && product.compare_price > product.price && (
-              <span className="text-sm text-ink-muted line-through font-medium">
-                {formatPrice(product.compare_price)}
+          {/* Price — headline is the price after the promo code, with the
+              original price, the saving and the code beside it. The coupon card
+              below stays as the copy-the-code fallback. */}
+          <div className="mb-4">
+            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <span className="font-bold text-ink text-3xl">{formatPrice(offerPrice)}</span>
+              <span className="text-base text-ink-muted line-through font-medium">
+                {formatPrice(listPrice)}
               </span>
-            )}
+              <span className="rounded-full bg-[#8E2439]/10 px-2.5 py-0.5 text-xs font-extrabold uppercase tracking-wide text-[#8E2439]">
+                {offerPercent}% off
+              </span>
+            </div>
+            <p className="mt-1 text-sm font-semibold text-sage-dark">
+              You save {formatPrice(offerSaving)} with code {PROMO_COUPON_CODE}
+            </p>
+            <p className="mt-0.5 text-xs font-medium text-ink-muted">
+              Diwali offer price: enter {PROMO_COUPON_CODE} at checkout. Limited-time offer; the final amount is confirmed at checkout.
+            </p>
           </div>
 
           {/* Coupon card */}
@@ -860,56 +887,31 @@ export default function ProductDetailClient({
             )}
           </div>
 
-          {/* Short description */}
+          {/* Warranty / exchange / secure-payment reassurance */}
+          <TrustBadges />
+
+          {/* Key benefits: four short highlights; the complete list stays
+              available (and in the page HTML) in the section below. */}
           {product.short_description && (
             <>
-              {/* Desktop View: No wrapper/accordion */}
-              <div className="hidden md:block mb-5 pt-5 border-t border-ink/8">
-                <div className="flex items-center gap-2.5 mb-3">
-                  <Info size={18} className="text-ink-muted" strokeWidth={1.8} />
-                  <span className="font-semibold text-ink text-sm">Key Features</span>
-                </div>
+              <FeatureHighlights html={product.short_description} />
+
+              <details className="group border-t border-ink/8">
+                <summary className="flex cursor-pointer list-none items-center justify-between py-4 [&::-webkit-details-marker]:hidden">
+                  <span className="flex items-center gap-2.5">
+                    <Info size={18} className="text-ink-muted" strokeWidth={1.8} />
+                    <span className="font-semibold text-ink text-sm">Full features &amp; specifications</span>
+                  </span>
+                  <ChevronDown
+                    size={16}
+                    className="text-ink-muted transition-transform group-open:rotate-180"
+                  />
+                </summary>
                 <div
                   className="pb-4 text-ink-light text-sm leading-relaxed font-medium prose prose-sm max-w-none"
                   dangerouslySetInnerHTML={{ __html: product.short_description }}
                 />
-              </div>
-
-              {/* Mobile View: Accordion */}
-              <div className="block md:hidden border-t border-ink/8">
-                <button
-                  onClick={() => toggleSection("short_description")}
-                  className="flex items-center justify-between w-full py-4 text-left"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <Info size={18} className="text-ink-muted" strokeWidth={1.8} />
-                    <span className="font-semibold text-ink text-sm">Key Features</span>
-                  </div>
-                  <ChevronDown
-                    size={16}
-                    className={cn(
-                      "text-ink-muted transition-transform",
-                      expandedSection === "short_description" && "rotate-180"
-                    )}
-                  />
-                </button>
-                <AnimatePresence>
-                  {expandedSection === "short_description" && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.2 }}
-                      className="overflow-hidden"
-                    >
-                      <div
-                        className="pb-4 text-ink-light text-sm leading-relaxed font-medium prose prose-sm max-w-none"
-                        dangerouslySetInnerHTML={{ __html: product.short_description }}
-                      />
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
+              </details>
             </>
           )}
 

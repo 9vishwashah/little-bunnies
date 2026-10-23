@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     url: `${SITE_URL}/faq`,
     images: [
       {
-        url: `${SITE_URL}/images/banner2.png`,
+        url: `${SITE_URL}/images/og/og-default.jpg`,
         width: 1200,
         height: 630,
         alt: "Little Bunnies FAQ",
